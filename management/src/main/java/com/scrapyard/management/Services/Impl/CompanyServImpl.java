@@ -7,6 +7,7 @@ import com.scrapyard.management.Services.ICompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CompanyServImpl implements ICompanyService {
@@ -18,19 +19,35 @@ public class CompanyServImpl implements ICompanyService {
 
     @Override
     public List<CompanyDTOResponse> getAllCompanies() {
+        if (companyRepo.findAll().isEmpty()) {
+            throw new IllegalArgumentException("There are no registered companies");
+        }
         return companyRepo.findAll().stream().map(comp ->
                 new CompanyDTOResponse(comp.getId(), comp.getName(), comp.getLocation())).toList();
     }
 
     @Override
-    public Company getCompanyById(Long id) {
-        return null;
+    public CompanyDTOResponse getCompanyById(Long id) {
+        if (!companyRepo.existsById(id)) {
+            throw new IllegalArgumentException("There is no company ID: " + " " + id);
+        }
+        Company company = companyRepo.findById(id).get();
+        return new CompanyDTOResponse(company.getId(), company.getName(), company.getLocation());
     }
 
+
     @Override
-    public Company getCompanyByName(String name) {
-        return null;
+    public CompanyDTOResponse getCompanyByName(String name) {
+
+        if (!companyRepo.existsByname(name)) {
+            throw new IllegalArgumentException("No Company Name : " + " " + name);
+        }
+        Company comp = companyRepo.findByname(name).get();
+
+        return new CompanyDTOResponse(comp.getId(), comp.getName(), comp.getLocation());
     }
+
+
 
     @Override
     public CompanyDTOResponse saveCompany(CompanyDTORequestInsert company) {
