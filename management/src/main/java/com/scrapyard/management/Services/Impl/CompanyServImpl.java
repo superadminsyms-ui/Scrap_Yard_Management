@@ -17,8 +17,9 @@ public class CompanyServImpl implements ICompanyService {
 
 
     @Override
-    public List<Company> getAllCompanies() {
-        return List.of();
+    public List<CompanyDTOResponse> getAllCompanies() {
+        return companyRepo.findAll().stream().map(comp ->
+                new CompanyDTOResponse(comp.getId(), comp.getName(), comp.getLocation())).toList();
     }
 
     @Override

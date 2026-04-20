@@ -12,5 +12,4 @@ public class CompanyDTOResponse {
     private String name;
     private String location;
 
-
 }

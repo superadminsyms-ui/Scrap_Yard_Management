@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface ICompanyService {
 
-    List<Company> getAllCompanies();
+    List<CompanyDTOResponse> getAllCompanies();
     Company getCompanyById(Long id);
     Company getCompanyByName(String name);
     CompanyDTOResponse saveCompany(CompanyDTORequestInsert company);
