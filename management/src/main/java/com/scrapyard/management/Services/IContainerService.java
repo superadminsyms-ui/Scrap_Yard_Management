@@ -16,6 +16,7 @@ public interface IContainerService {
     void deleteContainer(Long id);
     List<Container> getContainersByScrapYard(ScrapYard yard);
     List<Container> getContainersByCompany(Company company);
+    Double getMaterialWeight(Container container);
 
 
 

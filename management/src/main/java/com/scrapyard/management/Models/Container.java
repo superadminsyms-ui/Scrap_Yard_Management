@@ -1,4 +1,5 @@
 package com.scrapyard.management.Models;
+import com.scrapyard.management.Models.Enums.ContainerSize;
 import com.scrapyard.management.Models.Enums.MaterialType;
 import com.scrapyard.management.Models.Enums.UnitOfMeasure;
 import jakarta.persistence.*;
@@ -7,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class Container {
     private String description;
 
     @Column(nullable = false)
-    private BigDecimal currentWeight = BigDecimal.ZERO;
+    private Double materialWeight;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -47,6 +47,18 @@ public class Container {
 
     @OneToMany(mappedBy = "container")
     private List<InvoiceDetail> invoiceDetails=new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ContainerSize containerSize;
+
+    @OneToMany(mappedBy ="originContainer")
+    private List<Movement> outgoingMovement = new ArrayList<>();
+
+
+    @OneToMany(mappedBy ="destinationContainer")
+    private List<Movement> incomingMovement = new ArrayList<>();
+
 
 
 
