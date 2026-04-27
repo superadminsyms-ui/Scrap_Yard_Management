@@ -28,7 +28,6 @@ public class Container {
     @Column(nullable = false)
     private String description;
 
-    @Column(nullable = false)
     private BigDecimal materialWeight;
 
     @ManyToOne
@@ -41,5 +40,9 @@ public class Container {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ContainerSize containerSize;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MaterialType materialType;
 
 }

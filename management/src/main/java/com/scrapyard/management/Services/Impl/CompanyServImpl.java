@@ -13,7 +13,11 @@ public class CompanyServImpl implements ICompanyService {
 
 
     @Autowired
-    CompanyRepo companyRepo;
+    private final CompanyRepo companyRepo;
+
+    public CompanyServImpl(CompanyRepo companyRepo) {
+        this.companyRepo = companyRepo;
+    }
 
 
     @Override

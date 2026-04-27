@@ -12,7 +12,11 @@ public class CompanyController {
 
 
     @Autowired
-    CompanyServImpl companyServices;
+    private final CompanyServImpl companyServices;
+
+    public CompanyController(CompanyServImpl companyServices) {
+        this.companyServices = companyServices;
+    }
 
 
     @PostMapping("/save")
