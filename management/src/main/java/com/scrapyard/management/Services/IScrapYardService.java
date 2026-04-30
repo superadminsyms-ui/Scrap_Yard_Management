@@ -10,15 +10,12 @@ public interface IScrapYardService {
 
 
     List<ScrapYardDTOResponse> getAllScrapYard();
-    ScrapYard getScrapYardById(Long id);
-    ScrapYard getScrapYardByName(String name);
-
+    ScrapYardDTOResponse getScrapYardById(Long id);
     ScrapYardDTOResponse saveScrapYard(ScrapYardDTORequestInsert scrapYard);
-
-
-    void deleteScrapYard(Long id);
-    List<ScrapYard> getAllYardByCompany(Company company);
-    ScrapYard updateScrapYard(ScrapYard yard, Long id);
+    ScrapYardDTOResponse getScrapYardByName(String name);
+    String deleteScrapYard(Long id);
+    List<ScrapYardDTOResponse> getAllYardByCompany(Long companyID);
+    ScrapYardDTOResponse updateScrapYard(ScrapYardDTORequestInsert yard, Long id);
 
 
 

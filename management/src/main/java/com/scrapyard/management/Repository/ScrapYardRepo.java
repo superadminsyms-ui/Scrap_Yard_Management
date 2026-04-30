@@ -8,6 +8,6 @@ public interface ScrapYardRepo extends JpaRepository<ScrapYard,Long> {
 
 
     Optional<ScrapYard> findByname(String ScrapYardName);
-
+    boolean existsByname(String name);
 
 }
