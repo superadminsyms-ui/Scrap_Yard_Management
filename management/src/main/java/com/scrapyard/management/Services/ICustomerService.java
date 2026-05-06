@@ -16,12 +16,9 @@ CustomerDTOResponse getCustomerById(Long id);
 List<CustomerDTOResponse> searchByName(String name);
 CustomerDTOResponse updateCustomer(CustomerDTOInsert customer, Long id);
 String deleteCustomer(Long id);
-
-List<Customer> getCustomersByCompany(Long companyId);
-
+List<CustomerDTOResponse> getCustomersByCompany(Long companyId);
 
 
-List<Customer> getCustomersByType(CustomerType type);
 Customer getCustomerByPersonalId(String personalId);
 List<Invoice> getInvoicesByCustomer(Long customerId);
 long countCustomersByCompany(Long companyId);

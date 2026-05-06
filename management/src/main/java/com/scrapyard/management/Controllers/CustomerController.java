@@ -82,6 +82,15 @@ public class CustomerController {
     }
 
 
+    @GetMapping("/all-by-company/{id}")
+    public ResponseEntity<?> getCustomerByCompanyID(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(customerServices.getCustomersByCompany(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("Error", e.getMessage()));
+        }
+    }
 
 
 

@@ -135,19 +135,25 @@ public class CustomerServImpl implements ICustomerService {
             }
     }
 
-
-
-
-
     @Override
-    public List<Customer> getCustomersByCompany(Long companyId) {
-        return List.of();
+    public List<CustomerDTOResponse> getCustomersByCompany(Long companyId) {
+
+        if (!companyRepo.existsById(companyId)) {
+            throw new IllegalArgumentException("The company does not exist");
+        }
+
+        Company currentCompany = companyRepo.findById(companyId).get();
+
+        if (currentCompany.getCustomers().isEmpty()) {
+            throw new IllegalArgumentException("The company has no registered customers.");
+        }
+
+        return currentCompany.getCustomers().stream().map(customer -> new CustomerDTOResponse(
+                customer.getId(), customer.getName(), customer.getPersonalId(), customer.getTypeCustomer(),
+                customer.getCompany().getName()
+        )).toList();
     }
 
-    @Override
-    public List<Customer> getCustomersByType(CustomerType type) {
-        return List.of();
-    }
 
     @Override
     public Customer getCustomerByPersonalId(String personalId) {
