@@ -92,6 +92,46 @@ public class CustomerController {
         }
     }
 
+    @GetMapping("/search-by-personal-id")
+    public ResponseEntity<?> getCustomerByPersonalId(@RequestParam String personalId) {
+        try {
+            return ResponseEntity.ok(customerServices.getCustomerByPersonalId(personalId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+
+
+    @GetMapping("/{customerId}/invoices")
+    public ResponseEntity<?> getInvoicesByCustomer(@PathVariable Long customerId) {
+        try {
+            return ResponseEntity.ok(
+                    customerServices.getInvoicesByCustomer(customerId)
+            );
+        } catch (IllegalArgumentException e) {return ResponseEntity.badRequest().body(Map.of
+                ("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/count-by-company-id/{companyId}")
+    public ResponseEntity<?> getCountCustomerByCompanyId(@PathVariable Long companyId) {
+        try {
+            return ResponseEntity.ok(
+                    customerServices.countCustomersByCompany(companyId)
+            );
+        } catch (IllegalArgumentException e) {return ResponseEntity.badRequest().body(Map.of
+                ("error", e.getMessage()));
+        }
+    }
+
+
+
+
+
+
+
+
 
 
 
