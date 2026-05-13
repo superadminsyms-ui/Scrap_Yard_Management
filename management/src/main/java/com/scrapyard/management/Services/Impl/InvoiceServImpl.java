@@ -193,14 +193,14 @@ public class InvoiceServImpl implements IInvoiceService {
         ScrapYard scrapyard = scrapYardRepo.findById(invoiceDto.getScrapYardId())
                 .orElseThrow(() -> new IllegalArgumentException("ScrapYard not found"));
 
-//        ManagerSY manager = managerSYRepo.findById(invoiceDto.getManagerId())
-//                .orElseThrow(() -> new IllegalArgumentException("Manager not found"));
-//
-//
-//        if(!manager.getScrapYard().getId().equals(scrapyard.getId())){
-//            throw new IllegalArgumentException(
-//                    "Manager must belong to the yard");
-//        }
+        ManagerSY manager = managerSYRepo.findById(invoiceDto.getManagerId())
+                .orElseThrow(() -> new IllegalArgumentException("Manager not found"));
+
+
+        if(!manager.getScrapYard().getId().equals(scrapyard.getId())){
+            throw new IllegalArgumentException(
+                    "Manager must belong to the yard");
+        }
 
         // VALIDACIÓN DE NEGOCIO
         if (!customer.getCompany().getId()
@@ -223,7 +223,7 @@ public class InvoiceServImpl implements IInvoiceService {
         invoice.setCustomer(customer);
         invoice.setScrapYard(scrapyard);
         invoice.setDiscount(invoiceDto.getDiscount());
-//        invoice.setManager(manager);
+        invoice.setManager(manager);
 
         List<InvoiceDetail> detailEntities = new ArrayList<>();
 
