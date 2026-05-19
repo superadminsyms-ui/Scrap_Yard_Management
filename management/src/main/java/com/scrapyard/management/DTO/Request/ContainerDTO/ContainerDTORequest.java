@@ -1,6 +1,7 @@
 package com.scrapyard.management.DTO.Request.ContainerDTO;
 import com.scrapyard.management.Models.Enums.ContainerSize;
 import com.scrapyard.management.Models.Enums.MaterialType;
+import com.scrapyard.management.Models.Enums.UnitOfMeasure;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -33,5 +34,8 @@ public class ContainerDTORequest {
 
     @NotNull(message = "Material type is required")
     private MaterialType materialType;
+
+    @NotNull(message = "Unit of measure is required")
+    private UnitOfMeasure unitOfMeasure;
 
 }

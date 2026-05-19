@@ -9,14 +9,12 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class ContainerDTOResponse {
-
-
-   private Long id;
-   private String description;
-   private MaterialType materialType;
-   private ContainerSize containerSize;
+public class ContainerStockResponse {
+    private Long containerId;
+    private String description;
+    private MaterialType materialType;
+    private ContainerSize containerSize;
     private BigDecimal materialWeight;
+    private String scrapYardName;
     private String unit;
-
 }

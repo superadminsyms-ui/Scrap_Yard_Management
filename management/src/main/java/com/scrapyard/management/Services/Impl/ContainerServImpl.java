@@ -7,6 +7,7 @@ import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerDTOResponse;
 import com.scrapyard.management.Models.Company;
 import com.scrapyard.management.Models.Container;
 import com.scrapyard.management.Models.Enums.MaterialType;
+import com.scrapyard.management.Models.Enums.UnitOfMeasure;
 import com.scrapyard.management.Models.ScrapYard;
 import com.scrapyard.management.Repository.CompanyRepo;
 import com.scrapyard.management.Repository.ContainerRepo;
@@ -44,7 +45,7 @@ public class ContainerServImpl implements IContainerService {
                 findAll().stream().
                 map(cont ->
                 new ContainerDTOResponse(cont.getId(),cont.getDescription(), cont.getMaterialType()
-                ,cont.getContainerSize(), cont.getMaterialWeight())).toList();
+                ,cont.getContainerSize(), cont.getMaterialWeight(), "POUNDS")).toList();
     }
 
 
@@ -57,7 +58,7 @@ public class ContainerServImpl implements IContainerService {
         Container container = containerRepo.findById(id).get();
         return new ContainerDTOResponse(container.getId(),container.getDescription(),
                 container.getMaterialType(),container.getContainerSize(),
-                container.getMaterialWeight());
+                container.getMaterialWeight(), "POUNDS");
     }
 
 
@@ -75,7 +76,8 @@ public class ContainerServImpl implements IContainerService {
         Container containerEntity = new Container();
 
         containerEntity.setDescription(container.getDescription());
-        containerEntity.setMaterialWeight(container.getMaterialWeight());
+        BigDecimal weightInLbs = container.getUnitOfMeasure().toPounds(container.getMaterialWeight());
+        containerEntity.setMaterialWeight(weightInLbs);
         containerEntity.setContainerSize(container.getContainerSize());
         containerEntity.setMaterialType(container.getMaterialType());
 
@@ -91,7 +93,8 @@ public class ContainerServImpl implements IContainerService {
                 savedContainer.getDescription(),
                 savedContainer.getMaterialType(),
                 savedContainer.getContainerSize(),
-                savedContainer.getMaterialWeight());
+                savedContainer.getMaterialWeight(),
+                "POUNDS");
     }
 
 
@@ -112,7 +115,7 @@ public class ContainerServImpl implements IContainerService {
 
         return new ContainerDTOResponse
                 (updatedContainer.getId(),updatedContainer.getDescription(), updatedContainer.getMaterialType(),
-                updatedContainer.getContainerSize(), updatedContainer.getMaterialWeight());
+                updatedContainer.getContainerSize(), updatedContainer.getMaterialWeight(), "POUNDS");
     }
 
 
@@ -138,7 +141,7 @@ public class ContainerServImpl implements IContainerService {
 
         return existing.getContainers().stream().map(cont ->
                 new ContainerDTOResponse(cont.getId(),cont.getDescription(), cont.getMaterialType(),
-                        cont.getContainerSize(), cont.getMaterialWeight())).toList();
+                        cont.getContainerSize(), cont.getMaterialWeight(), "POUNDS")).toList();
     }
 
 

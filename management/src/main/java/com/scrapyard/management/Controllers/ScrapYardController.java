@@ -2,6 +2,8 @@ package com.scrapyard.management.Controllers;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequestUpdate;
 import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDTORequestInsert;
 import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDTORequestUpdate;
+import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerStockResponse;
+import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapYardStockTotalResponse;
 import com.scrapyard.management.Services.Impl.ScrapYardServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,8 +74,8 @@ public class ScrapYardController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
+        }
     }
-}
 
     @GetMapping("/{yardId}/all-containers")
     public ResponseEntity<?> getContainers(@PathVariable Long yardId) {
@@ -97,13 +99,33 @@ public class ScrapYardController {
         }
     }
 
+    @GetMapping("/{yardId}/stock")
+    public ResponseEntity<?> getTotalStock(@PathVariable Long yardId) {
+        try {
+            return ResponseEntity.ok(scrapYardServImpl.getTotalStockByYardId(yardId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("Error", e.getMessage()));
+        }
+    }
 
+    @GetMapping("/{yardId}/stock/containers")
+    public ResponseEntity<?> getStockByContainers(@PathVariable Long yardId) {
+        try {
+            return ResponseEntity.ok(scrapYardServImpl.getStockByContainers(yardId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("Error", e.getMessage()));
+        }
+    }
 
-
-
-
-
-
-
-
+    @GetMapping("/{yardId}/stock/containers/{containerId}")
+    public ResponseEntity<?> getStockByContainer(@PathVariable Long yardId, @PathVariable Long containerId) {
+        try {
+            return ResponseEntity.ok(scrapYardServImpl.getStockByContainerId(yardId, containerId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("Error", e.getMessage()));
+        }
+    }
 }

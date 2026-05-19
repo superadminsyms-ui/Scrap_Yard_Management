@@ -263,6 +263,14 @@ public class InvoiceServImpl implements IInvoiceService {
         // 6. Guardar invoice (cascade guarda details)
         Invoice saved = invoiceRepo.save(invoice);
 
+        for (InvoiceDetail detail : detailEntities) {
+            Container c = detail.getContainer();
+            BigDecimal weightInLbs = detail.getUnit().toPounds(detail.getWeight());
+            c.setMaterialWeight(c.getMaterialWeight().add(weightInLbs));
+            containerRepo.save(c);
+        }
+
+
         List<InvoiceDetailDTOResponse> detailsDtoResponses =
                 saved.getDetails()
                         .stream()
@@ -290,6 +298,13 @@ public class InvoiceServImpl implements IInvoiceService {
 
         invoice.setStatus(InvoiceStatus.CANCELLED);
         invoice.setCancelledAt(LocalDateTime.now());
+
+        for (InvoiceDetail detail : invoice.getDetails()) {
+            Container c = detail.getContainer();
+            BigDecimal weightInLbs = detail.getUnit().toPounds(detail.getWeight());
+            c.setMaterialWeight(c.getMaterialWeight().subtract(weightInLbs));
+            containerRepo.save(c);
+        }
 
         Invoice saved = invoiceRepo.save(invoice);
 

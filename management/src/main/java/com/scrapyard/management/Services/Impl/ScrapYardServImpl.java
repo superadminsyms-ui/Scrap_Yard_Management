@@ -2,17 +2,26 @@ package com.scrapyard.management.Services.Impl;
 import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDTORequestInsert;
 import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDTORequestUpdate;
 import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerDTOResponse;
+import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerStockResponse;
+import com.scrapyard.management.DTO.Response.ScrapYardDTO.MaterialStock;
 import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapYardDTOResponse;
+import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapYardStockTotalResponse;
 import com.scrapyard.management.DTO.Response.ScrapYardDTO.dtoResponseId;
 import com.scrapyard.management.Models.Company;
+import com.scrapyard.management.Models.Container;
+import com.scrapyard.management.Models.Enums.MaterialType;
 import com.scrapyard.management.Models.ScrapYard;
 import com.scrapyard.management.Repository.CompanyRepo;
+import com.scrapyard.management.Repository.ContainerRepo;
 import com.scrapyard.management.Repository.ScrapYardRepo;
 import com.scrapyard.management.Services.IScrapYardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -25,11 +34,14 @@ public class ScrapYardServImpl implements IScrapYardService {
     private final CompanyRepo companyRepo;
     @Autowired
     private final CompanyServImpl companyServImpl;
+    @Autowired
+    private final ContainerRepo containerRepo;
 
-    public ScrapYardServImpl(ScrapYardRepo scrapYardRepo, CompanyRepo companyRepo, CompanyServImpl companyServImpl) {
+    public ScrapYardServImpl(ScrapYardRepo scrapYardRepo, CompanyRepo companyRepo, CompanyServImpl companyServImpl, ContainerRepo containerRepo) {
         this.scrapYardRepo = scrapYardRepo;
         this.companyRepo = companyRepo;
         this.companyServImpl = companyServImpl;
+        this.containerRepo = containerRepo;
     }
 
 
@@ -153,8 +165,85 @@ public class ScrapYardServImpl implements IScrapYardService {
 
         return existing.getContainers().stream().map(container -> new
                 ContainerDTOResponse(container.getId(),container.getDescription(), container.getMaterialType()
-        ,container.getContainerSize(),container.getMaterialWeight())).toList();
+        ,container.getContainerSize(),container.getMaterialWeight(), "POUNDS")).toList();
     }
 
+    @Override
+    public ScrapYardStockTotalResponse getTotalStockByYardId(Long yardId) {
+        ScrapYard existing = scrapYardRepo.findById(yardId).orElseThrow(() ->
+                new IllegalArgumentException("The scrapyard does not exist"));
 
+        List<Container> containers = existing.getContainers();
+        if (containers.isEmpty()) {
+            throw new IllegalArgumentException("No containers present in the scrapyard");
+        }
+
+        BigDecimal totalWeight = containers.stream()
+                .map(c -> c.getMaterialWeight() != null ? c.getMaterialWeight() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Map<MaterialType, List<Container>> grouped = containers.stream()
+                .filter(c -> c.getMaterialType() != null)
+                .collect(Collectors.groupingBy(Container::getMaterialType));
+
+        List<MaterialStock> breakdown = grouped.entrySet().stream()
+                .map(entry -> new MaterialStock(
+                        entry.getKey(),
+                        entry.getValue().stream()
+                                .map(c -> c.getMaterialWeight() != null ? c.getMaterialWeight() : BigDecimal.ZERO)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add),
+                        entry.getValue().size(),
+                        "POUNDS"
+                ))
+                .toList();
+
+        return new ScrapYardStockTotalResponse(
+                existing.getId(),
+                existing.getName(),
+                totalWeight,
+                containers.size(),
+                breakdown,
+                "POUNDS"
+        );
+    }
+
+    @Override
+    public List<ContainerStockResponse> getStockByContainers(Long yardId) {
+        ScrapYard existing = scrapYardRepo.findById(yardId).orElseThrow(() ->
+                new IllegalArgumentException("The scrapyard does not exist"));
+
+        List<Container> containers = existing.getContainers();
+        if (containers.isEmpty()) {
+            throw new IllegalArgumentException("No containers present in the scrapyard");
+        }
+
+        return containers.stream().map(container -> new ContainerStockResponse(
+                container.getId(),
+                container.getDescription(),
+                container.getMaterialType(),
+                container.getContainerSize(),
+                container.getMaterialWeight(),
+                existing.getName(),
+                "POUNDS"
+        )).toList();
+    }
+
+    @Override
+    public ContainerStockResponse getStockByContainerId(Long yardId, Long containerId) {
+        Container container = containerRepo.findByIdAndScrapYardId(containerId, yardId)
+                .orElseThrow(() -> new IllegalArgumentException("Container not found in the specified scrapyard"));
+
+        ScrapYard yard = scrapYardRepo.findById(yardId).orElseThrow(() ->
+                new IllegalArgumentException("The scrapyard does not exist"));
+
+        return new ContainerStockResponse(
+                container.getId(),
+                container.getDescription(),
+                container.getMaterialType(),
+                container.getContainerSize(),
+                container.getMaterialWeight(),
+                yard.getName(),
+                "POUNDS"
+        );
+    }
 }
