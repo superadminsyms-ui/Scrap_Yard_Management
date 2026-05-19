@@ -1,8 +1,8 @@
 package com.scrapyard.management.Models;
+import com.scrapyard.management.Models.Enums.MaterialType;
 import com.scrapyard.management.Models.Enums.MovementType;
 import com.scrapyard.management.Models.Enums.UnitOfMeasure;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,19 +28,15 @@ public class Movement {
     private ScrapYard scrapYard;
 
     @ManyToOne
-    @JoinColumn(name = "originContainer_id", nullable = false)
-    private Container originContainer;
+    @JoinColumn(name = "container_id", nullable = false)
+    private Container container;
 
-    // Para destino
     @Column(nullable = false)
-    @NotBlank
     private String destination;
 
-    // Cantidad de material movida
     @Column(nullable = false)
     private BigDecimal amountMoved;
 
-    //unidad de pesaje del movimiento
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private UnitOfMeasure unitOfMeasure;
@@ -55,5 +51,9 @@ public class Movement {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private MovementType movementType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MaterialType materialType;
 
 }
