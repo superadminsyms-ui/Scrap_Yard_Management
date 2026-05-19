@@ -78,8 +78,13 @@ public class CustomerController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public String delete(@PathVariable Long id) {
-        return customerServices.deleteCustomer(id);
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(customerServices.deleteCustomer(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("Error", e.getMessage()));
+        }
     }
 
 

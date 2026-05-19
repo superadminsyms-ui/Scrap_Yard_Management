@@ -76,8 +76,13 @@ public class CompanyController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public String delete(@PathVariable Long id) {
-        return companyServices.deleteCompany(id);
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(companyServices.deleteCompany(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("Error", e.getMessage()));
+        }
     }
 
 

@@ -111,12 +111,15 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public String deleteScrapYard(Long id) {
-        if (scrapYardRepo.existsById(id)) {
-            scrapYardRepo.deleteById(id);
-            return "ScrapYard successfully removed";
-        }else {
-            return "ScrapYard does not exist";
+        ScrapYard existing = scrapYardRepo.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("The scrapyard does not exist"));
+
+        if (!existing.getInvoices().isEmpty()) {
+            throw new IllegalArgumentException("Cannot delete scrap yard with associated invoices");
         }
+
+        scrapYardRepo.deleteById(id);
+        return "ScrapYard successfully removed";
     }
 
 

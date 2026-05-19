@@ -121,13 +121,15 @@ public class ContainerServImpl implements IContainerService {
 
     @Override
     public String deleteContainer(Long id) {
+        Container container = containerRepo.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("The container does not exist"));
 
-        if (containerRepo.existsById(id)) {
-            containerRepo.deleteById(id);
-            return "Container successfully removed";
-        }else {
-            return "Container does not exist";
+        if (!container.getInvoiceDetails().isEmpty()) {
+            throw new IllegalArgumentException("Cannot delete container with associated invoice details");
         }
+
+        containerRepo.deleteById(id);
+        return "Container successfully removed";
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.scrapyard.management.Models.Company;
 import com.scrapyard.management.Models.ManagerSY;
 import com.scrapyard.management.Models.ScrapYard;
 import com.scrapyard.management.Repository.CompanyRepo;
+import com.scrapyard.management.Repository.InvoiceRepo;
 import com.scrapyard.management.Repository.ManagerSYRepo;
 import com.scrapyard.management.Repository.ScrapYardRepo;
 import com.scrapyard.management.Services.IManagerSYService;
@@ -25,12 +26,16 @@ public class ManagerSYServImpl implements IManagerSYService {
     @Autowired
     private final ScrapYardRepo scrapYardRepo;
 
+    @Autowired
+    private final InvoiceRepo invoiceRepo;
 
 
-    public ManagerSYServImpl(ManagerSYRepo managerSYRepo, CompanyRepo companyRepo, ScrapYardRepo scrapYardRepo) {
+
+    public ManagerSYServImpl(ManagerSYRepo managerSYRepo, CompanyRepo companyRepo, ScrapYardRepo scrapYardRepo, InvoiceRepo invoiceRepo) {
         this.managerSYRepo = managerSYRepo;
         this.companyRepo = companyRepo;
         this.scrapYardRepo = scrapYardRepo;
+        this.invoiceRepo = invoiceRepo;
     }
 
 
@@ -128,12 +133,15 @@ public class ManagerSYServImpl implements IManagerSYService {
 
     @Override
     public String deleteManager(Long id) {
-        if (managerSYRepo.existsById(id)) {
-            managerSYRepo.deleteById(id);
-            return "Manager successfully removed";
-        }else {
-            return "Manager does not exist";
+        ManagerSY manager = managerSYRepo.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("The manager does not exist"));
+
+        if (invoiceRepo.existsByManagerId(id)) {
+            throw new IllegalArgumentException("Cannot delete manager with associated invoices");
         }
+
+        managerSYRepo.deleteById(id);
+        return "Manager successfully removed";
     }
 
     @Override

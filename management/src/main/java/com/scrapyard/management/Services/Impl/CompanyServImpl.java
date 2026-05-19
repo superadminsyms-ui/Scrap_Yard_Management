@@ -98,12 +98,18 @@ public class CompanyServImpl implements ICompanyService {
 
     @Override
     public String deleteCompany(Long id) {
-        if (companyRepo.existsById(id)) {
-            companyRepo.deleteById(id);
-            return "Company successfully removed";
-        }else {
-            return "Company does not exist";
+        Company company = companyRepo.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("The company does not exist"));
+
+        if (!company.getScrapYards().isEmpty()) {
+            throw new IllegalArgumentException("Cannot delete company with associated scrap yards");
         }
+        if (!company.getCustomers().isEmpty()) {
+            throw new IllegalArgumentException("Cannot delete company with associated customers");
+        }
+
+        companyRepo.deleteById(id);
+        return "Company successfully removed";
     }
 
     @Override

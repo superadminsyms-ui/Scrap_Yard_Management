@@ -140,12 +140,15 @@ public class CustomerServImpl implements ICustomerService {
 
     @Override
     public String deleteCustomer(Long id) {
-        if (customerRepo.existsById(id)) {
-            customerRepo.deleteById(id);
-            return "Customer successfully removed";
-        } else {
-            return "Customer does not exist";
+        Customer customer = customerRepo.findById(id).orElseThrow(() ->
+                new IllegalArgumentException("The customer does not exist"));
+
+        if (!customer.getInvoices().isEmpty()) {
+            throw new IllegalArgumentException("Cannot delete customer with associated invoices");
         }
+
+        customerRepo.deleteById(id);
+        return "Customer successfully removed";
     }
 
     @Override

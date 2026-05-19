@@ -16,8 +16,6 @@ public interface InvoiceRepo extends JpaRepository<Invoice,Long> {
     """)
     List<Invoice> findByCustomerId(Long customerId);
 
-
-
-
+    boolean existsByManagerId(Long managerId);
 
 }
