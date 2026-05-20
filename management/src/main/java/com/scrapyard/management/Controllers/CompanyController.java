@@ -1,5 +1,6 @@
 package com.scrapyard.management.Controllers;
 import com.scrapyard.management.DTO.Request.CompanyDTORequest.CompanyDTORequestInsert;
+import com.scrapyard.management.Services.ICompanyService;
 import com.scrapyard.management.Services.Impl.CompanyServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,8 @@ public class CompanyController {
 
 
     @Autowired
-    private final CompanyServImpl companyServices;
+    private final ICompanyService companyServices;
+
 
     public CompanyController(CompanyServImpl companyServices) {
         this.companyServices = companyServices;

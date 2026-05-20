@@ -4,6 +4,7 @@ import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequest;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequestUpdate;
 import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDToGetContainers;
 import com.scrapyard.management.Models.Enums.MaterialType;
+import com.scrapyard.management.Services.IContainerService;
 import com.scrapyard.management.Services.Impl.ContainerServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class ContainerController {
 
     @Autowired
-    private final ContainerServImpl containerServices;
+    private final IContainerService containerServices;
 
     public ContainerController(ContainerServImpl containerServices) {
         this.containerServices = containerServices;

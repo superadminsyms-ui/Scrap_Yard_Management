@@ -1,6 +1,7 @@
 package com.scrapyard.management.Controllers;
 import com.scrapyard.management.DTO.Request.CompanyDTORequest.CompanyDTORequestInsert;
 import com.scrapyard.management.DTO.Request.InvoiceDTO.InvoiceDTORequestInsert;
+import com.scrapyard.management.Services.IInvoiceService;
 import com.scrapyard.management.Services.Impl.InvoiceServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ public class InvoiceController {
 
 
     @Autowired
-    private final InvoiceServImpl invoiceServices;
+    private final IInvoiceService invoiceServices;
 
 
     public InvoiceController(InvoiceServImpl invoiceServices) {

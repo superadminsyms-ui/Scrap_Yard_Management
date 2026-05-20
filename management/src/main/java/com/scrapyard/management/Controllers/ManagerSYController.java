@@ -1,5 +1,6 @@
 package com.scrapyard.management.Controllers;
 import com.scrapyard.management.DTO.Request.ManagerSYDTO.ManagerSYDTORequestInsert;
+import com.scrapyard.management.Services.IManagerSYService;
 import com.scrapyard.management.Services.Impl.ManagerSYServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,7 @@ import java.util.Map;
 public class ManagerSYController {
 
     @Autowired
-    private final ManagerSYServImpl managerSYServ;
+    private final IManagerSYService managerSYServ;
 
     public ManagerSYController(ManagerSYServImpl managerSYServ) {
         this.managerSYServ = managerSYServ;

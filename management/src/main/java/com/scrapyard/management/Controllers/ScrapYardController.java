@@ -4,6 +4,7 @@ import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDTORequestInse
 import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDTORequestUpdate;
 import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerStockResponse;
 import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapYardStockTotalResponse;
+import com.scrapyard.management.Services.IScrapYardService;
 import com.scrapyard.management.Services.Impl.ScrapYardServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import java.util.Map;
 public class ScrapYardController {
 
     @Autowired
-    private final ScrapYardServImpl scrapYardServImpl;
+    private final IScrapYardService scrapYardServImpl;
 
     public ScrapYardController(ScrapYardServImpl scrapYardServImpl) {this.scrapYardServImpl = scrapYardServImpl;}
 

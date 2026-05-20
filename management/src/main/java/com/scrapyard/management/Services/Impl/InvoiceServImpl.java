@@ -186,17 +186,26 @@ public class InvoiceServImpl implements IInvoiceService {
     public InvoiceDTOResponse saveInvoice(InvoiceDTORequestInsert invoiceDto) {
 
         // 1. Validar customer
-        Customer customer = customerRepo.findById(invoiceDto.getCustomerId()).orElseThrow(() -> new IllegalArgumentException("Customer not found"));
+        Customer customer = customerRepo.
+                findById(invoiceDto.getCustomerId()).orElseThrow(() ->
+                        new IllegalArgumentException("Customer not found"));
         // 2. Validar scrapyard
-        ScrapYard scrapyard = scrapYardRepo.findById(invoiceDto.getScrapYardId()).orElseThrow(() -> new IllegalArgumentException("ScrapYard not found"));
+        ScrapYard scrapyard = scrapYardRepo.
+                findById(invoiceDto.getScrapYardId()).orElseThrow(() ->
+                        new IllegalArgumentException("ScrapYard not found"));
         // 2. Validar manager
-        ManagerSY manager = managerSYRepo.findById(invoiceDto.getManagerId()).orElseThrow(() -> new IllegalArgumentException("Manager not found"));
+        ManagerSY manager = managerSYRepo.
+                findById(invoiceDto.getManagerId()).orElseThrow(() ->
+                        new IllegalArgumentException("Manager not found"));
 
-        if(!manager.getScrapYard().getId().equals(scrapyard.getId())){throw new IllegalArgumentException("Manager must belong to the yard");}
+        if(!manager.getScrapYard().getId().equals(scrapyard.getId()))
+        {throw new IllegalArgumentException("Manager must belong to the yard");}
         // VALIDACIÓN DE NEGOCIO
-        if (!customer.getCompany().getId().equals(scrapyard.getCompany().getId())) {throw new IllegalArgumentException("Customer and ScrapYard must belong to the same company");}
+        if (!customer.getCompany().getId().equals(scrapyard.getCompany().getId()))
+        {throw new IllegalArgumentException("Customer and ScrapYard must belong to the same company");}
         // VALIDAR DETAILS
-        if (invoiceDto.getDetails() == null || invoiceDto.getDetails().isEmpty()) {throw new IllegalArgumentException("Invoice must contain at least one detail");}
+        if (invoiceDto.getDetails() == null || invoiceDto.getDetails().isEmpty())
+        {throw new IllegalArgumentException("Invoice must contain at least one detail");}
         // Crear invoice
         Invoice invoice = new Invoice();
         invoice.setStatus(InvoiceStatus.ACTIVE);

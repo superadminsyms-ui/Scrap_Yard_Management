@@ -1,5 +1,6 @@
 package com.scrapyard.management.Controllers;
 import com.scrapyard.management.DTO.Request.MovementDTO.MovementDTORequestInsert;
+import com.scrapyard.management.Services.IMovementService;
 import com.scrapyard.management.Services.Impl.MovementServImpl;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +11,7 @@ import java.util.Map;
 @RequestMapping("/api/movement")
 public class MovementController {
 
-    private final MovementServImpl movementServImpl;
+    private final IMovementService movementServImpl;
 
     public MovementController(MovementServImpl movementServImpl) {
         this.movementServImpl = movementServImpl;

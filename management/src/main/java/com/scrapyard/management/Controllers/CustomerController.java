@@ -1,6 +1,7 @@
 package com.scrapyard.management.Controllers;
 import com.scrapyard.management.DTO.Request.CompanyDTORequest.CompanyDTORequestInsert;
 import com.scrapyard.management.DTO.Request.CustomerDTO.CustomerDTOInsert;
+import com.scrapyard.management.Services.ICustomerService;
 import com.scrapyard.management.Services.Impl.CustomerServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ public class CustomerController {
 
 
     @Autowired
-    private final CustomerServImpl customerServices;
+    private final ICustomerService customerServices;
 
 
     public CustomerController(CustomerServImpl customerServices) {
