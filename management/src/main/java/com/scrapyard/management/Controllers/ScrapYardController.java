@@ -134,4 +134,17 @@ public class ScrapYardController {
                     .body(Map.of("Error", e.getMessage()));
         }
     }
+
+    @GetMapping("/{yardId}/report")
+    public ResponseEntity<?> getReport(
+            @PathVariable Long yardId,
+            @RequestParam String type,
+            @RequestParam String period) {
+        try {
+            return ResponseEntity.ok(scrapYardServImpl.getReport(yardId, type, period));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("Error", e.getMessage()));
+        }
+    }
 }

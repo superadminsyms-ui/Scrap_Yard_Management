@@ -3,21 +3,27 @@ import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDTORequestInse
 import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDTORequestUpdate;
 import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerDTOResponse;
 import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerStockResponse;
-import com.scrapyard.management.DTO.Response.ScrapYardDTO.MaterialStock;
-import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapYardDTOResponse;
-import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapYardStockTotalResponse;
-import com.scrapyard.management.DTO.Response.ScrapYardDTO.dtoResponseId;
+import com.scrapyard.management.DTO.Response.ScrapYardDTO.*;
+import com.scrapyard.management.DTO.Response.InvoiceDTO.InvoiceDTOResponse1;
 import com.scrapyard.management.Models.Company;
 import com.scrapyard.management.Models.Container;
 import com.scrapyard.management.Models.Enums.MaterialType;
+import com.scrapyard.management.Models.Enums.ReportPeriod;
+import com.scrapyard.management.Models.Invoice;
 import com.scrapyard.management.Models.ScrapYard;
 import com.scrapyard.management.Repository.CompanyRepo;
 import com.scrapyard.management.Repository.ContainerRepo;
+import com.scrapyard.management.Repository.InvoiceRepo;
 import com.scrapyard.management.Repository.ScrapYardRepo;
+import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IScrapYardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,28 +43,50 @@ public class ScrapYardServImpl implements IScrapYardService {
     @Autowired
     private final ContainerRepo containerRepo;
 
-    public ScrapYardServImpl(ScrapYardRepo scrapYardRepo, CompanyRepo companyRepo, CompanyServImpl companyServImpl, ContainerRepo containerRepo) {
+    @Autowired
+    private final InvoiceRepo invoiceRepo;
+
+    @Autowired
+    private final SecurityContextService securityContextService;
+
+    public ScrapYardServImpl(ScrapYardRepo scrapYardRepo, CompanyRepo companyRepo, CompanyServImpl companyServImpl, ContainerRepo containerRepo, InvoiceRepo invoiceRepo, SecurityContextService securityContextService) {
         this.scrapYardRepo = scrapYardRepo;
         this.companyRepo = companyRepo;
         this.companyServImpl = companyServImpl;
         this.containerRepo = containerRepo;
+        this.invoiceRepo = invoiceRepo;
+        this.securityContextService = securityContextService;
     }
 
 
     @Override
     public List<dtoResponseId> getAllScrapYard() {
+        Long yardId = securityContextService.getCurrentYardId();
+        List<ScrapYard> yards;
 
-        if (scrapYardRepo.findAll().isEmpty()) {
+        if (yardId != null) {
+            ScrapYard yard = scrapYardRepo.findById(yardId)
+                    .orElseThrow(() -> new IllegalArgumentException("Scrap yard not found"));
+            yards = List.of(yard);
+        } else {
+            yards = scrapYardRepo.findAll();
+        }
+
+        if (yards.isEmpty()) {
             throw new IllegalArgumentException("There are no registered ScrapYards");
         }
 
-        return scrapYardRepo.findAll().stream().map
+        return yards.stream().map
                 (yard -> new dtoResponseId
                         (yard.getId(), yard.getCompany().getName(), yard.getName(), yard.getLocation(), yard.isActive())).toList();
     }
 
     @Override
     public ScrapYardDTOResponse getScrapYardById(Long id) {
+        Long yardId = securityContextService.getCurrentYardId();
+        if (yardId != null && !yardId.equals(id)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
 
         if (!scrapYardRepo.existsById(id)) {
             throw new IllegalArgumentException("There is no scrapyard ID: " + " " + id);
@@ -73,11 +101,18 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public List<ScrapYardDTOResponse> getScrapYardByName(String name) {
+        Long yardId = securityContextService.getCurrentYardId();
 
         if(name==null || name.isEmpty()) throw new
                 IllegalArgumentException("ScrapYard name cannot be empty or null");
 
         List<ScrapYard> found= scrapYardRepo.findByNameContainingIgnoreCase(name);
+
+        if (yardId != null) {
+            found = found.stream()
+                    .filter(y -> y.getId().equals(yardId))
+                    .toList();
+        }
 
         if (found.isEmpty()) throw new IllegalArgumentException("There are no registered ScrapYards");
 
@@ -91,6 +126,9 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public ScrapYardDTOResponse saveScrapYard(ScrapYardDTORequestInsert scrapYardDTO) {
+        if (securityContextService.getCurrentYardId() != null) {
+            throw new IllegalArgumentException("Managers cannot create scrap yards");
+        }
 
         ScrapYard yardEntity = new ScrapYard();
 
@@ -111,6 +149,10 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public String deleteScrapYard(Long id) {
+        if (securityContextService.getCurrentYardId() != null) {
+            throw new IllegalArgumentException("Managers cannot delete scrap yards");
+        }
+
         ScrapYard existing = scrapYardRepo.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("The scrapyard does not exist"));
 
@@ -125,11 +167,18 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public List<ScrapYardDTOResponse> getAllYardByCompany(Long companyID) {
+        Long yardId = securityContextService.getCurrentYardId();
 
         Company entity = companyRepo.findById(companyID).orElseThrow(() -> new IllegalArgumentException
                 ("Company not found with ID: " + companyID));
 
-        return entity.getScrapYards().stream().map(yard -> new ScrapYardDTOResponse(
+        List<ScrapYard> yards = entity.getScrapYards();
+
+        if (yardId != null) {
+            yards = yards.stream().filter(y -> y.getId().equals(yardId)).toList();
+        }
+
+        return yards.stream().map(yard -> new ScrapYardDTOResponse(
                 yard.getCompany().getName(),yard.getName(),yard.getLocation(), yard.isActive()
         )).toList();
     }
@@ -138,6 +187,9 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public ScrapYardDTOResponse updateScrapYard(ScrapYardDTORequestUpdate yard, Long id) {
+        if (securityContextService.getCurrentYardId() != null) {
+            throw new IllegalArgumentException("Managers cannot update scrap yards");
+        }
 
         ScrapYard existing = scrapYardRepo.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("The scrapyard does not exist"));
@@ -158,6 +210,10 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public List<ContainerDTOResponse> getContainers(Long yardId) {
+        Long currentYardId = securityContextService.getCurrentYardId();
+        if (currentYardId != null && !currentYardId.equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
 
         ScrapYard existing = scrapYardRepo.findById(yardId).orElseThrow(() ->
                 new IllegalArgumentException("The scrapyard does not exist"));
@@ -173,6 +229,11 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public ScrapYardStockTotalResponse getTotalStockByYardId(Long yardId) {
+        Long currentYardId = securityContextService.getCurrentYardId();
+        if (currentYardId != null && !currentYardId.equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
+
         ScrapYard existing = scrapYardRepo.findById(yardId).orElseThrow(() ->
                 new IllegalArgumentException("The scrapyard does not exist"));
 
@@ -212,6 +273,11 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public List<ContainerStockResponse> getStockByContainers(Long yardId) {
+        Long currentYardId = securityContextService.getCurrentYardId();
+        if (currentYardId != null && !currentYardId.equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
+
         ScrapYard existing = scrapYardRepo.findById(yardId).orElseThrow(() ->
                 new IllegalArgumentException("The scrapyard does not exist"));
 
@@ -233,6 +299,11 @@ public class ScrapYardServImpl implements IScrapYardService {
 
     @Override
     public ContainerStockResponse getStockByContainerId(Long yardId, Long containerId) {
+        Long currentYardId = securityContextService.getCurrentYardId();
+        if (currentYardId != null && !currentYardId.equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
+
         Container container = containerRepo.findByIdAndScrapYardId(containerId, yardId)
                 .orElseThrow(() -> new IllegalArgumentException("Container not found in the specified scrapyard"));
 
@@ -249,4 +320,94 @@ public class ScrapYardServImpl implements IScrapYardService {
                 "POUNDS"
         );
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ScrapyardReportResponse getReport(Long yardId, String reportType, String period) {
+        Long currentYardId = securityContextService.getCurrentYardId();
+        if (currentYardId != null && !currentYardId.equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
+
+        ScrapYard yard = scrapYardRepo.findById(yardId)
+                .orElseThrow(() -> new IllegalArgumentException("The scrapyard does not exist"));
+
+        ReportPeriod reportPeriod;
+        try {
+            reportPeriod = ReportPeriod.valueOf(period.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid period. Use: WEEKLY, MONTHLY, QUARTERLY, SEMIANNUAL");
+        }
+
+        String type = reportType.toUpperCase();
+        if (!type.equals("PURCHASES") && !type.equals("PRICING")) {
+            throw new IllegalArgumentException("Invalid report type. Use: PURCHASES, PRICING");
+        }
+
+        LocalDateTime startDate = reportPeriod.getStartDate();
+        LocalDateTime endDate = reportPeriod.getEndDate();
+
+        List<Invoice> invoices = invoiceRepo.findByScrapYardIdAndCreatedAtBetween(yardId, startDate, endDate);
+
+        BigDecimal totalInvested = invoices.stream()
+                .map(inv -> inv.getTotalPaid() != null ? inv.getTotalPaid() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<InvoiceDTOResponse1> invoiceDTOs = invoices.stream()
+                .map(inv -> new InvoiceDTOResponse1(
+                        inv.getId(),
+                        inv.getCustomer().getName(),
+                        inv.getCustomer().getTypeCustomer(),
+                        inv.getScrapYard().getName(),
+                        inv.getScrapYard().getId(),
+                        inv.getCreatedAt(),
+                        inv.getTotalPaid(),
+                        inv.getDiscount()
+                ))
+                .toList();
+
+        List<MaterialPricing> materialPricing = new ArrayList<>();
+
+        if (type.equals("PRICING")) {
+            Map<MaterialType, List<com.scrapyard.management.Models.InvoiceDetail>> grouped = invoices.stream()
+                    .flatMap(inv -> inv.getDetails().stream())
+                    .filter(d -> d.getMaterialType() != null && d.getWeight() != null && d.getUnitPrice() != null)
+                    .collect(Collectors.groupingBy(com.scrapyard.management.Models.InvoiceDetail::getMaterialType));
+
+            materialPricing = grouped.entrySet().stream()
+                    .map(entry -> {
+                        MaterialType matType = entry.getKey();
+                        List<com.scrapyard.management.Models.InvoiceDetail> details = entry.getValue();
+
+                        BigDecimal totalWeight = details.stream()
+                                .map(com.scrapyard.management.Models.InvoiceDetail::getWeight)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                        BigDecimal totalSpent = details.stream()
+                                .map(com.scrapyard.management.Models.InvoiceDetail::getSubtotal)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                        BigDecimal avgPrice = totalWeight.compareTo(BigDecimal.ZERO) > 0
+                                ? totalSpent.divide(totalWeight, 4, RoundingMode.HALF_UP)
+                                : BigDecimal.ZERO;
+
+                        return new MaterialPricing(matType, totalWeight, totalSpent, avgPrice, details.size());
+                    })
+                    .toList();
+        }
+
+        return new ScrapyardReportResponse(
+                yard.getId(),
+                yard.getName(),
+                type,
+                reportPeriod,
+                startDate,
+                endDate,
+                totalInvested,
+                invoices.size(),
+                invoiceDTOs,
+                materialPricing
+        );
+    }
+
 }

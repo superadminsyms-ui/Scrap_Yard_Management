@@ -77,19 +77,6 @@ public class InvoiceController {
     }
 
 
-    @PatchMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelInvoice(@PathVariable Long id) {
-
-        try {
-            return ResponseEntity.ok(invoiceServices.cancelInvoice(id));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("Error", e.getMessage()));
-        }
-    }
-
-
-
 
 
 

@@ -1,0 +1,309 @@
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { movementsApi } from '@/api/endpoints/movements'
+import { scrapyardsApi } from '@/api/endpoints/scrapyards'
+import { managersApi } from '@/api/endpoints/managers'
+import { Button, Input, Select, Modal, PageHeader, EmptyState, LoadingSpinner, Badge } from '@/components/ui'
+import { MaterialType, UnitOfMeasure, MovementType } from '@/types/models'
+import type { Movement, MovementFormData } from '@/types/models'
+import { Plus } from 'lucide-react'
+
+const MATERIAL_LABELS: Record<MaterialType, string> = {
+  [MaterialType.ALUMINIUM]: 'Aluminum',
+  [MaterialType.IRON]: 'Iron',
+  [MaterialType.MOTOR]: 'Motor',
+  [MaterialType.BATTERY]: 'Battery',
+  [MaterialType.STAINLESS_STEEL]: 'Stainless Steel',
+  [MaterialType.REFER]: 'Refer',
+  [MaterialType.CIRCUIT_BOARD]: 'Circuit',
+  [MaterialType.COPPER]: 'Copper',
+  [MaterialType.BRASS]: 'Brass',
+  [MaterialType.CATALYST]: 'Catalyst',
+  [MaterialType.ALUMINIUM_CANS]: 'Aluminum Cans',
+}
+
+const MOVEMENT_TYPE_LABELS: Record<MovementType, string> = {
+  [MovementType.INBOUND]: 'Inbound',
+  [MovementType.OUTBOUND]: 'Outbound',
+  [MovementType.TRANSFER]: 'Transfer',
+}
+
+const MOVEMENT_TYPE_BADGE: Record<MovementType, 'green' | 'red' | 'blue'> = {
+  [MovementType.INBOUND]: 'green',
+  [MovementType.OUTBOUND]: 'red',
+  [MovementType.TRANSFER]: 'blue',
+}
+
+export default function MovementsPage() {
+  const queryClient = useQueryClient()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [typeFilter, setTypeFilter] = useState('')
+  const [yardFilter, setYardFilter] = useState('')
+
+  const { data: movements, isLoading } = useQuery({
+    queryKey: ['movements'],
+    queryFn: movementsApi.getAll,
+  })
+
+  const { data: yards } = useQuery({
+    queryKey: ['scrapyards'],
+    queryFn: scrapyardsApi.getAll,
+  })
+
+  const yardMovementsQuery = useQuery({
+    queryKey: ['movements-by-yard', yardFilter],
+    queryFn: () => movementsApi.getByYard(Number(yardFilter)),
+    enabled: !!yardFilter,
+  })
+
+  const displayedMovements = (() => {
+    let result: Movement[] = yardFilter
+      ? (yardMovementsQuery.data || [])
+      : (movements || [])
+    if (typeFilter) {
+      result = result.filter((m) => m.movementType === typeFilter)
+    }
+    return result.sort((a, b) => new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime())
+  })()
+
+  if (isLoading) return <LoadingSpinner />
+
+  return (
+    <div>
+      <PageHeader title="Movements" description="Material movement log">
+        <Button onClick={() => setModalOpen(true)}>
+          <Plus className="w-4 h-4" /> New Movement
+        </Button>
+      </PageHeader>
+
+      <div className="mb-4 flex gap-3 flex-wrap">
+        <Select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="max-w-[200px]"
+        >
+          <option value="">All types</option>
+          {Object.entries(MOVEMENT_TYPE_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </Select>
+        <Select
+          value={yardFilter}
+          onChange={(e) => setYardFilter(e.target.value)}
+          className="max-w-[250px]"
+        >
+          <option value="">All scrapyards</option>
+          {yards?.map((y) => (
+            <option key={y.id} value={y.id}>{y.name}</option>
+          ))}
+        </Select>
+      </div>
+
+      {!displayedMovements.length ? (
+        <EmptyState
+          title="No movements registered"
+          description="Create the first movement to get started"
+          action={{ label: 'New Movement', onClick: () => setModalOpen(true) }}
+        />
+      ) : (
+        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-outline bg-surface-50">
+                <th className="text-left px-6 py-3 font-medium text-secondary-600">Date</th>
+                <th className="text-left px-6 py-3 font-medium text-secondary-600">Type</th>
+                <th className="text-left px-6 py-3 font-medium text-secondary-600">Scrapyard</th>
+                <th className="text-left px-6 py-3 font-medium text-secondary-600">Material</th>
+                <th className="text-left px-6 py-3 font-medium text-secondary-600">Container</th>
+                <th className="text-left px-6 py-3 font-medium text-secondary-600">Destination</th>
+                <th className="text-right px-6 py-3 font-medium text-secondary-600">Quantity</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-outline-light">
+              {displayedMovements.map((m) => (
+                <tr key={m.id} className="hover:bg-surface-50">
+                  <td className="px-6 py-4 text-secondary-600 whitespace-nowrap">
+                    {new Date(m.movementDate).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge variant={MOVEMENT_TYPE_BADGE[m.movementType]}>
+                      {MOVEMENT_TYPE_LABELS[m.movementType]}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4 text-secondary-600">{m.scrapYardName}</td>
+                  <td className="px-6 py-4 text-secondary-600">
+                    {MATERIAL_LABELS[m.materialType] || m.materialType}
+                  </td>
+                  <td className="px-6 py-4 text-secondary-600">
+                    #{m.containerId} - {m.containerDescription}
+                  </td>
+                  <td className="px-6 py-4 text-secondary-600">{m.destination}</td>
+                  <td className="px-6 py-4 text-right text-secondary-800 font-medium">
+                    {m.amountMoved} {m.unitOfMeasure}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="New Movement"
+        size="lg"
+      >
+        <MovementForm
+          yards={yards || []}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['movements'] })
+            setModalOpen(false)
+          }}
+        />
+      </Modal>
+    </div>
+  )
+}
+
+function MovementForm({ yards, onSuccess }: { yards: { id: number; name: string }[]; onSuccess: () => void }) {
+  const [form, setForm] = useState({
+    scrapYardId: 0,
+    containerId: 0,
+    destination: '',
+    amountMoved: 0,
+    unitOfMeasure: UnitOfMeasure.KILOGRAMS,
+    materialType: MaterialType.IRON,
+    managerId: 0,
+    movementType: MovementType.INBOUND,
+  })
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [error, setError] = useState('')
+
+  const { data: yardContainers } = useQuery({
+    queryKey: ['yard-containers-move', form.scrapYardId],
+    queryFn: () => scrapyardsApi.getContainers(form.scrapYardId),
+    enabled: !!form.scrapYardId,
+  })
+
+  const { data: yardManagers } = useQuery({
+    queryKey: ['yard-managers-move', form.scrapYardId],
+    queryFn: () => managersApi.getByYard(form.scrapYardId),
+    enabled: !!form.scrapYardId,
+  })
+
+  const saveMutation = useMutation({
+    mutationFn: (data: MovementFormData) => movementsApi.create(data),
+    onSuccess: onSuccess,
+    onError: (err: any) => setError(err.message || 'Error creating the movement'),
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const newErrors: Record<string, string> = {}
+    if (!form.scrapYardId) newErrors.scrapYardId = 'Select a scrapyard'
+    if (!form.containerId) newErrors.containerId = 'Select a container'
+    if (!form.destination.trim()) newErrors.destination = 'Destination required'
+    if (!form.amountMoved || form.amountMoved <= 0) newErrors.amountMoved = 'Quantity required'
+    if (!form.managerId) newErrors.managerId = 'Select a manager'
+    if (Object.keys(newErrors).length) { setErrors(newErrors); return }
+    saveMutation.mutate(form as MovementFormData)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <Select
+          label="Scrapyard"
+          value={form.scrapYardId || ''}
+          onChange={(e) => {
+            setForm({ ...form, scrapYardId: Number(e.target.value), containerId: 0, managerId: 0 })
+          }}
+          error={errors.scrapYardId}
+        >
+          <option value="">Select scrapyard...</option>
+          {yards.map((y) => (
+            <option key={y.id} value={y.id}>{y.name}</option>
+          ))}
+        </Select>
+        <Select
+          label="Movement Type"
+          value={form.movementType}
+          onChange={(e) => setForm({ ...form, movementType: e.target.value as MovementType })}
+        >
+          <option value={MovementType.INBOUND}>Inbound</option>
+          <option value={MovementType.OUTBOUND}>Outbound</option>
+          <option value={MovementType.TRANSFER}>Transfer</option>
+        </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Select
+          label="Container"
+          value={form.containerId || ''}
+          onChange={(e) => setForm({ ...form, containerId: Number(e.target.value) })}
+          error={errors.containerId}
+        >
+          <option value="">Select container...</option>
+          {yardContainers?.map((c) => (
+            <option key={c.id} value={c.id}>
+              #{c.id} - {c.description} ({MATERIAL_LABELS[c.materialType] || c.materialType})
+            </option>
+          ))}
+        </Select>
+        <Select
+          label="Material"
+          value={form.materialType}
+          onChange={(e) => setForm({ ...form, materialType: e.target.value as MaterialType })}
+        >
+          {Object.entries(MATERIAL_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </Select>
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <Input
+          label="Quantity"
+          type="number"
+          step="0.01"
+          value={form.amountMoved || ''}
+          onChange={(e) => setForm({ ...form, amountMoved: parseFloat(e.target.value) || 0 })}
+          error={errors.amountMoved}
+          placeholder="0.00"
+        />
+        <Select
+          label="Unit"
+          value={form.unitOfMeasure}
+          onChange={(e) => setForm({ ...form, unitOfMeasure: e.target.value as UnitOfMeasure })}
+        >
+          <option value={UnitOfMeasure.KILOGRAMS}>Kilograms</option>
+          <option value={UnitOfMeasure.POUNDS}>Pounds</option>
+          <option value={UnitOfMeasure.TONNES}>Tonnes</option>
+        </Select>
+        <Input
+          label="Destination"
+          value={form.destination}
+          onChange={(e) => setForm({ ...form, destination: e.target.value })}
+          error={errors.destination}
+          placeholder="Destination location"
+        />
+      </div>
+      <Select
+        label="Manager"
+        value={form.managerId || ''}
+        onChange={(e) => setForm({ ...form, managerId: Number(e.target.value) })}
+        error={errors.managerId}
+      >
+        <option value="">Select manager...</option>
+        {yardManagers?.map((m: any) => (
+          <option key={m.id || m.name} value={m.id}>{m.name}</option>
+        ))}
+      </Select>
+      {error && <div className="bg-error-50 text-error-600 text-sm rounded-lg px-3 py-2">{error}</div>}
+      <div className="flex justify-end gap-3 pt-2">
+        <Button type="submit" disabled={saveMutation.isPending}>
+          {saveMutation.isPending ? 'Creating...' : 'Create Movement'}
+        </Button>
+      </div>
+    </form>
+  )
+}

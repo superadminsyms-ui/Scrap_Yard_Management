@@ -1,5 +1,4 @@
 package com.scrapyard.management.Services.Impl;
-import com.scrapyard.management.DTO.Request.CompanyDTORequest.CompanyDTOgetAllCont;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequest;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequestUpdate;
 import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDToGetContainers;
@@ -12,6 +11,7 @@ import com.scrapyard.management.Models.ScrapYard;
 import com.scrapyard.management.Repository.CompanyRepo;
 import com.scrapyard.management.Repository.ContainerRepo;
 import com.scrapyard.management.Repository.ScrapYardRepo;
+import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IContainerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,21 +29,35 @@ public class ContainerServImpl implements IContainerService {
     @Autowired
     private final CompanyRepo companyRepo;
 
-    public ContainerServImpl(ContainerRepo containerRepo, ScrapYardRepo scrapYardRepo, CompanyRepo companyRepo) {
+    @Autowired
+    private final SecurityContextService securityContextService;
+
+    public ContainerServImpl(ContainerRepo containerRepo, ScrapYardRepo scrapYardRepo, CompanyRepo companyRepo, SecurityContextService securityContextService) {
         this.containerRepo = containerRepo;
         this.scrapYardRepo = scrapYardRepo;
         this.companyRepo = companyRepo;
+        this.securityContextService = securityContextService;
     }
 
     @Override
     public List<ContainerDTOResponse> getAllContainers() {
-        if (containerRepo.findAll().isEmpty()) {
+        Long yardId = securityContextService.getCurrentYardId();
+        List<Container> containers;
+
+        if (yardId != null) {
+            ScrapYard yard = scrapYardRepo.findById(yardId)
+                    .orElseThrow(() -> new IllegalArgumentException("Scrap yard not found"));
+            containers = yard.getContainers();
+        } else {
+            containers = containerRepo.findAll();
+        }
+
+        if (containers.isEmpty()) {
             throw new IllegalArgumentException("There are no registered containers");
         }
 
-        return containerRepo.
-                findAll().stream().
-                map(cont ->
+        return containers.stream()
+                .map(cont ->
                 new ContainerDTOResponse(cont.getId(),cont.getDescription(), cont.getMaterialType()
                 ,cont.getContainerSize(), cont.getMaterialWeight(), "POUNDS")).toList();
     }
@@ -51,11 +65,17 @@ public class ContainerServImpl implements IContainerService {
 
     @Override
     public ContainerDTOResponse getContainerById(Long id) {
+        Long yardId = securityContextService.getCurrentYardId();
 
         if (!containerRepo.existsById(id)) {
             throw new IllegalArgumentException("There is no container ID: " + " " + id);
         }
         Container container = containerRepo.findById(id).get();
+
+        if (yardId != null && !container.getScrapYard().getId().equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this container");
+        }
+
         return new ContainerDTOResponse(container.getId(),container.getDescription(),
                 container.getMaterialType(),container.getContainerSize(),
                 container.getMaterialWeight(), "POUNDS");
@@ -72,6 +92,10 @@ public class ContainerServImpl implements IContainerService {
 
     @Override
     public ContainerDTOResponse saveContainer(ContainerDTORequest container) {
+        Long yardId = securityContextService.getCurrentYardId();
+        if (yardId != null) {
+            container.setScrapYardId(yardId);
+        }
 
         Container containerEntity = new Container();
 
@@ -100,9 +124,14 @@ public class ContainerServImpl implements IContainerService {
 
     @Override
     public ContainerDTOResponse updateContainer(ContainerDTORequestUpdate cont, Long id) {
+        Long yardId = securityContextService.getCurrentYardId();
 
         Container existing = containerRepo.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("The container does not exist"));
+
+        if (yardId != null && !existing.getScrapYard().getId().equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this container");
+        }
 
         if (cont.getDescription().isBlank()) {
             throw new IllegalArgumentException("There cannot be blank fields");
@@ -121,8 +150,14 @@ public class ContainerServImpl implements IContainerService {
 
     @Override
     public String deleteContainer(Long id) {
+        Long yardId = securityContextService.getCurrentYardId();
+
         Container container = containerRepo.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("The container does not exist"));
+
+        if (yardId != null && !container.getScrapYard().getId().equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this container");
+        }
 
         if (!container.getInvoiceDetails().isEmpty()) {
             throw new IllegalArgumentException("Cannot delete container with associated invoice details");
@@ -148,13 +183,14 @@ public class ContainerServImpl implements IContainerService {
 
 
     @Override
-    public List<ContainerDTOResponse> getContainersByCompany(CompanyDTOgetAllCont company) {
-        if (company == null || company.getCompanyName() == null || company.getCompanyName().isBlank()) {
-            throw new IllegalArgumentException("Company name cannot be blank or null");
+    public List<ContainerDTOResponse> getContainersByCompany(Long companyId) {
+        if (companyId == null || companyId <= 0) {
+            throw new IllegalArgumentException("Company ID cannot be null or negative");
         }
-        Company existing = companyRepo.findByName(company.getCompanyName()).orElseThrow(() ->
-                new IllegalArgumentException("The company does not exist, please try again"));
-        return containerRepo.findContainersByCompanyName(company.getCompanyName());
+        if (!companyRepo.existsById(companyId)) {
+            throw new IllegalArgumentException("The company does not exist");
+        }
+        return containerRepo.findContainersByCompanyId(companyId);
     }
 
 

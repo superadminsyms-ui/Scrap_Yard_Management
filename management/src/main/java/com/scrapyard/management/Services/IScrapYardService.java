@@ -5,6 +5,7 @@ import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerDTOResponse;
 import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerStockResponse;
 import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapYardDTOResponse;
 import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapYardStockTotalResponse;
+import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapyardReportResponse;
 import com.scrapyard.management.DTO.Response.ScrapYardDTO.dtoResponseId;
 import com.scrapyard.management.Models.Company;
 import com.scrapyard.management.Models.ScrapYard;
@@ -25,11 +26,6 @@ public interface IScrapYardService {
     ScrapYardStockTotalResponse getTotalStockByYardId(Long yardId);
     List<ContainerStockResponse> getStockByContainers(Long yardId);
     ContainerStockResponse getStockByContainerId(Long yardId, Long containerId);
-
-
-
-
-
-
+    ScrapyardReportResponse getReport(Long yardId, String reportType, String period);
 
 }

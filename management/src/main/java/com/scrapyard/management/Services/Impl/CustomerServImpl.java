@@ -7,12 +7,12 @@ import com.scrapyard.management.DTO.Response.InvoiceDetailDTO.InvoiceDetailDTORe
 import com.scrapyard.management.Mapper.mapDetail;
 import com.scrapyard.management.Models.Company;
 import com.scrapyard.management.Models.Customer;
-import com.scrapyard.management.Models.Enums.InvoiceStatus;
 import com.scrapyard.management.Models.Invoice;
 import com.scrapyard.management.Models.InvoiceDetail;
 import com.scrapyard.management.Repository.CompanyRepo;
 import com.scrapyard.management.Repository.CustomerRepo;
 import com.scrapyard.management.Repository.InvoiceRepo;
+import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.ICustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,23 +36,37 @@ public class CustomerServImpl implements ICustomerService {
 
     private final mapDetail mapDetail;
 
+    @Autowired
+    private final SecurityContextService securityContextService;
 
-    public CustomerServImpl(CustomerRepo customerRepo, CompanyRepo companyRepo, InvoiceRepo invoiceRepo, mapDetail mapDetail) {
+
+    public CustomerServImpl(CustomerRepo customerRepo, CompanyRepo companyRepo, InvoiceRepo invoiceRepo, mapDetail mapDetail, SecurityContextService securityContextService) {
         this.customerRepo = customerRepo;
         this.companyRepo = companyRepo;
         this.invoiceRepo = invoiceRepo;
         this.mapDetail = mapDetail;
+        this.securityContextService = securityContextService;
     }
 
 
     @Override
     public List<CustomerDTOResponse> getAllCustomers() {
+        Long companyId = securityContextService.getCurrentCompanyId();
+        List<Customer> customers;
 
-        if (customerRepo.findAll().isEmpty()) {
+        if (companyId != null) {
+            Company company = companyRepo.findById(companyId).orElseThrow(() ->
+                    new IllegalArgumentException("Company not found"));
+            customers = company.getCustomers();
+        } else {
+            customers = customerRepo.findAll();
+        }
+
+        if (customers.isEmpty()) {
             throw new IllegalArgumentException("There are no registered customers");
         }
 
-        return customerRepo.findAll().stream().map(customer ->
+        return customers.stream().map(customer ->
                 new CustomerDTOResponse(customer.getId(), customer.getName(), customer.getPersonalId()
                         , customer.getTypeCustomer(), customer.getCompany().getName())).toList();
 
@@ -60,6 +74,10 @@ public class CustomerServImpl implements ICustomerService {
 
     @Override
     public CustomerDTOResponse saveCustomer(CustomerDTOInsert customerDTOInsert) {
+        Long companyId = securityContextService.getCurrentCompanyId();
+        if (companyId != null) {
+            customerDTOInsert.setCompanyId(companyId);
+        }
 
         if (customerDTOInsert.getName() == null || customerDTOInsert.getName().isBlank() ||
                 customerDTOInsert.getPersonalId() == null ||
@@ -87,19 +105,32 @@ public class CustomerServImpl implements ICustomerService {
 
     @Override
     public CustomerDTOResponse getCustomerById(Long id) {
+        Long companyId = securityContextService.getCurrentCompanyId();
 
         if (!customerRepo.existsById(id)) {
             throw new IllegalArgumentException("There is no customer ID: " + " " + id);
         }
         Customer customer = customerRepo.findById(id).get();
+
+        if (companyId != null && !customer.getCompany().getId().equals(companyId)) {
+            throw new IllegalArgumentException("Access denied to this customer");
+        }
+
         return new CustomerDTOResponse(customer.getId(), customer.getName(), customer.getPersonalId(),
                 customer.getTypeCustomer(), customer.getCompany().getName());
     }
 
     @Override
     public List<CustomerDTOResponse> searchByName(String name) {
+        Long companyId = securityContextService.getCurrentCompanyId();
 
         List<Customer> customers = customerRepo.findByNameContainingIgnoreCase(name);
+
+        if (companyId != null) {
+            customers = customers.stream()
+                    .filter(c -> c.getCompany().getId().equals(companyId))
+                    .toList();
+        }
 
         if (customers.isEmpty()) {
             throw new IllegalArgumentException("No customer found with name containing: " + name);
@@ -112,9 +143,17 @@ public class CustomerServImpl implements ICustomerService {
 
     @Override
     public CustomerDTOResponse updateCustomer(CustomerDTOInsert customerInsert, Long id) {
+        Long companyId = securityContextService.getCurrentCompanyId();
 
         Customer exist = customerRepo.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("The customer does not exist"));
+
+        if (companyId != null) {
+            if (!exist.getCompany().getId().equals(companyId)) {
+                throw new IllegalArgumentException("Access denied to this customer");
+            }
+            customerInsert.setCompanyId(companyId);
+        }
 
         if (customerInsert.getName() == null || customerInsert.getName().isBlank() ||
                 customerInsert.getPersonalId() == null ||
@@ -140,8 +179,14 @@ public class CustomerServImpl implements ICustomerService {
 
     @Override
     public String deleteCustomer(Long id) {
+        Long companyId = securityContextService.getCurrentCompanyId();
+
         Customer customer = customerRepo.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("The customer does not exist"));
+
+        if (companyId != null && !customer.getCompany().getId().equals(companyId)) {
+            throw new IllegalArgumentException("Access denied to this customer");
+        }
 
         if (!customer.getInvoices().isEmpty()) {
             throw new IllegalArgumentException("Cannot delete customer with associated invoices");
@@ -153,6 +198,10 @@ public class CustomerServImpl implements ICustomerService {
 
     @Override
     public List<CustomerDTOResponse> getCustomersByCompany(Long companyId) {
+        Long currentCompanyId = securityContextService.getCurrentCompanyId();
+        if (currentCompanyId != null && !currentCompanyId.equals(companyId)) {
+            throw new IllegalArgumentException("Access denied to this company");
+        }
 
         if (!companyRepo.existsById(companyId)) {
             throw new IllegalArgumentException("The company does not exist");
@@ -173,15 +222,28 @@ public class CustomerServImpl implements ICustomerService {
 
     @Override
     public CustomerDTOResponse getCustomerByPersonalId(String personalId) {
+        Long companyId = securityContextService.getCurrentCompanyId();
+
         if (personalId == null || personalId.isBlank()) {
             throw new IllegalArgumentException(
                     "Personal ID cannot be null or blank");}
-        return customerRepo.findCustomerDTOByPersonalId(personalId).orElseThrow(() ->
+        CustomerDTOResponse customer = customerRepo.findCustomerDTOByPersonalId(personalId).orElseThrow(() ->
                 new IllegalArgumentException("Customer not found"));
+
+        if (companyId != null) {
+            Customer entity = customerRepo.findById(customer.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
+            if (!entity.getCompany().getId().equals(companyId)) {
+                throw new IllegalArgumentException("Access denied to this customer");
+            }
+        }
+
+        return customer;
     }
 
     @Override
     public List<InvoiceDTOResponse1> getInvoicesByCustomer(Long customerId) {
+        Long companyId = securityContextService.getCurrentCompanyId();
 
         if (customerId == null) {
             throw new IllegalArgumentException("Customer ID cannot be null");
@@ -191,16 +253,17 @@ public class CustomerServImpl implements ICustomerService {
             throw new IllegalArgumentException("Customer not found");
         }
 
+        Customer customer = customerRepo.findById(customerId).get();
+        if (companyId != null && !customer.getCompany().getId().equals(companyId)) {
+            throw new IllegalArgumentException("Access denied to this customer");
+        }
+
         List<Invoice> invoices = invoiceRepo.findByCustomerId(customerId);
 
         if (invoices.isEmpty()) {
             throw new IllegalArgumentException("No invoices are registered with this customer");
         }
-        List<InvoiceDTOResponse1> activeInvoices = invoices.stream()
-
-                // IGNORA CANCELADAS
-                .filter(invoice -> invoice.getStatus() != InvoiceStatus.CANCELLED)
-
+        return invoices.stream()
                 .map(invoice -> new InvoiceDTOResponse1(
                         invoice.getId(),
                         invoice.getCustomer().getName(),
@@ -209,24 +272,19 @@ public class CustomerServImpl implements ICustomerService {
                         invoice.getScrapYard().getId(),
                         invoice.getCreatedAt(),
                         invoice.getTotalPaid(),
-                        invoice.getDiscount(),
-                        invoice.getStatus(),
-                        invoice.getCancelledAt()
+                        invoice.getDiscount()
                 ))
                 .toList();
-        if (activeInvoices.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "All invoices for this customer are cancelled"
-            );
-        }
-
-        return activeInvoices;
     }
 
 
 
     @Override
     public long countCustomersByCompany(Long companyId) {
+        Long currentCompanyId = securityContextService.getCurrentCompanyId();
+        if (currentCompanyId != null && !currentCompanyId.equals(companyId)) {
+            throw new IllegalArgumentException("Access denied to this company");
+        }
 
         if (companyId == null || companyId <= 0) {
             throw new IllegalArgumentException("Company ID invalid");

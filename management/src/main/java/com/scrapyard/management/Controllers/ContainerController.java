@@ -1,5 +1,4 @@
 package com.scrapyard.management.Controllers;
-import com.scrapyard.management.DTO.Request.CompanyDTORequest.CompanyDTOgetAllCont;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequest;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequestUpdate;
 import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDToGetContainers;
@@ -104,11 +103,10 @@ public class ContainerController {
 
     }
 
-    @GetMapping("/company/containers")
-    public ResponseEntity<?> getContainersByCompany(
-            @RequestParam CompanyDTOgetAllCont company) {
+    @GetMapping("/company/{companyId}/containers")
+    public ResponseEntity<?> getContainersByCompany(@PathVariable Long companyId) {
         try {
-            return ResponseEntity.ok(containerServices.getContainersByCompany(company));
+            return ResponseEntity.ok(containerServices.getContainersByCompany(companyId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));

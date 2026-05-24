@@ -10,6 +10,7 @@ import com.scrapyard.management.Repository.ContainerRepo;
 import com.scrapyard.management.Repository.ManagerSYRepo;
 import com.scrapyard.management.Repository.MovementRepo;
 import com.scrapyard.management.Repository.ScrapYardRepo;
+import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IMovementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,15 +29,28 @@ public class MovementServImpl implements IMovementService {
     @Autowired
     private final ManagerSYRepo managerSYRepo;
 
-    public MovementServImpl(MovementRepo movementRepo, ScrapYardRepo scrapYardRepo, ContainerRepo containerRepo, ManagerSYRepo managerSYRepo) {
+    @Autowired
+    private final SecurityContextService securityContextService;
+
+    public MovementServImpl(MovementRepo movementRepo, ScrapYardRepo scrapYardRepo, ContainerRepo containerRepo, ManagerSYRepo managerSYRepo, SecurityContextService securityContextService) {
         this.movementRepo = movementRepo;
         this.scrapYardRepo = scrapYardRepo;
         this.containerRepo = containerRepo;
         this.managerSYRepo = managerSYRepo;
+        this.securityContextService = securityContextService;
     }
 
     @Override
     public MovementDTOResponse createMovement(MovementDTORequestInsert dto) {
+        Long yardId = securityContextService.getCurrentYardId();
+        if (yardId != null) {
+            dto.setScrapYardId(yardId);
+            if (securityContextService.getCurrentUser() != null
+                    && securityContextService.getCurrentUser().getManagerSY() != null) {
+                dto.setManagerId(securityContextService.getCurrentUser().getManagerSY().getId());
+            }
+        }
+
         ScrapYard scrapYard = scrapYardRepo.findById(dto.getScrapYardId())
                 .orElseThrow(() -> new IllegalArgumentException("ScrapYard not found"));
 
@@ -112,23 +126,44 @@ public class MovementServImpl implements IMovementService {
 
     @Override
     public List<MovementDTOResponse> getAllMovements() {
-        if (movementRepo.findAll().isEmpty()) {
+        Long yardId = securityContextService.getCurrentYardId();
+        List<Movement> movements;
+
+        if (yardId != null) {
+            movements = movementRepo.findByScrapYardId(yardId);
+        } else {
+            movements = movementRepo.findAll();
+        }
+
+        if (movements.isEmpty()) {
             throw new IllegalArgumentException("No movements are registered");
         }
-        return movementRepo.findAll().stream()
+        return movements.stream()
                 .map(this::mapToDTO)
                 .toList();
     }
 
     @Override
     public MovementDTOResponse getMovementById(Long id) {
+        Long yardId = securityContextService.getCurrentYardId();
+
         Movement movement = movementRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Movement not found with ID: " + id));
+
+        if (yardId != null && !movement.getScrapYard().getId().equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this movement");
+        }
+
         return mapToDTO(movement);
     }
 
     @Override
     public List<MovementDTOResponse> getMovementsByScrapYard(Long yardId) {
+        Long currentYardId = securityContextService.getCurrentYardId();
+        if (currentYardId != null && !currentYardId.equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
+
         ScrapYard scrapYard = scrapYardRepo.findById(yardId)
                 .orElseThrow(() -> new IllegalArgumentException("ScrapYard not found"));
 
@@ -143,8 +178,14 @@ public class MovementServImpl implements IMovementService {
 
     @Override
     public List<MovementDTOResponse> getMovementsByContainer(Long containerId) {
+        Long yardId = securityContextService.getCurrentYardId();
+
         Container container = containerRepo.findById(containerId)
                 .orElseThrow(() -> new IllegalArgumentException("Container not found"));
+
+        if (yardId != null && !container.getScrapYard().getId().equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this container");
+        }
 
         List<Movement> movements = movementRepo.findByContainerId(containerId);
         if (movements.isEmpty()) {

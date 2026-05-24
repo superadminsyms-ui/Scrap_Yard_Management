@@ -5,6 +5,7 @@ import com.scrapyard.management.DTO.Response.CustomerDTO.CustomerDTOResponse;
 import com.scrapyard.management.DTO.Response.ScrapYardDTO.ScrapYardDTOResponse;
 import com.scrapyard.management.Models.Company;
 import com.scrapyard.management.Repository.CompanyRepo;
+import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.ICompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,23 +18,41 @@ public class CompanyServImpl implements ICompanyService {
     @Autowired
     private final CompanyRepo companyRepo;
 
-    public CompanyServImpl(CompanyRepo companyRepo) {
-        this.companyRepo = companyRepo;
+    @Autowired
+    private final SecurityContextService securityContextService;
 
+    public CompanyServImpl(CompanyRepo companyRepo, SecurityContextService securityContextService) {
+        this.companyRepo = companyRepo;
+        this.securityContextService = securityContextService;
     }
 
 
     @Override
     public List<CompanyDTOResponse> getAllCompanies() {
-        if (companyRepo.findAll().isEmpty()) {
+        Long companyId = securityContextService.getCurrentCompanyId();
+        List<Company> companies;
+
+        if (companyId != null) {
+            companies = List.of(companyRepo.findById(companyId).orElseThrow(() ->
+                    new IllegalArgumentException("Company not found")));
+        } else {
+            companies = companyRepo.findAll();
+        }
+
+        if (companies.isEmpty()) {
             throw new IllegalArgumentException("There are no registered companies");
         }
-        return companyRepo.findAll().stream().map(comp ->
+        return companies.stream().map(comp ->
                 new CompanyDTOResponse(comp.getId(), comp.getName(), comp.getLocation())).toList();
     }
 
     @Override
     public CompanyDTOResponse getCompanyById(Long id) {
+        Long companyId = securityContextService.getCurrentCompanyId();
+        if (companyId != null && !companyId.equals(id)) {
+            throw new IllegalArgumentException("Access denied to this company");
+        }
+
         if (!companyRepo.existsById(id)) {
             throw new IllegalArgumentException("There is no company ID: " + " " + id);
         }
@@ -61,6 +80,9 @@ public class CompanyServImpl implements ICompanyService {
 
     @Override
     public CompanyDTOResponse saveCompany(CompanyDTORequestInsert company) {
+        if (securityContextService.getCurrentCompanyId() != null) {
+            throw new IllegalArgumentException("Managers cannot create companies");
+        }
 
         if (companyRepo.existsByName(company.getName())) {
             throw new IllegalArgumentException("There is already a company with name: " + company.getName());
@@ -77,6 +99,9 @@ public class CompanyServImpl implements ICompanyService {
 
     @Override
     public CompanyDTOResponse updateCompany(CompanyDTORequestInsert company, Long id) {
+        if (securityContextService.getCurrentCompanyId() != null) {
+            throw new IllegalArgumentException("Managers cannot update companies");
+        }
 
         Company existing = companyRepo.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("The company does not exist"));
@@ -98,6 +123,10 @@ public class CompanyServImpl implements ICompanyService {
 
     @Override
     public String deleteCompany(Long id) {
+        if (securityContextService.getCurrentCompanyId() != null) {
+            throw new IllegalArgumentException("Managers cannot delete companies");
+        }
+
         Company company = companyRepo.findById(id).orElseThrow(() ->
                 new IllegalArgumentException("The company does not exist"));
 
@@ -114,6 +143,11 @@ public class CompanyServImpl implements ICompanyService {
 
     @Override
     public List<ScrapYardDTOResponse> getAllYards(Long companyId) {
+        Long currentCompanyId = securityContextService.getCurrentCompanyId();
+        if (currentCompanyId != null && !currentCompanyId.equals(companyId)) {
+            throw new IllegalArgumentException("Access denied to this company");
+        }
+
         Company existing = companyRepo.findById(companyId).orElseThrow(() ->
                 new IllegalArgumentException("The company does not exist"));
 
@@ -123,6 +157,10 @@ public class CompanyServImpl implements ICompanyService {
 
     @Override
     public List<CustomerDTOResponse> getAllCustomers(Long companyId) {
+        Long currentCompanyId = securityContextService.getCurrentCompanyId();
+        if (currentCompanyId != null && !currentCompanyId.equals(companyId)) {
+            throw new IllegalArgumentException("Access denied to this company");
+        }
 
         if (!companyRepo.existsById(companyId)) {
             throw new IllegalArgumentException("The company does not exist");
