@@ -37,5 +37,19 @@ public interface ContainerRepo extends JpaRepository<Container,Long> {
 """)
     List<ContainerDTOResponse> findContainersByCompanyId(Long companyId);
 
+    @Query("""
+    SELECT new com.scrapyard.management.DTO.Response.ContainerDTO.ContainerDTOResponse(
+        c.id,
+        c.description,
+        c.materialType,
+        c.containerSize,
+        c.materialWeight,
+        'POUNDS'
+    )
+    FROM Container c
+    WHERE c.scrapYard.company.id = :companyId AND c.scrapYard.id = :yardId
+""")
+    List<ContainerDTOResponse> findContainersByCompanyIdAndScrapYardId(Long companyId, Long yardId);
+
     Optional<Container> findByIdAndScrapYardId(Long containerId, Long yardId);
 }

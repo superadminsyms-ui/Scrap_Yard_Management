@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { movementsApi } from '@/api/endpoints/movements'
 import { scrapyardsApi } from '@/api/endpoints/scrapyards'
 import { managersApi } from '@/api/endpoints/managers'
+import { useAuth } from '@/context/AuthContext'
 import { Button, Input, Select, Modal, PageHeader, EmptyState, LoadingSpinner, Badge } from '@/components/ui'
 import { MaterialType, UnitOfMeasure, MovementType } from '@/types/models'
-import type { Movement, MovementFormData } from '@/types/models'
+import type { Movement, MovementFormData, User } from '@/types/models'
 import { Plus } from 'lucide-react'
 
 const MATERIAL_LABELS: Record<MaterialType, string> = {
@@ -36,6 +37,7 @@ const MOVEMENT_TYPE_BADGE: Record<MovementType, 'green' | 'red' | 'blue'> = {
 
 export default function MovementsPage() {
   const queryClient = useQueryClient()
+  const { isManager, isSuperAdmin, user } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const [typeFilter, setTypeFilter] = useState('')
   const [yardFilter, setYardFilter] = useState('')
@@ -87,16 +89,18 @@ export default function MovementsPage() {
             <option key={k} value={k}>{v}</option>
           ))}
         </Select>
-        <Select
-          value={yardFilter}
-          onChange={(e) => setYardFilter(e.target.value)}
-          className="max-w-[250px]"
-        >
-          <option value="">All scrapyards</option>
-          {yards?.map((y) => (
-            <option key={y.id} value={y.id}>{y.name}</option>
-          ))}
-        </Select>
+        {isSuperAdmin && (
+          <Select
+            value={yardFilter}
+            onChange={(e) => setYardFilter(e.target.value)}
+            className="max-w-[250px]"
+          >
+            <option value="">All scrapyards</option>
+            {yards?.map((y) => (
+              <option key={y.id} value={y.id}>{y.name}</option>
+            ))}
+          </Select>
+        )}
       </div>
 
       {!displayedMovements.length ? (
@@ -112,6 +116,7 @@ export default function MovementsPage() {
               <tr className="border-b border-outline bg-surface-50">
                 <th className="text-left px-6 py-3 font-medium text-secondary-600">Date</th>
                 <th className="text-left px-6 py-3 font-medium text-secondary-600">Type</th>
+                <th className="text-left px-6 py-3 font-medium text-secondary-600">Manager</th>
                 <th className="text-left px-6 py-3 font-medium text-secondary-600">Scrapyard</th>
                 <th className="text-left px-6 py-3 font-medium text-secondary-600">Material</th>
                 <th className="text-left px-6 py-3 font-medium text-secondary-600">Container</th>
@@ -130,6 +135,7 @@ export default function MovementsPage() {
                       {MOVEMENT_TYPE_LABELS[m.movementType]}
                     </Badge>
                   </td>
+                  <td className="px-6 py-4 text-secondary-600">{m.managerName}</td>
                   <td className="px-6 py-4 text-secondary-600">{m.scrapYardName}</td>
                   <td className="px-6 py-4 text-secondary-600">
                     {MATERIAL_LABELS[m.materialType] || m.materialType}
@@ -156,6 +162,8 @@ export default function MovementsPage() {
       >
         <MovementForm
           yards={yards || []}
+          isManager={isManager}
+          user={user}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['movements'] })
             setModalOpen(false)
@@ -166,9 +174,15 @@ export default function MovementsPage() {
   )
 }
 
-function MovementForm({ yards, onSuccess }: { yards: { id: number; name: string }[]; onSuccess: () => void }) {
+function MovementForm({ yards, onSuccess, isManager, user }: {
+  yards: { id: number; name: string }[]
+  onSuccess: () => void
+  isManager: boolean
+  user: User | null
+}) {
+  const initialYardId = isManager && user?.yardId ? user.yardId : 0
   const [form, setForm] = useState({
-    scrapYardId: 0,
+    scrapYardId: initialYardId,
     containerId: 0,
     destination: '',
     amountMoved: 0,
@@ -192,6 +206,18 @@ function MovementForm({ yards, onSuccess }: { yards: { id: number; name: string 
     enabled: !!form.scrapYardId,
   })
 
+  useEffect(() => {
+    if (isManager && user && yardManagers) {
+      const currentManager = yardManagers.find((m: any) => m.email === user.email)
+      if (currentManager && currentManager.id !== form.managerId) {
+        setForm((prev) => ({ ...prev, managerId: currentManager.id }))
+      }
+    }
+  }, [isManager, user, yardManagers, form.managerId])
+
+  const currentYardName = yards.find((y) => y.id === form.scrapYardId)?.name || ''
+  const currentManagerName = yardManagers?.find((m: any) => m.id === form.managerId)?.name || ''
+
   const saveMutation = useMutation({
     mutationFn: (data: MovementFormData) => movementsApi.create(data),
     onSuccess: onSuccess,
@@ -213,19 +239,25 @@ function MovementForm({ yards, onSuccess }: { yards: { id: number; name: string 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <Select
-          label="Scrapyard"
-          value={form.scrapYardId || ''}
-          onChange={(e) => {
-            setForm({ ...form, scrapYardId: Number(e.target.value), containerId: 0, managerId: 0 })
-          }}
-          error={errors.scrapYardId}
-        >
-          <option value="">Select scrapyard...</option>
-          {yards.map((y) => (
-            <option key={y.id} value={y.id}>{y.name}</option>
-          ))}
-        </Select>
+        {isManager ? (
+          <Select label="Scrapyard" value={form.scrapYardId || ''} disabled>
+            <option value={form.scrapYardId || ''}>{currentYardName}</option>
+          </Select>
+        ) : (
+          <Select
+            label="Scrapyard"
+            value={form.scrapYardId || ''}
+            onChange={(e) => {
+              setForm({ ...form, scrapYardId: Number(e.target.value), containerId: 0, managerId: 0 })
+            }}
+            error={errors.scrapYardId}
+          >
+            <option value="">Select scrapyard...</option>
+            {yards.map((y) => (
+              <option key={y.id} value={y.id}>{y.name}</option>
+            ))}
+          </Select>
+        )}
         <Select
           label="Movement Type"
           value={form.movementType}
@@ -287,17 +319,23 @@ function MovementForm({ yards, onSuccess }: { yards: { id: number; name: string 
           placeholder="Destination location"
         />
       </div>
-      <Select
-        label="Manager"
-        value={form.managerId || ''}
-        onChange={(e) => setForm({ ...form, managerId: Number(e.target.value) })}
-        error={errors.managerId}
-      >
-        <option value="">Select manager...</option>
-        {yardManagers?.map((m: any) => (
-          <option key={m.id || m.name} value={m.id}>{m.name}</option>
-        ))}
-      </Select>
+      {isManager ? (
+        <Select label="Manager" value={form.managerId || ''} disabled>
+          <option value={form.managerId || ''}>{currentManagerName}</option>
+        </Select>
+      ) : (
+        <Select
+          label="Manager"
+          value={form.managerId || ''}
+          onChange={(e) => setForm({ ...form, managerId: Number(e.target.value) })}
+          error={errors.managerId}
+        >
+          <option value="">Select manager...</option>
+          {yardManagers?.map((m: any) => (
+            <option key={m.id || m.name} value={m.id}>{m.name}</option>
+          ))}
+        </Select>
+      )}
       {error && <div className="bg-error-50 text-error-600 text-sm rounded-lg px-3 py-2">{error}</div>}
       <div className="flex justify-end gap-3 pt-2">
         <Button type="submit" disabled={saveMutation.isPending}>

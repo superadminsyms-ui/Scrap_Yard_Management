@@ -9,7 +9,15 @@ class ApiError extends Error {
   }
 }
 
+// In-memory token for when mustChangePassword=true (not persisted to localStorage)
+let inMemoryToken: string | null = null
+
+export function setInMemoryToken(token: string | null) {
+  inMemoryToken = token
+}
+
 function getToken(): string | null {
+  if (inMemoryToken) return inMemoryToken
   try {
     const stored = localStorage.getItem('auth')
     if (stored) {
@@ -22,7 +30,8 @@ function getToken(): string | null {
   return null
 }
 
-function clearAuth() {
+export function clearAuth() {
+  inMemoryToken = null
   localStorage.removeItem('auth')
 }
 
@@ -44,6 +53,10 @@ async function apiClient<T>(endpoint: string, options?: RequestInit): Promise<T>
     if (window.location.pathname !== '/login') {
       window.location.href = '/login'
     }
+  }
+
+  if (response.status === 429) {
+    throw new ApiError(429, 'Too many requests. Please wait a moment and try again.')
   }
 
   if (!response.ok) {

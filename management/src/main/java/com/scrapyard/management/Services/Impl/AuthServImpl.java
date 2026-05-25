@@ -18,6 +18,7 @@ import com.scrapyard.management.SecurityConfig.JwtUtil;
 import com.scrapyard.management.Services.IAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -59,6 +60,8 @@ public class AuthServImpl implements IAuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
+        } catch (DisabledException e) {
+            throw new IllegalArgumentException("Your account has been deactivated from the system, please contact the super admin");
         } catch (AuthenticationException e) {
             throw new IllegalArgumentException("Invalid email or password");
         }
@@ -67,7 +70,7 @@ public class AuthServImpl implements IAuthService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (!user.isActive()) {
-            throw new IllegalArgumentException("Account is deactivated");
+            throw new IllegalArgumentException("Your account has been deactivated from the system, please contact the super admin");
         }
 
         String token = jwtUtil.generateToken(user);
@@ -196,7 +199,7 @@ public class AuthServImpl implements IAuthService {
 
         if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-            user.setMustChangePassword(false);
+        user.setMustChangePassword(true);
             changed = true;
         }
 

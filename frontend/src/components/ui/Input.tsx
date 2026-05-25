@@ -1,5 +1,6 @@
-import { type InputHTMLAttributes, forwardRef } from 'react'
+import { type InputHTMLAttributes, forwardRef, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { Eye, EyeOff } from 'lucide-react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -10,6 +11,9 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className, id, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
+    const [showPassword, setShowPassword] = useState(false)
+    const isPassword = props.type === 'password'
+
     return (
       <div className="w-full">
         {label && (
@@ -17,18 +21,32 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
-          ref={ref}
-          id={inputId}
-          className={cn(
-            'w-full rounded-lg border bg-white px-4 py-2.5 text-body-md text-secondary-800 placeholder:text-secondary-400 transition-all duration-200 ease-emphasized focus:outline-none focus:ring-2 focus:ring-offset-0',
-            error
-              ? 'border-error-400 focus:ring-error-500'
-              : 'border-outline focus:ring-primary-500 focus:border-primary-500',
-            className,
+        <div className="relative">
+          <input
+            ref={ref}
+            id={inputId}
+            type={isPassword ? (showPassword ? 'text' : 'password') : props.type}
+            className={cn(
+              'w-full rounded-lg border bg-white px-4 py-2.5 text-body-md text-secondary-800 placeholder:text-secondary-400 transition-all duration-200 ease-emphasized focus:outline-none focus:ring-2 focus:ring-offset-0',
+              isPassword && 'pr-10',
+              error
+                ? 'border-error-400 focus:ring-error-500'
+                : 'border-outline focus:ring-primary-500 focus:border-primary-500',
+              className,
+            )}
+            {...{ ...props, type: undefined }}
+          />
+          {isPassword && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           )}
-          {...props}
-        />
+        </div>
         {error && <p className="mt-1.5 text-label-sm text-error-600">{error}</p>}
       </div>
     )

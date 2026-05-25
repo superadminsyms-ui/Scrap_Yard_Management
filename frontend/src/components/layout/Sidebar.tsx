@@ -10,6 +10,7 @@ import {
   ArrowRightLeft,
   LogOut,
   Settings,
+  Scale,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
@@ -27,10 +28,11 @@ export function Sidebar() {
     { to: '/managers', label: 'Managers', icon: UserCog, always: true },
     { to: '/invoices', label: 'Invoices', icon: Receipt, always: true },
     { to: '/movements', label: 'Movements', icon: ArrowRightLeft, always: true },
+    { to: '/stock', label: 'Stock', icon: Scale, managerOnly: true },
   ]
 
   const navItems = allItems.filter(
-    (item) => item.always || (item.adminOnly && isSuperAdmin)
+    (item) => item.always || (item.adminOnly && isSuperAdmin) || (item.managerOnly && !isSuperAdmin)
   )
 
   const handleLogout = () => {
@@ -44,7 +46,7 @@ export function Sidebar() {
         <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center shadow-elevation-2">
           <Warehouse className="w-5 h-5 text-white" />
         </div>
-        <span className="text-title-lg text-secondary-800">ScrapyardMS</span>
+        <span className="text-title-lg text-secondary-800">SYMS</span>
       </div>
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) => (

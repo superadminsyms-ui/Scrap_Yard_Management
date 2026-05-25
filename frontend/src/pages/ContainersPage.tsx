@@ -7,6 +7,7 @@ import { Button, Input, Select, Modal, ConfirmDialog, PageHeader, EmptyState, Lo
 import { MaterialType, ContainerSize, UnitOfMeasure } from '@/types/models'
 import type { Container, ContainerFormData } from '@/types/models'
 import { Plus, Search, Pencil, Trash2, RefreshCw } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 const MATERIAL_LABELS: Record<MaterialType, string> = {
   [MaterialType.ALUMINIUM]: 'Aluminum',
@@ -38,6 +39,7 @@ const MATERIAL_COLORS: Record<MaterialType, 'green' | 'red' | 'blue' | 'yellow' 
 
 export default function ContainersPage() {
   const queryClient = useQueryClient()
+  const { isSuperAdmin } = useAuth()
   const [materialFilter, setMaterialFilter] = useState('')
   const [companyFilter, setCompanyFilter] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
@@ -145,17 +147,19 @@ export default function ContainersPage() {
       </PageHeader>
 
       <div className="mb-4 flex gap-3">
-        <Select
-          value={companyFilter || ''}
-          onChange={(e) => { setCompanyFilter(Number(e.target.value)); setMaterialFilter('') }}
-          label="Filter by company"
-          className="max-w-xs"
-        >
-          <option value="">All companies</option>
-          {companies?.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </Select>
+        {isSuperAdmin && (
+          <Select
+            value={companyFilter || ''}
+            onChange={(e) => { setCompanyFilter(Number(e.target.value)); setMaterialFilter('') }}
+            label="Filter by company"
+            className="max-w-xs"
+          >
+            <option value="">All companies</option>
+            {companies?.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </Select>
+        )}
         <Select
           value={materialFilter}
           onChange={(e) => setMaterialFilter(e.target.value)}

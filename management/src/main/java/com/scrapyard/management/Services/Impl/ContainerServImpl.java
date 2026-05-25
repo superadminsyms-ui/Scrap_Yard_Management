@@ -190,6 +190,10 @@ public class ContainerServImpl implements IContainerService {
         if (!companyRepo.existsById(companyId)) {
             throw new IllegalArgumentException("The company does not exist");
         }
+        Long yardId = securityContextService.getCurrentYardId();
+        if (yardId != null) {
+            return containerRepo.findContainersByCompanyIdAndScrapYardId(companyId, yardId);
+        }
         return containerRepo.findContainersByCompanyId(companyId);
     }
 

@@ -18,6 +18,7 @@ const InvoicesPage = lazy(() => import('@/pages/InvoicesPage'))
 const CreateInvoicePage = lazy(() => import('@/pages/CreateInvoicePage'))
 const InvoiceDetailPage = lazy(() => import('@/pages/InvoiceDetailPage'))
 const MovementsPage = lazy(() => import('@/pages/MovementsPage'))
+const StockPage = lazy(() => import('@/pages/StockPage'))
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
       { path: 'invoices/new', element: <SuspenseWrapper><CreateInvoicePage /></SuspenseWrapper> },
       { path: 'invoices/:id', element: <SuspenseWrapper><InvoiceDetailPage /></SuspenseWrapper> },
       { path: 'movements', element: <SuspenseWrapper><MovementsPage /></SuspenseWrapper> },
+      { path: 'stock', element: <SuspenseWrapper><StockPage /></SuspenseWrapper> },
       { path: 'profile', element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper> },
     ],
   },

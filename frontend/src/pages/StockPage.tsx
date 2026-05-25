@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 import { useQuery } from '@tanstack/react-query'
 import { scrapyardsApi } from '@/api/endpoints/scrapyards'
 import { PageHeader, Tabs, LoadingSpinner, EmptyState, Badge, StatCard, Card, Button, Select } from '@/components/ui'
 import { MaterialType, MovementType, ReportPeriod } from '@/types/models'
-import type { Container, InvoiceSummary, Movement, MaterialStockItem, ContainerStockItem, YardStockSummary, ScrapyardReport, MaterialPricing } from '@/types/models'
-import { ArrowLeft, Package, Scale, TrendingUp, Receipt, FileDown } from 'lucide-react'
+import type { Container, InvoiceSummary, Movement, MaterialStockItem, ContainerStockItem, YardStockSummary, ScrapyardReport } from '@/types/models'
+import { Scale, Package, TrendingUp, Receipt, FileDown } from 'lucide-react'
 
 const MATERIAL_LABELS: Record<MaterialType, string> = {
   [MaterialType.ALUMINIUM]: 'Aluminum',
@@ -27,59 +27,54 @@ const MOVEMENT_TYPE_LABELS: Record<MovementType, string> = {
   [MovementType.TRANSFER]: 'Transfer',
 }
 
-export default function ScrapyardDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const yardId = Number(id)
-  const [activeTab, setActiveTab] = useState('containers')
+export default function StockPage() {
+  const { user } = useAuth()
+  const yardId = user?.yardId
+  const [activeTab, setActiveTab] = useState('stock')
 
   const yardQuery = useQuery({
     queryKey: ['scrapyard', yardId],
-    queryFn: () => scrapyardsApi.getById(yardId),
-  })
-
-  const containersQuery = useQuery({
-    queryKey: ['scrapyard-containers', yardId],
-    queryFn: () => scrapyardsApi.getContainers(yardId),
-    enabled: activeTab === 'containers',
+    queryFn: () => scrapyardsApi.getById(yardId!),
+    enabled: !!yardId,
   })
 
   const stockTotalQuery = useQuery({
     queryKey: ['scrapyard-stock', yardId],
-    queryFn: () => scrapyardsApi.getStock(yardId),
-    enabled: activeTab === 'stock',
+    queryFn: () => scrapyardsApi.getStock(yardId!),
+    enabled: activeTab === 'stock' && !!yardId,
   })
 
   const stockContainersQuery = useQuery({
     queryKey: ['scrapyard-stock-containers', yardId],
-    queryFn: () => scrapyardsApi.getStockByContainers(yardId),
-    enabled: activeTab === 'stock',
+    queryFn: () => scrapyardsApi.getStockByContainers(yardId!),
+    enabled: activeTab === 'stock' && !!yardId,
   })
 
   const invoicesQuery = useQuery({
     queryKey: ['scrapyard-invoices', yardId],
     queryFn: async () => {
       const mod = await import('@/api/endpoints/invoices')
-      return mod.invoicesApi.getByYard(yardId)
+      return mod.invoicesApi.getByYard(yardId!)
     },
-    enabled: activeTab === 'invoices',
+    enabled: activeTab === 'invoices' && !!yardId,
   })
 
   const movementsQuery = useQuery({
     queryKey: ['scrapyard-movements', yardId],
     queryFn: async () => {
       const mod = await import('@/api/endpoints/movements')
-      return mod.movementsApi.getByYard(yardId)
+      return mod.movementsApi.getByYard(yardId!)
     },
-    enabled: activeTab === 'movements',
+    enabled: activeTab === 'movements' && !!yardId,
   })
 
   const resumeQuery = useQuery({
     queryKey: ['scrapyard-resume', yardId],
     queryFn: async () => {
       const mod = await import('@/api/endpoints/invoices')
-      return mod.invoicesApi.getByYard(yardId)
+      return mod.invoicesApi.getByYard(yardId!)
     },
-    enabled: activeTab === 'resume',
+    enabled: activeTab === 'resume' && !!yardId,
   })
 
   const [reportType, setReportType] = useState('PURCHASES')
@@ -87,12 +82,11 @@ export default function ScrapyardDetailPage() {
 
   const reportQuery = useQuery({
     queryKey: ['scrapyard-report', yardId, reportType, reportPeriod],
-    queryFn: () => scrapyardsApi.getReport(yardId, reportType, reportPeriod),
-    enabled: activeTab === 'reports',
+    queryFn: () => scrapyardsApi.getReport(yardId!, reportType, reportPeriod),
+    enabled: activeTab === 'reports' && !!yardId,
   })
 
   const tabs = [
-    { key: 'containers', label: 'Containers' },
     { key: 'stock', label: 'Stock' },
     { key: 'invoices', label: 'Invoices' },
     { key: 'movements', label: 'Movements' },
@@ -100,29 +94,23 @@ export default function ScrapyardDetailPage() {
     { key: 'reports', label: 'Reports' },
   ]
 
+  if (!yardId) {
+    return (
+      <div>
+        <PageHeader title="Stock" description="Inventory management" />
+        <EmptyState title="No yard assigned" description="Your account is not linked to a scrapyard" />
+      </div>
+    )
+  }
+
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <Link to="/scrapyards" className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-secondary-800">
-            {yardQuery.data?.name || 'Loading...'}
-          </h1>
-          <p className="text-sm text-secondary-500">
-            {yardQuery.data?.companyName} &middot; {yardQuery.data?.location}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={yardQuery.data?.name || 'Stock'}
+        description={yardQuery.data?.companyName ? `${yardQuery.data.companyName} · ${yardQuery.data.location}` : 'Inventory management'}
+      />
 
       <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab}>
-        {activeTab === 'containers' && (
-          <ContainersTab
-            data={containersQuery.data}
-            isLoading={containersQuery.isLoading}
-          />
-        )}
         {activeTab === 'stock' && (
           <StockTab
             total={stockTotalQuery.data}
@@ -159,39 +147,6 @@ export default function ScrapyardDetailPage() {
           />
         )}
       </Tabs>
-    </div>
-  )
-}
-
-function ContainersTab({ data, isLoading }: { data: Container[] | undefined; isLoading: boolean }) {
-  if (isLoading) return <LoadingSpinner />
-  if (!data?.length) return <EmptyState title="No containers in this scrapyard" />
-  return (
-    <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-outline bg-surface-50">
-            <th className="text-left px-6 py-3 font-medium text-secondary-600">ID</th>
-            <th className="text-left px-6 py-3 font-medium text-secondary-600">Description</th>
-            <th className="text-left px-6 py-3 font-medium text-secondary-600">Material</th>
-            <th className="text-left px-6 py-3 font-medium text-secondary-600">Size</th>
-            <th className="text-right px-6 py-3 font-medium text-secondary-600">Weight</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-outline-light">
-          {data.map((c) => (
-            <tr key={c.id} className="hover:bg-surface-50">
-              <td className="px-6 py-4 font-medium text-secondary-800">#{c.id}</td>
-              <td className="px-6 py-4 text-secondary-600">{c.description}</td>
-              <td className="px-6 py-4 text-secondary-600">{MATERIAL_LABELS[c.materialType] || c.materialType}</td>
-              <td className="px-6 py-4 text-secondary-600">{c.containerSize}</td>
-              <td className="px-6 py-4 text-right text-secondary-800 font-medium">
-                {c.materialWeight ?? '-'} {c.unit}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   )
 }

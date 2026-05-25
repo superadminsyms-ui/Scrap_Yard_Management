@@ -6,9 +6,11 @@ import { Button, Select, Badge, PageHeader, EmptyState, LoadingSpinner } from '@
 import type { InvoiceSummary } from '@/types/models'
 import { Plus, Eye } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 export default function InvoicesPage() {
   const navigate = useNavigate()
+  const { isSuperAdmin } = useAuth()
   const [yardFilter, setYardFilter] = useState('')
 
   const { data: invoices, isLoading } = useQuery({
@@ -44,18 +46,20 @@ export default function InvoicesPage() {
         </Button>
       </PageHeader>
 
-      <div className="mb-4">
-        <Select
-          value={yardFilter}
-          onChange={(e) => setYardFilter(e.target.value)}
-          className="max-w-[250px]"
-        >
-          <option value="">All scrapyards</option>
-          {yards?.map((y) => (
-            <option key={y.id} value={y.id}>{y.name}</option>
-          ))}
-        </Select>
-      </div>
+      {isSuperAdmin && (
+        <div className="mb-4">
+          <Select
+            value={yardFilter}
+            onChange={(e) => setYardFilter(e.target.value)}
+            className="max-w-[250px]"
+          >
+            <option value="">All scrapyards</option>
+            {yards?.map((y) => (
+              <option key={y.id} value={y.id}>{y.name}</option>
+            ))}
+          </Select>
+        </div>
+      )}
 
       {!displayedInvoices.length ? (
         <EmptyState

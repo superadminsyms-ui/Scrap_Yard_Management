@@ -1,16 +1,20 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { authApi } from '@/api/endpoints/auth'
-import { Lock } from 'lucide-react'
+import { Lock, Eye, EyeOff } from 'lucide-react'
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const { refreshUser } = useAuth()
+  const passwordChanged = useRef(false)
+  const { refreshUser, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,6 +35,7 @@ export default function ChangePasswordPage() {
 
     try {
       await authApi.changePassword({ currentPassword, newPassword })
+      passwordChanged.current = true
       await refreshUser()
       navigate('/')
     } catch (err: unknown) {
@@ -42,6 +47,13 @@ export default function ChangePasswordPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleBack = () => {
+    if (!passwordChanged.current) {
+      logout()
+    }
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -67,43 +79,73 @@ export default function ChangePasswordPage() {
               <label htmlFor="current" className="block text-sm font-medium text-secondary-700 mb-1">
                 Current Password
               </label>
-              <input
-                id="current"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
+              <div className="relative">
+                <input
+                  id="current"
+                  type={showCurrent ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowCurrent(!showCurrent)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
+                >
+                  {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div>
               <label htmlFor="new" className="block text-sm font-medium text-secondary-700 mb-1">
                 New Password
               </label>
-              <input
-                id="new"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                placeholder="At least 6 characters"
-              />
+              <div className="relative">
+                <input
+                  id="new"
+                  type={showNew ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  placeholder="At least 6 characters"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowNew(!showNew)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
+                >
+                  {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div>
               <label htmlFor="confirm" className="block text-sm font-medium text-secondary-700 mb-1">
                 Confirm New Password
               </label>
-              <input
-                id="confirm"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
+              <div className="relative">
+                <input
+                  id="confirm"
+                  type={showConfirm ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
@@ -112,6 +154,14 @@ export default function ChangePasswordPage() {
               className="w-full py-2.5 rounded-full bg-primary-500 text-white font-medium text-sm hover:bg-primary-600 transition-colors disabled:opacity-50 shadow-elevation-1"
             >
               {submitting ? 'Changing...' : 'Change Password'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBack}
+              className="w-full py-2.5 rounded-full text-secondary-500 font-medium text-sm hover:text-secondary-700 transition-colors mt-2"
+            >
+              Back to Login
             </button>
           </form>
         </div>

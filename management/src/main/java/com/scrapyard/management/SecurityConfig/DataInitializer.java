@@ -27,7 +27,7 @@ public class DataInitializer {
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setRole(UserRole.SUPERADMIN);
             admin.setActive(true);
-            admin.setMustChangePassword(false);
+            admin.setMustChangePassword(true);
             userRepo.save(admin);
         }
     }

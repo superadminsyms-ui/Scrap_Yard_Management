@@ -309,3 +309,21 @@ export interface UpdateProfileRequest {
   currentPassword: string
   newPassword?: string
 }
+
+export interface UserListResponse {
+  id: number
+  email: string
+  role: string
+  active: boolean
+  mustChangePassword: boolean
+  managerName: string | null
+  managerId: number | null
+  phone: string | null
+  yardId: number | null
+  createdAt: string
+}
+
+export interface UserUpdateRequest {
+  email?: string
+  newPassword?: string
+}

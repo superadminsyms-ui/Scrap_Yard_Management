@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { authApi } from '@/api/endpoints/auth'
+import { setInMemoryToken, clearAuth } from '@/api/client'
 import type { User, LoginRequest, LoginResponse } from '@/types/models'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -77,14 +78,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setToken(response.token)
     setUser(userInfo)
-    saveAuth(response.token, userInfo)
+    if (response.mustChangePassword) {
+      setInMemoryToken(response.token)
+    } else {
+      saveAuth(response.token, userInfo)
+    }
     return response
   }, [])
 
   const logout = useCallback(() => {
     setToken(null)
     setUser(null)
-    localStorage.removeItem('auth')
+    clearAuth()
     queryClient.clear()
   }, [queryClient])
 
