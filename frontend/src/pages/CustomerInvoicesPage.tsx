@@ -37,7 +37,7 @@ export default function CustomerInvoicesPage() {
       {!invoicesQuery.data?.length ? (
         <EmptyState title="No invoices for this customer" description="Create an invoice from the invoices module" />
       ) : (
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-outline bg-surface-50">
@@ -49,7 +49,7 @@ export default function CustomerInvoicesPage() {
             </thead>
             <tbody className="divide-y divide-outline-light">
               {invoicesQuery.data.map((inv) => (
-                <tr key={inv.invoiceId} className="hover:bg-surface-50">
+                <tr key={inv.invoiceId} className="hover:bg-surface-100">
                   <td className="px-6 py-4">
                     <Link to={`/invoices/${inv.invoiceId}`} className="font-medium text-primary-500 hover:underline">
                       #{inv.invoiceId}

@@ -22,6 +22,6 @@ public class ScrapYardDTORequestUpdate {
     private String location;
 
 
-    private boolean active = true;
+    private Boolean active;
 
 }

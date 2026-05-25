@@ -51,10 +51,10 @@ export default function ScrapyardsPage() {
   const saveMutation = useMutation({
     mutationFn: (data: ScrapYardFormData) =>
       editingYard
-        ? scrapyardsApi.update(editingYard.id, { name: data.name, location: data.location, active: data.active })
+        ? scrapyardsApi.update(editingYard.id, { name: data.name, location: data.location })
         : scrapyardsApi.create(data),
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ['scrapyards'] })
+      queryClient.invalidateQueries({ queryKey: ['scrapyards'] })
       setSearch('')
       searchMutation.reset()
       setModalOpen(false)
@@ -62,14 +62,21 @@ export default function ScrapyardsPage() {
       setForm({ name: '', location: '', companyId: 0, active: true })
       setErrors({})
     },
+    onError: (err: Error) => {
+      alert(err.message || 'Error saving scrapyard')
+    },
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => scrapyardsApi.delete(id),
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ['scrapyards'] })
+      queryClient.invalidateQueries({ queryKey: ['scrapyards'] })
       setSearch('')
       searchMutation.reset()
+      setDeleteId(null)
+    },
+    onError: (err: Error) => {
+      alert(err.message)
       setDeleteId(null)
     },
   })
@@ -83,7 +90,7 @@ export default function ScrapyardsPage() {
 
   const openEdit = (yard: ScrapYardListItem) => {
     setEditingYard(yard)
-    setForm({ name: yard.name, location: yard.location, companyId: 0, active: yard.active })
+    setForm({ name: yard.name, location: yard.location, companyId: 0, active: true })
     setErrors({})
     setModalOpen(true)
   }
@@ -111,7 +118,7 @@ export default function ScrapyardsPage() {
         <Button onClick={openCreate}><Plus className="w-4 h-4" /> New Scrapyard</Button>
       </PageHeader>
 
-      <div className="mb-4 flex gap-3">
+      <div className="mb-4 flex gap-3 flex-wrap">
         <Input
           placeholder="Search by name..."
           value={search}
@@ -128,7 +135,7 @@ export default function ScrapyardsPage() {
           action={{ label: 'New Scrapyard', onClick: openCreate }}
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-outline bg-surface-50">
@@ -141,7 +148,7 @@ export default function ScrapyardsPage() {
             </thead>
             <tbody className="divide-y divide-outline-light">
               {displayedYards.map((yard) => (
-                <tr key={yard.id} className="hover:bg-surface-50">
+                <tr key={yard.id} className="hover:bg-surface-100">
                   <td className="px-6 py-4 font-medium text-secondary-800">{yard.name}</td>
                   <td className="px-6 py-4 text-secondary-600">{yard.location}</td>
                   <td className="px-6 py-4 text-secondary-600">{yard.companyName}</td>
@@ -213,17 +220,6 @@ export default function ScrapyardsPage() {
               ))}
             </Select>
           )}
-          {editingYard && (
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form.active}
-                onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                className="rounded"
-              />
-              Active
-            </label>
-          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button type="submit" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Saving...' : editingYard ? 'Update' : 'Create'}
@@ -237,7 +233,7 @@ export default function ScrapyardsPage() {
         onClose={() => setDeleteId(null)}
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
         title="Delete Scrapyard"
-        message="Are you sure you want to delete this scrapyard? All associated containers and managers will also be deleted."
+        message="Are you sure you want to delete this scrapyard? This action cannot be undone."
       />
     </div>
   )

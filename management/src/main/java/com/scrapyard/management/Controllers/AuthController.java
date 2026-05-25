@@ -5,6 +5,7 @@ import com.scrapyard.management.DTO.Request.AuthDTO.LoginRequest;
 import com.scrapyard.management.DTO.Request.AuthDTO.RegisterRequest;
 import com.scrapyard.management.DTO.Request.AuthDTO.UpdateProfileRequest;
 import com.scrapyard.management.SecurityConfig.SecurityContextService;
+import com.scrapyard.management.Services.IAuthService;
 import com.scrapyard.management.Services.Impl.AuthServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ import java.util.Map;
 public class AuthController {
 
     @Autowired
-    private final AuthServImpl authService;
+    private final IAuthService authService;
 
     @Autowired
     private final SecurityContextService securityContextService;

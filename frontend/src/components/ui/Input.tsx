@@ -27,7 +27,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             type={isPassword ? (showPassword ? 'text' : 'password') : props.type}
             className={cn(
-              'w-full rounded-lg border bg-white px-4 py-2.5 text-body-md text-secondary-800 placeholder:text-secondary-400 transition-all duration-200 ease-emphasized focus:outline-none focus:ring-2 focus:ring-offset-0',
+              'w-full rounded-lg border bg-surface px-4 py-2.5 text-body-md text-secondary-800 placeholder:text-secondary-400 transition-all duration-200 ease-emphasized focus:outline-none focus:ring-2 focus:ring-offset-0',
               isPassword && 'pr-10',
               error
                 ? 'border-error-400 focus:ring-error-500'

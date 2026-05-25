@@ -6,7 +6,7 @@ import { companiesApi } from '@/api/endpoints/companies'
 import { Button, Input, Select, Modal, ConfirmDialog, PageHeader, EmptyState, LoadingSpinner, Badge } from '@/components/ui'
 import { MaterialType, ContainerSize, UnitOfMeasure } from '@/types/models'
 import type { Container, ContainerFormData } from '@/types/models'
-import { Plus, Search, Pencil, Trash2, RefreshCw } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 
 const MATERIAL_LABELS: Record<MaterialType, string> = {
@@ -45,8 +45,6 @@ export default function ContainersPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingContainer, setEditingContainer] = useState<Container | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-
   const { data: containers, isLoading } = useQuery({
     queryKey: ['containers'],
     queryFn: containersApi.getAll,
@@ -113,40 +111,17 @@ export default function ContainersPage() {
     onError: (err: Error) => alert('Error deleting: ' + err.message),
   })
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    queryClient.removeQueries({ queryKey: ['containers'] })
-    queryClient.removeQueries({ queryKey: ['containers-by-material'] })
-    await queryClient.fetchQuery({
-      queryKey: ['containers'],
-      queryFn: containersApi.getAll,
-    })
-    if (materialFilter) {
-      await queryClient.fetchQuery({
-        queryKey: ['containers-by-material', materialFilter],
-        queryFn: () => containersApi.getByMaterial(materialFilter as MaterialType),
-      })
-    }
-    setIsRefreshing(false)
-  }
-
   if (isLoading) return <LoadingSpinner />
 
   return (
     <div>
       <PageHeader title="Containers" description="Material container management">
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={handleRefresh} disabled={isRefreshing} title="Refresh data">
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Updating...' : 'Refresh'}
-          </Button>
-          <Button onClick={() => { setEditingContainer(null); setModalOpen(true) }}>
-            <Plus className="w-4 h-4" /> New Container
-          </Button>
-        </div>
+        <Button onClick={() => { setEditingContainer(null); setModalOpen(true) }}>
+          <Plus className="w-4 h-4" /> New Container
+        </Button>
       </PageHeader>
 
-      <div className="mb-4 flex gap-3">
+      <div className="mb-4 flex gap-3 flex-wrap">
         {isSuperAdmin && (
           <Select
             value={companyFilter || ''}
@@ -180,7 +155,7 @@ export default function ContainersPage() {
           action={!materialFilter && !companyFilter ? { label: 'New Container', onClick: () => setModalOpen(true) } : undefined}
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-outline bg-surface-50">
@@ -194,7 +169,7 @@ export default function ContainersPage() {
             </thead>
             <tbody className="divide-y divide-outline-light">
               {displayedContainers.map((c) => (
-                <tr key={c.id} className="hover:bg-surface-50">
+                <tr key={c.id} className="hover:bg-surface-100">
                   <td className="px-6 py-4 font-medium text-secondary-800">#{c.id}</td>
                   <td className="px-6 py-4 text-secondary-600">{c.description}</td>
                   <td className="px-6 py-4">
@@ -302,7 +277,7 @@ function ContainerForm({
         error={errors.description}
         placeholder="E.g.: Copper container #1"
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label="Material Type"
           value={form.materialType}
@@ -331,7 +306,7 @@ function ContainerForm({
         )}
       </div>
       {!initial && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Material Weight"
             type="number"

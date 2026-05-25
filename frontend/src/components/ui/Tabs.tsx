@@ -11,14 +11,14 @@ interface TabsProps {
 export function Tabs({ tabs, activeTab, onTabChange, children }: TabsProps) {
   return (
     <div>
-      <div className="border-b border-outline">
-        <nav className="flex gap-0 -mb-px">
+      <div className="border-b border-outline overflow-x-auto">
+        <nav className="flex gap-0 -mb-px whitespace-nowrap">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => onTabChange(tab.key)}
               className={cn(
-                'relative px-5 pb-3 pt-1 text-label-lg transition-colors cursor-pointer',
+                'relative px-5 pb-3 pt-1 text-label-lg transition-colors cursor-pointer flex-shrink-0',
                 activeTab === tab.key
                   ? 'text-primary-500'
                   : 'text-secondary-500 hover:text-secondary-700',

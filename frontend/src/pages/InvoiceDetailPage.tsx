@@ -40,12 +40,12 @@ export default function InvoiceDetailPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <Link to="/invoices" className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-secondary-800">Invoice #{invoice.invoiceId}</h1>
             <Badge variant={invoice.details?.length ? 'green' : 'gray'}>
               {invoice.details?.length ? 'Active' : 'No details'}
@@ -65,7 +65,7 @@ export default function InvoiceDetailPage() {
         <div className="lg:col-span-2 space-y-4">
           <Card className="p-6">
             <h2 className="text-sm font-semibold text-secondary-800 mb-4">General Information</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-secondary-500">Customer</p>
                 <p className="text-sm font-medium text-secondary-800">{invoice.customerName}</p>
@@ -92,7 +92,7 @@ export default function InvoiceDetailPage() {
             <h2 className="text-sm font-semibold text-secondary-800 mb-4">
               Details ({invoice.details?.length || 0} line{invoice.details?.length !== 1 ? 's' : ''})
             </h2>
-            <div className="overflow-hidden">
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-outline bg-surface-50">

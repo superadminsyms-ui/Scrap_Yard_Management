@@ -20,7 +20,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div className={`relative z-10 w-full ${sizes[size]} mx-4`}>
-        <div className="bg-white rounded-3xl shadow-elevation-4 animate-[fadeIn_200ms_ease-emphasized] overflow-hidden">
+        <div className="bg-surface rounded-3xl shadow-elevation-4 animate-[fadeIn_200ms_ease-emphasized] overflow-hidden">
           <div className="flex items-center justify-between px-6 py-5 border-b border-outline-light">
             <h2 className="text-title-lg text-secondary-800">{title}</h2>
             <button
@@ -32,7 +32,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
               </svg>
             </button>
           </div>
-          <div className="px-6 py-5">{children}</div>
+          <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">{children}</div>
         </div>
       </div>
     </div>

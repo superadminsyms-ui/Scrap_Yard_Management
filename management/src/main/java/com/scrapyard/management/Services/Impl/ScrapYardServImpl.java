@@ -200,7 +200,9 @@ public class ScrapYardServImpl implements IScrapYardService {
 
         existing.setName(yard.getName());
         existing.setLocation(yard.getLocation());
-        existing.setActive(yard.isActive());
+        if (yard.getActive() != null) {
+            existing.setActive(yard.getActive());
+        }
 
         ScrapYard saved = scrapYardRepo.save(existing);
 

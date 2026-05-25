@@ -327,3 +327,9 @@ export interface UserUpdateRequest {
   email?: string
   newPassword?: string
 }
+
+export interface BackupFileInfo {
+  filename: string
+  sizeBytes: number
+  createdAt: string
+}

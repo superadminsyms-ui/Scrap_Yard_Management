@@ -86,7 +86,7 @@ export default function LoginPage() {
       style={{ backgroundImage: "url('/login_image.jpg')" }}
     >
       <div className="w-full max-w-sm">
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-white/30 shadow-elevation-1 p-8">
+        <div className="bg-surface/85 backdrop-blur-md rounded-2xl border border-outline-light shadow-elevation-1 p-8">
           <div className="flex flex-col items-center mb-6">
             <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-elevation-2 mb-4">
               <Warehouse className="w-7 h-7 text-white" />
@@ -135,8 +135,8 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                placeholder="admin"
+                className="w-full px-4 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                placeholder="email@example.com"
               />
             </div>
 
@@ -151,7 +151,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   placeholder="Enter your password"
                 />
                 <button

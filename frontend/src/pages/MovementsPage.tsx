@@ -110,7 +110,7 @@ export default function MovementsPage() {
           action={{ label: 'New Movement', onClick: () => setModalOpen(true) }}
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-outline bg-surface-50">
@@ -126,7 +126,7 @@ export default function MovementsPage() {
             </thead>
             <tbody className="divide-y divide-outline-light">
               {displayedMovements.map((m) => (
-                <tr key={m.id} className="hover:bg-surface-50">
+                <tr key={m.id} className="hover:bg-surface-100">
                   <td className="px-6 py-4 text-secondary-600 whitespace-nowrap">
                     {new Date(m.movementDate).toLocaleDateString()}
                   </td>
@@ -238,7 +238,7 @@ function MovementForm({ yards, onSuccess, isManager, user }: {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {isManager ? (
           <Select label="Scrapyard" value={form.scrapYardId || ''} disabled>
             <option value={form.scrapYardId || ''}>{currentYardName}</option>
@@ -268,7 +268,7 @@ function MovementForm({ yards, onSuccess, isManager, user }: {
           <option value={MovementType.TRANSFER}>Transfer</option>
         </Select>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label="Container"
           value={form.containerId || ''}
@@ -292,7 +292,7 @@ function MovementForm({ yards, onSuccess, isManager, user }: {
           ))}
         </Select>
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Input
           label="Quantity"
           type="number"

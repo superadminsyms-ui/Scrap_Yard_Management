@@ -39,6 +39,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
+                        .requestMatchers("/api/backup/**").hasRole("SUPERADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

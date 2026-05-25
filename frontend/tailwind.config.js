@@ -32,11 +32,11 @@ export default {
           900: '#17181A',
         },
         surface: {
-          DEFAULT: '#FFFFFF',
-          50: '#F8F9FA',
-          100: '#F1F3F4',
-          200: '#E8EAED',
-          300: '#DADCE0',
+          DEFAULT: '#F8FAFC',
+          50: '#EEF2F7',
+          100: '#E8EDF5',
+          200: '#E2E8F0',
+          300: '#CBD5E1',
         },
         error: {
           50: '#FCE8E6',
@@ -51,6 +51,7 @@ export default {
           100: '#CEECD6',
           500: '#34A853',
           600: '#1E8E3E',
+          700: '#178235',
           800: '#137333',
         },
         warning: {
@@ -61,9 +62,17 @@ export default {
           800: '#B06000',
         },
         outline: {
-          DEFAULT: '#DADCE0',
-          light: '#E8EAED',
-          dark: '#BDC1C6',
+          DEFAULT: '#CBD5E1',
+          light: '#E2E8F0',
+          dark: '#94A3B8',
+        },
+        sidebar: {
+          DEFAULT: '#1E293B',
+          hover: '#334155',
+          active: '#1E3A5F',
+          border: '#2D3A4F',
+          text: '#94A3B8',
+          textActive: '#E2E8F0',
         },
       },
       fontFamily: {
@@ -81,11 +90,11 @@ export default {
         'full': '9999px',
       },
       boxShadow: {
-        'elevation-1': '0 1px 2px 0 rgba(0, 0, 0, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.04)',
-        'elevation-2': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 2px 6px 0 rgba(0, 0, 0, 0.06)',
-        'elevation-3': '0 4px 8px 0 rgba(0, 0, 0, 0.12), 0 2px 4px 0 rgba(0, 0, 0, 0.08)',
-        'elevation-4': '0 8px 16px 0 rgba(0, 0, 0, 0.15), 0 4px 8px 0 rgba(0, 0, 0, 0.1)',
-        'elevation-5': '0 16px 24px 0 rgba(0, 0, 0, 0.18), 0 8px 16px 0 rgba(0, 0, 0, 0.12)',
+        'elevation-1': '0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+        'elevation-2': '0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 2px 6px 0 rgba(0, 0, 0, 0.04)',
+        'elevation-3': '0 4px 8px 0 rgba(0, 0, 0, 0.08), 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+        'elevation-4': '0 8px 16px 0 rgba(0, 0, 0, 0.10), 0 4px 8px 0 rgba(0, 0, 0, 0.06)',
+        'elevation-5': '0 16px 24px 0 rgba(0, 0, 0, 0.12), 0 8px 16px 0 rgba(0, 0, 0, 0.08)',
         'inner': 'inset 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
       },
       fontSize: {

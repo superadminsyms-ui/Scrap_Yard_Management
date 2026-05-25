@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { companiesApi } from '@/api/endpoints/companies'
 import { Button, Input, Modal, ConfirmDialog, PageHeader, EmptyState, LoadingSpinner } from '@/components/ui'
 import type { Company, CompanyFormData } from '@/types/models'
-import { Plus, Search, Pencil, Trash2, Warehouse, Users, RefreshCw } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Warehouse, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function CompaniesPage() {
@@ -59,25 +59,12 @@ export default function CompaniesPage() {
     onError: (err: Error) => alert(err.message),
   })
 
-  const handleRefresh = async () => {
-    queryClient.removeQueries({ queryKey: ['companies'] })
-    await queryClient.fetchQuery({
-      queryKey: ['companies'],
-      queryFn: companiesApi.getAll,
-    })
-  }
-
   return (
     <div>
       <PageHeader title="Companies" description="Management of companies registered in the system">
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={handleRefresh} title="Refresh data">
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </Button>
-          <Button onClick={() => { setEditingCompany(null); setModalOpen(true) }}>
-            <Plus className="w-4 h-4" /> New Company
-          </Button>
-        </div>
+        <Button onClick={() => { setEditingCompany(null); setModalOpen(true) }}>
+          <Plus className="w-4 h-4" /> New Company
+        </Button>
       </PageHeader>
 
       <div className="mb-4">
@@ -97,7 +84,7 @@ export default function CompaniesPage() {
           action={{ label: 'New Company', onClick: () => setModalOpen(true) }}
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-outline bg-surface-50">
@@ -108,7 +95,7 @@ export default function CompaniesPage() {
             </thead>
             <tbody className="divide-y divide-outline-light">
               {displayedCompanies.map((company) => (
-                <tr key={company.id} className="hover:bg-surface-50">
+                <tr key={company.id} className="hover:bg-surface-100">
                   <td className="px-6 py-4 font-medium text-secondary-800">{company.name}</td>
                   <td className="px-6 py-4 text-secondary-600">{company.location}</td>
                   <td className="px-6 py-4">

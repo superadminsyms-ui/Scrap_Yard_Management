@@ -183,7 +183,7 @@ export default function ManagersPage() {
               description="Switch to the User Accounts tab to create one"
             />
           ) : (
-            <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+            <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-outline bg-surface-50">
@@ -196,7 +196,7 @@ export default function ManagersPage() {
                 </thead>
                 <tbody className="divide-y divide-outline-light">
                   {displayedManagers.map((m) => (
-                    <tr key={m.id} className="hover:bg-surface-50">
+                    <tr key={m.id} className="hover:bg-surface-100">
                       <td className="px-6 py-4 font-medium text-secondary-800">{m.name}</td>
                       <td className="px-6 py-4 text-secondary-600">{m.email}</td>
                       <td className="px-6 py-4 text-secondary-600">{m.phone || '-'}</td>
@@ -243,7 +243,7 @@ export default function ManagersPage() {
               action={{ label: 'New Super Admin', onClick: () => setSuperAdminModalOpen(true) }}
             />
           ) : (
-            <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+            <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-outline bg-surface-50">
@@ -259,7 +259,7 @@ export default function ManagersPage() {
                   {filteredUsers.map((u) => {
                     const isSelf = currentUser?.id === u.id
                     return (
-                      <tr key={u.id} className="hover:bg-surface-50">
+                      <tr key={u.id} className="hover:bg-surface-100">
                         <td className="px-6 py-4 font-medium text-secondary-800">{u.email}</td>
                         <td className="px-6 py-4">
                           <Badge variant={u.role === 'SUPERADMIN' ? 'blue' : 'gray'}>
@@ -338,7 +338,7 @@ export default function ManagersPage() {
           description="No managers available to display"
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-outline bg-surface-50">
@@ -350,7 +350,7 @@ export default function ManagersPage() {
             </thead>
             <tbody className="divide-y divide-outline-light">
               {displayedManagers.map((m) => (
-                <tr key={m.id} className="hover:bg-surface-50">
+                <tr key={m.id} className="hover:bg-surface-100">
                   <td className="px-6 py-4 font-medium text-secondary-800">{m.name}</td>
                   <td className="px-6 py-4 text-secondary-600">{m.email}</td>
                   <td className="px-6 py-4 text-secondary-600">{m.phone || '-'}</td>

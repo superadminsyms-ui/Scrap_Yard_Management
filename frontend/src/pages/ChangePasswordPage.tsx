@@ -59,7 +59,7 @@ export default function ChangePasswordPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 p-8">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 p-8">
           <div className="flex flex-col items-center mb-6">
             <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center shadow-elevation-2 mb-4">
               <Lock className="w-6 h-6 text-white" />
@@ -86,7 +86,7 @@ export default function ChangePasswordPage() {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   required
-                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 />
                 <button
                   type="button"
@@ -110,7 +110,7 @@ export default function ChangePasswordPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   placeholder="At least 6 characters"
                 />
                 <button
@@ -135,7 +135,7 @@ export default function ChangePasswordPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                  className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 />
                 <button
                   type="button"

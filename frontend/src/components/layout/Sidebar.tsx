@@ -11,13 +11,23 @@ import {
   LogOut,
   Settings,
   Scale,
+  X,
+  Database,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { useRoleTheme } from '@/hooks/useRoleTheme'
+import { Badge } from '@/components/ui'
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { isSuperAdmin, logout, user } = useAuth()
   const navigate = useNavigate()
+  const theme = useRoleTheme()
 
   const allItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, always: true },
@@ -28,6 +38,7 @@ export function Sidebar() {
     { to: '/managers', label: 'Managers', icon: UserCog, always: true },
     { to: '/invoices', label: 'Invoices', icon: Receipt, always: true },
     { to: '/movements', label: 'Movements', icon: ArrowRightLeft, always: true },
+    { to: '/backup', label: 'Backup', icon: Database, adminOnly: true },
     { to: '/stock', label: 'Stock', icon: Scale, managerOnly: true },
   ]
 
@@ -38,28 +49,44 @@ export function Sidebar() {
   const handleLogout = () => {
     logout()
     navigate('/login')
+    onClose()
   }
 
-  return (
-    <aside className="w-64 bg-white border-r border-outline flex flex-col shrink-0">
-      <div className="flex items-center gap-3 h-16 px-6 border-b border-outline">
-        <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center shadow-elevation-2">
-          <Warehouse className="w-5 h-5 text-white" />
+  const handleNavClick = () => {
+    onClose()
+  }
+
+  const sidebarContent = (
+    <aside className={cn(
+      'w-64 bg-sidebar flex flex-col shrink-0 h-full border-r border-sidebar-border',
+    )}>
+      <div className="flex items-center justify-between gap-3 h-16 px-5 border-b border-sidebar-border">
+        <div className="flex items-center gap-3">
+          <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shadow-elevation-2', theme.iconBg)}>
+            <Warehouse className={cn('w-5 h-5', theme.iconText)} />
+          </div>
+          <span className="text-title-lg text-sidebar-textActive font-medium">SYMS</span>
         </div>
-        <span className="text-title-lg text-secondary-800">SYMS</span>
+        <button
+          onClick={onClose}
+          className="md:hidden p-1.5 text-sidebar-text hover:text-sidebar-textActive rounded-lg hover:bg-sidebar-hover"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === '/'}
+            onClick={handleNavClick}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-4 py-2.5 rounded-full text-label-lg transition-all duration-200 ease-emphasized',
+                'flex items-center gap-3 px-4 py-2.5 rounded-lg text-label-lg transition-all duration-200 ease-emphasized border-l-[3px] border-transparent',
                 isActive
-                  ? 'bg-primary-100 text-primary-700 font-medium'
-                  : 'text-secondary-600 hover:bg-secondary-100 hover:text-secondary-800',
+                  ? cn(theme.sidebarActive, theme.sidebarActiveBorder)
+                  : 'text-sidebar-text hover:bg-sidebar-hover hover:text-sidebar-textActive',
               )
             }
           >
@@ -68,38 +95,56 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="p-3 border-t border-outline">
-        <div className="px-4 mb-2">
-          <p className="text-sm font-medium text-secondary-800 truncate">
+      <div className="p-3 border-t border-sidebar-border">
+        <div className="px-1 mb-3">
+          <p className="text-sm font-medium text-sidebar-textActive truncate">
             {user?.email}
           </p>
-          <p className="text-xs text-secondary-500">
-            {user?.role === 'SUPERADMIN' ? 'Super Admin' : 'Manager'}
-            {user?.managerName ? ` - ${user.managerName}` : ''}
-          </p>
+          <div className="mt-1.5">
+            <Badge variant={theme.badge}>{theme.badgeLabel}</Badge>
+          </div>
         </div>
-        <NavLink
-          to="/profile"
-          className={({ isActive }) =>
-            cn(
-              'flex items-center gap-3 px-4 py-2.5 rounded-full text-label-lg transition-all duration-200',
-              isActive
-                ? 'bg-primary-100 text-primary-700 font-medium'
-                : 'text-secondary-600 hover:bg-secondary-100 hover:text-secondary-800',
-            )
-          }
-        >
-          <Settings className="w-5 h-5" />
-          Profile
-        </NavLink>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-full text-label-lg text-secondary-600 hover:bg-error-50 hover:text-error-700 transition-all duration-200"
-        >
-          <LogOut className="w-5 h-5" />
-          Logout
-        </button>
+        <div className="space-y-0.5">
+          <NavLink
+            to="/profile"
+            onClick={handleNavClick}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-4 py-2.5 rounded-lg text-label-lg transition-all duration-200 border-l-[3px] border-transparent',
+                isActive
+                  ? cn(theme.sidebarActive, theme.sidebarActiveBorder)
+                  : 'text-sidebar-text hover:bg-sidebar-hover hover:text-sidebar-textActive',
+              )
+            }
+          >
+            <Settings className="w-5 h-5" />
+            Profile
+          </NavLink>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg text-label-lg text-sidebar-text hover:bg-error-500/10 hover:text-error-400 transition-all duration-200 border-l-[3px] border-transparent"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
+        </div>
       </div>
     </aside>
+  )
+
+  return (
+    <>
+      {isOpen && (
+        <div className="md:hidden fixed inset-0 z-40">
+          <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+          <div className="fixed inset-y-0 left-0 z-50 animate-[slideInLeft_200ms_ease-emphasized]">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+      <div className="hidden md:flex shrink-0">
+        {sidebarContent}
+      </div>
+    </>
   )
 }

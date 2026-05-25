@@ -72,7 +72,7 @@ export default function ProfilePage() {
         <p className="mt-1 text-sm text-secondary-500">Update your email or password</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 p-6">
+      <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 p-6">
         {success && (
           <div className="bg-success-50 text-success-700 text-sm p-3 rounded-xl border border-success-200 mb-4">
             {success}
@@ -107,7 +107,7 @@ export default function ProfilePage() {
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               placeholder={user?.email || 'New email'}
             />
           </div>
@@ -124,7 +124,7 @@ export default function ProfilePage() {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
-              className="w-full px-4 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
             />
           </div>
 
@@ -137,7 +137,7 @@ export default function ProfilePage() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               placeholder="At least 6 characters"
             />
           </div>
@@ -153,7 +153,7 @@ export default function ProfilePage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-full border border-outline bg-white text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               />
             </div>
           )}

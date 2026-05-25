@@ -16,9 +16,9 @@
     --md-sys-color-secondary-container: #E8EAED;
     --md-sys-color-on-secondary-container: #202124;
 
-    --md-sys-color-surface: #FFFFFF;
+    --md-sys-color-surface: #F8FAFC;
     --md-sys-color-on-surface: #202124;
-    --md-sys-color-surface-variant: #F8F9FA;
+    --md-sys-color-surface-variant: #F0F2F5;
 
     --md-sys-color-error: #D93025;
     --md-sys-color-on-error: #FFFFFF;
@@ -30,14 +30,14 @@
     --md-sys-color-warning: #F9AB00;
     --md-sys-color-warning-container: #FEEFC3;
 
-    --md-sys-color-outline: #DADCE0;
-    --md-sys-color-outline-variant: #E8EAED;
+    --md-sys-color-outline: #CBD5E1;
+    --md-sys-color-outline-variant: #E2E8F0;
 
-    --md-sys-elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.04);
-    --md-sys-elevation-2: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 2px 6px 0 rgba(0, 0, 0, 0.06);
-    --md-sys-elevation-3: 0 4px 8px 0 rgba(0, 0, 0, 0.12), 0 2px 4px 0 rgba(0, 0, 0, 0.08);
-    --md-sys-elevation-4: 0 8px 16px 0 rgba(0, 0, 0, 0.15), 0 4px 8px 0 rgba(0, 0, 0, 0.1);
-    --md-sys-elevation-5: 0 16px 24px 0 rgba(0, 0, 0, 0.18), 0 8px 16px 0 rgba(0, 0, 0, 0.12);
+    --md-sys-elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+    --md-sys-elevation-2: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 2px 6px 0 rgba(0, 0, 0, 0.04);
+    --md-sys-elevation-3: 0 4px 8px 0 rgba(0, 0, 0, 0.08), 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+    --md-sys-elevation-4: 0 8px 16px 0 rgba(0, 0, 0, 0.10), 0 4px 8px 0 rgba(0, 0, 0, 0.06);
+    --md-sys-elevation-5: 0 16px 24px 0 rgba(0, 0, 0, 0.12), 0 8px 16px 0 rgba(0, 0, 0, 0.08);
 
     --md-sys-shape-corner-xs: 4px;
     --md-sys-shape-corner-sm: 8px;
@@ -59,7 +59,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: var(--md-sys-color-on-surface);
-    background-color: var(--md-sys-color-surface-variant);
+    background-color: #F0F2F5;
   }
 }
 
@@ -78,10 +78,15 @@
   }
 
   .md-card {
-    @apply bg-white rounded-2xl border border-outline shadow-elevation-1;
+    @apply bg-surface rounded-2xl border border-outline shadow-elevation-1;
   }
 
   .md-chip {
     @apply inline-flex items-center px-3 py-1 rounded-full text-label-md font-medium;
   }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }

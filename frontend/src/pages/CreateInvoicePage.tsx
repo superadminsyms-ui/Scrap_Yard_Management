@@ -167,7 +167,7 @@ export default function CreateInvoicePage() {
         <div className="lg:col-span-2 space-y-6">
           <Card className="p-6">
             <h2 className="text-sm font-semibold text-secondary-800 mb-4">Invoice Data</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Select
                   label="Yard"
@@ -264,7 +264,7 @@ export default function CreateInvoicePage() {
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <Select
                         value={d.materialType}
                         onChange={(e) => updateDetail(d.key, 'materialType', e.target.value)}
@@ -324,7 +324,7 @@ export default function CreateInvoicePage() {
         </div>
 
         <div>
-          <Card className="p-6 sticky top-6">
+          <Card className="p-6 sm:sticky sm:top-6">
             <h2 className="text-sm font-semibold text-secondary-800 mb-4">Summary</h2>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">

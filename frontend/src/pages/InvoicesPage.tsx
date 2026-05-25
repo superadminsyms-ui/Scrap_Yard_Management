@@ -68,7 +68,7 @@ export default function InvoicesPage() {
           action={{ label: 'New Invoice', onClick: () => navigate('/invoices/new') }}
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-outline bg-surface-50">
@@ -83,7 +83,7 @@ export default function InvoicesPage() {
             </thead>
             <tbody className="divide-y divide-outline-light">
               {displayedInvoices.map((inv) => (
-                <tr key={inv.invoiceId} className="hover:bg-surface-50">
+                <tr key={inv.invoiceId} className="hover:bg-surface-100">
                   <td className="px-6 py-4 font-medium text-secondary-800">#{inv.invoiceId}</td>
                   <td className="px-6 py-4 text-secondary-600">{inv.customerName}</td>
                   <td className="px-6 py-4">

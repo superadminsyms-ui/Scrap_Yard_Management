@@ -167,7 +167,7 @@ function ContainersTab({ data, isLoading }: { data: Container[] | undefined; isL
   if (isLoading) return <LoadingSpinner />
   if (!data?.length) return <EmptyState title="No containers in this scrapyard" />
   return (
-    <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-outline bg-surface-50">
@@ -180,7 +180,7 @@ function ContainersTab({ data, isLoading }: { data: Container[] | undefined; isL
         </thead>
         <tbody className="divide-y divide-outline-light">
           {data.map((c) => (
-            <tr key={c.id} className="hover:bg-surface-50">
+            <tr key={c.id} className="hover:bg-surface-100">
               <td className="px-6 py-4 font-medium text-secondary-800">#{c.id}</td>
               <td className="px-6 py-4 text-secondary-600">{c.description}</td>
               <td className="px-6 py-4 text-secondary-600">{MATERIAL_LABELS[c.materialType] || c.materialType}</td>
@@ -247,7 +247,7 @@ function StockTab({
       )}
 
       {containers && containers.length > 0 && (
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-outline bg-surface-50">
@@ -259,7 +259,7 @@ function StockTab({
             </thead>
             <tbody className="divide-y divide-outline-light">
               {containers.map((c: ContainerStockItem, i: number) => (
-                <tr key={i} className="hover:bg-surface-50">
+                <tr key={i} className="hover:bg-surface-100">
                   <td className="px-6 py-4 font-medium text-secondary-800">{c.description}</td>
                   <td className="px-6 py-4 text-secondary-600">{MATERIAL_LABELS[c.materialType] || c.materialType}</td>
                   <td className="px-6 py-4 text-secondary-600">{c.containerSize}</td>
@@ -280,7 +280,7 @@ function InvoicesTab({ data, isLoading }: { data: InvoiceSummary[] | undefined; 
   if (isLoading) return <LoadingSpinner />
   if (!data?.length) return <EmptyState title="No invoices in this scrapyard" />
   return (
-    <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-outline bg-surface-50">
@@ -292,7 +292,7 @@ function InvoicesTab({ data, isLoading }: { data: InvoiceSummary[] | undefined; 
         </thead>
         <tbody className="divide-y divide-outline-light">
           {data.map((inv) => (
-            <tr key={inv.invoiceId} className="hover:bg-surface-50">
+            <tr key={inv.invoiceId} className="hover:bg-surface-100">
               <td className="px-6 py-4 font-medium text-secondary-800">#{inv.invoiceId}</td>
               <td className="px-6 py-4 text-secondary-600">{inv.customerName}</td>
               <td className="px-6 py-4 text-secondary-600">
@@ -313,7 +313,7 @@ function MovementsTab({ data, isLoading }: { data: Movement[] | undefined; isLoa
   if (isLoading) return <LoadingSpinner />
   if (!data?.length) return <EmptyState title="No movements registered" />
   return (
-    <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-outline bg-surface-50">
@@ -327,7 +327,7 @@ function MovementsTab({ data, isLoading }: { data: Movement[] | undefined; isLoa
         </thead>
         <tbody className="divide-y divide-outline-light">
           {data.map((m) => (
-            <tr key={m.id} className="hover:bg-surface-50">
+            <tr key={m.id} className="hover:bg-surface-100">
               <td className="px-6 py-4 text-secondary-600">
                 {new Date(m.movementDate).toLocaleDateString()}
               </td>
@@ -446,7 +446,7 @@ function ReportsTab({
           {reportType === 'PURCHASES' && data.invoices && data.invoices.length > 0 && (
             <Card className="p-6">
               <h3 className="text-sm font-semibold text-secondary-800 mb-4">Invoices in Period</h3>
-              <div className="bg-white rounded-2xl border border-outline overflow-hidden">
+              <div className="bg-surface rounded-2xl border border-outline overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-outline bg-surface-50">
@@ -458,7 +458,7 @@ function ReportsTab({
                   </thead>
                   <tbody className="divide-y divide-outline-light">
                     {data.invoices.map((inv) => (
-                      <tr key={inv.invoiceId} className="hover:bg-surface-50">
+                      <tr key={inv.invoiceId} className="hover:bg-surface-100">
                         <td className="px-6 py-4 font-medium text-secondary-800">#{inv.invoiceId}</td>
                         <td className="px-6 py-4 text-secondary-600">{inv.customerName}</td>
                         <td className="px-6 py-4 text-secondary-600">{new Date(inv.createdAt).toLocaleDateString()}</td>
@@ -474,7 +474,7 @@ function ReportsTab({
           {reportType === 'PRICING' && data.materialPricing && data.materialPricing.length > 0 && (
             <Card className="p-6">
               <h3 className="text-sm font-semibold text-secondary-800 mb-4">Material Pricing Breakdown</h3>
-              <div className="bg-white rounded-2xl border border-outline overflow-hidden">
+              <div className="bg-surface rounded-2xl border border-outline overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-outline bg-surface-50">
@@ -487,7 +487,7 @@ function ReportsTab({
                   </thead>
                   <tbody className="divide-y divide-outline-light">
                     {data.materialPricing.map((mp, i) => (
-                      <tr key={i} className="hover:bg-surface-50">
+                      <tr key={i} className="hover:bg-surface-100">
                         <td className="px-6 py-4">
                           <Badge variant="blue">{MATERIAL_LABELS[mp.materialType] || mp.materialType}</Badge>
                         </td>

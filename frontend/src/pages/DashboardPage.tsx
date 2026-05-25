@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '@/api/endpoints/dashboard'
 import { useAuth } from '@/context/AuthContext'
+import { useRoleTheme } from '@/hooks/useRoleTheme'
 import { StatCard, Badge, LoadingSpinner, Card } from '@/components/ui'
 import { MovementType } from '@/types/models'
 import { Building2, Warehouse, Box, Users, Receipt, ArrowRightLeft, TrendingUp } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { cn } from '@/lib/utils'
 
 export default function DashboardPage() {
   const { isSuperAdmin } = useAuth()
+  const theme = useRoleTheme()
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard'],
@@ -83,7 +86,7 @@ export default function DashboardPage() {
                 <Link
                   key={inv.invoiceId}
                   to={`/invoices/${inv.invoiceId}`}
-                  className="flex items-center justify-between py-2 border-b border-outline-light last:border-0 hover:bg-surface-50 rounded px-2 transition-colors"
+                  className="flex items-center justify-between py-2 border-b border-outline-light last:border-0 hover:bg-surface-100 rounded px-2 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-secondary-800">#{inv.invoiceId}</span>
@@ -139,16 +142,19 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
         <Link
           to="/invoices/new"
-          className="flex items-center justify-center gap-2 py-3 px-4 bg-primary-500 text-white rounded-full text-label-lg font-medium hover:bg-primary-600 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
+          className={cn(
+            'flex items-center justify-center gap-2 py-3 px-4 rounded-full text-label-lg font-medium transition-colors shadow-elevation-1 hover:shadow-elevation-2',
+            theme.btnPrimary,
+          )}
         >
           <Receipt className="w-4 h-4" /> New Invoice
         </Link>
         <Link
           to="/movements"
-          className="flex items-center justify-center gap-2 py-3 px-4 bg-success-600 text-white rounded-full text-label-lg font-medium hover:bg-success-600 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
+          className="flex items-center justify-center gap-2 py-3 px-4 bg-success-600 text-white rounded-full text-label-lg font-medium hover:bg-success-700 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
         >
           <ArrowRightLeft className="w-4 h-4" /> New Movement
         </Link>
@@ -156,7 +162,7 @@ export default function DashboardPage() {
           <>
             <Link
               to="/scrapyards"
-              className="flex items-center justify-center gap-2 py-3 px-4 bg-primary-600 text-white rounded-full text-label-lg font-medium hover:bg-primary-700 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
+              className="flex items-center justify-center gap-2 py-3 px-4 bg-secondary-700 text-white rounded-full text-label-lg font-medium hover:bg-secondary-800 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
             >
               <Warehouse className="w-4 h-4" /> View Inventory
             </Link>
@@ -171,7 +177,7 @@ export default function DashboardPage() {
           <>
             <Link
               to="/containers"
-              className="flex items-center justify-center gap-2 py-3 px-4 bg-primary-600 text-white rounded-full text-label-lg font-medium hover:bg-primary-700 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
+              className="flex items-center justify-center gap-2 py-3 px-4 bg-secondary-700 text-white rounded-full text-label-lg font-medium hover:bg-secondary-800 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
             >
               <Box className="w-4 h-4" /> View Containers
             </Link>

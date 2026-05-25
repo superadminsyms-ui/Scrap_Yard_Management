@@ -138,7 +138,7 @@ public class AuthServImpl implements IAuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
         user.setActive(true);
-        user.setMustChangePassword(false);
+        user.setMustChangePassword(true);
         User savedUser = userRepo.save(user);
 
         RegisterResponse response = new RegisterResponse();

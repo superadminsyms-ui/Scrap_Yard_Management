@@ -5,7 +5,7 @@ import { companiesApi } from '@/api/endpoints/companies'
 import { Button, Input, Select, Modal, ConfirmDialog, PageHeader, EmptyState, LoadingSpinner, Badge } from '@/components/ui'
 import { CustomerType } from '@/types/models'
 import type { Customer, CustomerFormData } from '@/types/models'
-import { Plus, Search, Pencil, Trash2, Receipt, RefreshCw } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Receipt } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 const CUSTOMER_TYPE_LABELS: Record<CustomerType, string> = {
@@ -94,19 +94,6 @@ export default function CustomersPage() {
     onError: (err: Error) => alert('Error deleting: ' + err.message),
   })
 
-  const handleRefresh = async () => {
-    if (filterCompanyId) {
-      queryClient.removeQueries({ queryKey: ['customers-by-company', filterCompanyId] })
-      await queryClient.fetchQuery({
-        queryKey: ['customers-by-company', filterCompanyId],
-        queryFn: () => customersApi.getByCompany(Number(filterCompanyId)),
-      })
-    } else {
-      queryClient.removeQueries({ queryKey: ['customers'] })
-      await queryClient.fetchQuery({ queryKey: ['customers'], queryFn: customersApi.getAll })
-    }
-  }
-
   if (filterCompanyId ? isLoadingByCompany : isLoading) return <LoadingSpinner />
 
   return (
@@ -115,14 +102,9 @@ export default function CustomersPage() {
         title={filterCompanyName ? `Customers of ${filterCompanyName}` : 'Customers'}
         description={filterCompanyName ? `Showing customers for ${filterCompanyName}` : 'Customer management'}
       >
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={handleRefresh} title="Refresh data">
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </Button>
-          <Button onClick={() => { setEditingCustomer(null); setModalOpen(true) }}>
-            <Plus className="w-4 h-4" /> New Customer
-          </Button>
-        </div>
+        <Button onClick={() => { setEditingCustomer(null); setModalOpen(true) }}>
+          <Plus className="w-4 h-4" /> New Customer
+        </Button>
       </PageHeader>
 
       <div className="mb-4 flex gap-3">
@@ -142,7 +124,7 @@ export default function CustomersPage() {
           action={{ label: 'New Customer', onClick: () => setModalOpen(true) }}
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-outline bg-surface-50">
@@ -155,7 +137,7 @@ export default function CustomersPage() {
             </thead>
             <tbody className="divide-y divide-outline-light">
               {displayedCustomers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-surface-50">
+                <tr key={customer.id} className="hover:bg-surface-100">
                   <td className="px-6 py-4 font-medium text-secondary-800">{customer.name}</td>
                   <td className="px-6 py-4 text-secondary-600">{customer.personalId}</td>
                   <td className="px-6 py-4">

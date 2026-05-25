@@ -99,6 +99,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
+    // BACKUP / RESTORE / WIPE ERRORS
+    @ExceptionHandler(java.io.IOException.class)
+    public ResponseEntity<?> handleIOException(java.io.IOException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("timestamp", LocalDateTime.now());
+        error.put("status", 500);
+        error.put("message", "Backup operation failed: " + ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     // CUALQUIER ERROR GENERAL
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGeneralException(Exception ex) {
