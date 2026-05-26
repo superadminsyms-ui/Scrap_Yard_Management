@@ -16,7 +16,7 @@ export function setInMemoryToken(token: string | null) {
   inMemoryToken = token
 }
 
-function getToken(): string | null {
+export function getToken(): string | null {
   if (inMemoryToken) return inMemoryToken
   try {
     const stored = localStorage.getItem('auth')

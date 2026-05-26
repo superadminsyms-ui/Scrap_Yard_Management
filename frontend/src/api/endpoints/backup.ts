@@ -1,4 +1,4 @@
-import { apiClient } from '../client'
+import { apiClient, getToken } from '../client'
 import type { BackupFileInfo } from '@/types/models'
 
 export const backupApi = {
@@ -10,9 +10,7 @@ export const backupApi = {
   listBackups: () => apiClient<BackupFileInfo[]>('/backup/list'),
 
   downloadBackup: (filename: string) => {
-    const token = localStorage.getItem('auth')
-      ? JSON.parse(localStorage.getItem('auth')!).token
-      : null
+    const token = getToken()
     const headers: Record<string, string> = {}
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
@@ -32,9 +30,7 @@ export const backupApi = {
     }),
 
   uploadBackup: (file: File) => {
-    const token = localStorage.getItem('auth')
-      ? JSON.parse(localStorage.getItem('auth')!).token
-      : null
+    const token = getToken()
     const headers = new Headers()
     if (token) {
       headers.set('Authorization', `Bearer ${token}`)

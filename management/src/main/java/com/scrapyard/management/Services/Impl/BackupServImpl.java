@@ -177,12 +177,13 @@ public class BackupServImpl implements IBackupService {
     public BackupFileInfo uploadBackup(MultipartFile file) {
         validateAdminAccess();
 
-        if (!file.getOriginalFilename().endsWith(".zip")) {
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || !originalFilename.endsWith(".zip")) {
             throw new IllegalArgumentException("Only .zip files are allowed");
         }
 
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss"));
-        String filename = "upload_" + timestamp + "_" + file.getOriginalFilename();
+        String filename = "upload_" + timestamp + "_" + originalFilename;
         Path destPath = Paths.get(backupProperties.getDir(), filename);
 
         try {
