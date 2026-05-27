@@ -13,4 +13,5 @@ public class BackupStorageProperties {
 
     private String dir = "./backups";
     private int maxFiles = 10;
+    private int maxUploadSizeMb = 10;
 }

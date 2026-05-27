@@ -135,8 +135,22 @@ export default function BackupPage() {
     }
   }
 
+  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
   const handleUpload = async () => {
     if (!uploadFile) return
+
+    if (!uploadFile.name.toLowerCase().endsWith('.zip')) {
+      setErrorMsg('Only .zip files are allowed')
+      setTimeout(() => setErrorMsg(''), 4000)
+      return
+    }
+    if (uploadFile.size > MAX_UPLOAD_BYTES) {
+      setErrorMsg('File size exceeds the maximum allowed (10MB)')
+      setTimeout(() => setErrorMsg(''), 4000)
+      return
+    }
+
     setUploading(true)
     try {
       await backupApi.uploadBackup(uploadFile)

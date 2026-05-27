@@ -34,6 +34,7 @@ public class BackupController {
 
     @GetMapping("/list")
     public ResponseEntity<List<BackupFileInfo>> listBackups() {
+
         return ResponseEntity.ok(backupService.listBackups());
     }
 
