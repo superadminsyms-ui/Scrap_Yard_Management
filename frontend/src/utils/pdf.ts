@@ -106,12 +106,11 @@ export function generateInvoicePDF(invoice: Invoice): void {
 
   autoTable(doc, {
     startY: tableStartY,
-    head: [['Material', 'Weight', 'Unit Price', 'Container', 'Subtotal']],
+    head: [['Material', 'Weight', 'Unit Price', 'Subtotal']],
     body: (invoice.details || []).map((d, i) => [
       MATERIAL_LABELS[d.materialType] || d.materialType,
       `${d.weight} ${UNIT_LABELS[d.unit]}`,
       `$${(d.unitPrice || 0).toFixed(2)}`,
-      `#${d.containerId}`,
       `$${(subtotals[i] || 0).toFixed(2)}`,
     ]),
     theme: 'striped',
@@ -130,13 +129,12 @@ export function generateInvoicePDF(invoice: Invoice): void {
     alternateRowStyles: {
       fillColor: [248, 249, 250],
     },
-    columnStyles: {
-      0: { cellWidth: 50 },
-      1: { halign: 'right' as const },
-      2: { halign: 'right' as const },
-      3: { halign: 'center' as const },
-      4: { halign: 'right' as const },
-    },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { halign: 'right' as const },
+        2: { halign: 'right' as const },
+        3: { halign: 'right' as const },
+      },
     margin: { left: margin, right: margin },
     styles: {
       lineColor: [218, 220, 224],

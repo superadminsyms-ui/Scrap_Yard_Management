@@ -7,6 +7,7 @@ import com.scrapyard.management.Models.User;
 import com.scrapyard.management.Repository.UserRepo;
 import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IBackupService;
+import com.scrapyard.management.Services.ITwoFactorService;
 import com.scrapyard.management.config.BackupStorageProperties;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -61,6 +62,7 @@ public class BackupServImpl implements IBackupService {
     private final PasswordEncoder passwordEncoder;
     private final SecurityContextService securityContextService;
     private final UserRepo userRepo;
+    private final ITwoFactorService twoFactorService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -76,12 +78,14 @@ public class BackupServImpl implements IBackupService {
             PasswordEncoder passwordEncoder,
             SecurityContextService securityContextService,
             UserRepo userRepo,
+            ITwoFactorService twoFactorService,
             org.springframework.core.env.Environment env
     ) {
         this.backupProperties = backupProperties;
         this.passwordEncoder = passwordEncoder;
         this.securityContextService = securityContextService;
         this.userRepo = userRepo;
+        this.twoFactorService = twoFactorService;
 
         Path absoluteDir = Paths.get(backupProperties.getDir()).toAbsolutePath().normalize();
         try {
@@ -181,6 +185,7 @@ public class BackupServImpl implements IBackupService {
     public void restoreFromBackup(String filename, WipeRestoreRequest request) {
         validateConfirmation(request, "RESTORE");
         validateAdminPassword(request.getPassword());
+        validate2FA(request.getTwoFACode());
 
         Path zipPath = Paths.get(backupProperties.getDir(), filename).normalize();
         if (!Files.exists(zipPath)) {
@@ -265,6 +270,7 @@ public class BackupServImpl implements IBackupService {
     public void wipeAllData(WipeRestoreRequest request) {
         validateConfirmation(request, "DELETE");
         validateAdminPassword(request.getPassword());
+        validate2FA(request.getTwoFACode());
 
         try {
             entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
@@ -490,6 +496,13 @@ public class BackupServImpl implements IBackupService {
         User currentUser = securityContextService.getCurrentUser();
         if (currentUser == null || !passwordEncoder.matches(rawPassword, currentUser.getPassword())) {
             throw new AccessDeniedException("Invalid admin password");
+        }
+    }
+
+    private void validate2FA(String twoFACode) {
+        User currentUser = securityContextService.getCurrentUser();
+        if (currentUser != null) {
+            twoFactorService.verifyRequired(currentUser, twoFACode);
         }
     }
 

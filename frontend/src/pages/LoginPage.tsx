@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { ApiError } from '@/api/client'
-import { Warehouse, Eye, EyeOff, Lock } from 'lucide-react'
+import { Warehouse, Eye, EyeOff, Lock, ShieldCheck, ArrowLeft } from 'lucide-react'
+import { OTPInput } from '@/components/OTPInput'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -12,10 +13,14 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [lockedOut, setLockedOut] = useState(false)
   const [lockoutTimer, setLockoutTimer] = useState(0)
-  const { login } = useAuth()
+
+  const [show2FA, setShow2FA] = useState(false)
+  const [twoFACode, setTwoFACode] = useState('')
+  const [tempToken, setTempToken] = useState('')
+
+  const { login, verify2FA } = useAuth()
   const navigate = useNavigate()
 
-  // Restore lockout state on mount (survives page refresh)
   useEffect(() => {
     const lockoutUntil = sessionStorage.getItem('loginLockoutUntil')
     if (lockoutUntil) {
@@ -59,7 +64,10 @@ export default function LoginPage() {
 
     try {
       const response = await login({ email, password })
-      if (response.mustChangePassword) {
+      if (response.requires2FA) {
+        setTempToken(response.tempToken ?? '')
+        setShow2FA(true)
+      } else if (response.mustChangePassword) {
         navigate('/change-password')
       } else {
         navigate('/')
@@ -78,6 +86,36 @@ export default function LoginPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handle2FAVerify = async () => {
+    if (twoFACode.length !== 6) return
+    setError('')
+    setSubmitting(true)
+
+    try {
+      const response = await verify2FA(tempToken, twoFACode)
+      if (response.mustChangePassword) {
+        navigate('/change-password')
+      } else {
+        navigate('/')
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('Verification failed')
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleBackToLogin = () => {
+    setShow2FA(false)
+    setTwoFACode('')
+    setTempToken('')
+    setError('')
   }
 
   return (
@@ -116,6 +154,53 @@ export default function LoginPage() {
                   style={{ width: `${((60 - lockoutTimer) / 60) * 100}%` }}
                 />
               </div>
+            </div>
+          ) : show2FA ? (
+            <div className="space-y-5">
+              <div className="flex flex-col items-center">
+                <div className="w-14 h-14 bg-primary-50 rounded-full flex items-center justify-center mb-3">
+                  <ShieldCheck className="w-7 h-7 text-primary-500" />
+                </div>
+                <h2 className="text-lg font-semibold text-secondary-800">Two-Factor Authentication</h2>
+                <p className="text-sm text-secondary-500 text-center mt-1">
+                  Enter the 6-digit code from your authenticator app
+                </p>
+                {email && (
+                  <p className="text-xs text-secondary-400 mt-1">{email}</p>
+                )}
+              </div>
+
+              {error && (
+                <div className="bg-error-50 text-error-700 text-sm p-3 rounded-xl border border-error-200">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <OTPInput
+                  value={twoFACode}
+                  onChange={setTwoFACode}
+                  error={!!error}
+                  disabled={submitting}
+                />
+              </div>
+
+              <button
+                onClick={handle2FAVerify}
+                disabled={twoFACode.length !== 6 || submitting}
+                className="w-full py-2.5 rounded-full bg-primary-500 text-white font-medium text-sm hover:bg-primary-600 transition-colors disabled:opacity-50 shadow-elevation-1"
+              >
+                {submitting ? 'Verifying...' : 'Verify'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBackToLogin}
+                className="w-full flex items-center justify-center gap-1.5 text-sm text-secondary-500 hover:text-secondary-700 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to login
+              </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

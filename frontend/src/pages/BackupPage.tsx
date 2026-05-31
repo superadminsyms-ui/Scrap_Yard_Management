@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { backupApi } from '@/api/endpoints/backup'
+import { useAuth } from '@/context/AuthContext'
 import type { BackupFileInfo } from '@/types/models'
 import {
   Download,
@@ -12,6 +13,7 @@ import {
   RotateCcw,
   Loader2,
   CheckCircle,
+  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { clearAuth } from '@/api/client'
@@ -41,6 +43,7 @@ function formatDate(isoString: string): string {
 
 export default function BackupPage() {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
 
   const [restoreFile, setRestoreFile] = useState<string>('')
   const [uploadFile, setUploadFile] = useState<File | null>(null)
@@ -50,10 +53,14 @@ export default function BackupPage() {
   const [showRestoreModal, setShowRestoreModal] = useState(false)
   const [wipeConfirm, setWipeConfirm] = useState('')
   const [wipePassword, setWipePassword] = useState('')
+  const [wipeTwoFACode, setWipeTwoFACode] = useState('')
   const [restoreConfirm, setRestoreConfirm] = useState('')
   const [restorePassword, setRestorePassword] = useState('')
+  const [restoreTwoFACode, setRestoreTwoFACode] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+
+  const twoFAEnabled = user?.twoFactorEnabled ?? false
 
   const { data: backups = [], isLoading } = useQuery({
     queryKey: ['backups'],
@@ -87,7 +94,7 @@ export default function BackupPage() {
   })
 
   const wipeMutation = useMutation({
-    mutationFn: () => backupApi.wipeData(wipeConfirm, wipePassword),
+    mutationFn: () => backupApi.wipeData(wipeConfirm, wipePassword, twoFAEnabled ? wipeTwoFACode : undefined),
     onSuccess: () => {
       setShowWipeModal(false)
       queryClient.invalidateQueries({ queryKey: ['backups'] })
@@ -101,11 +108,12 @@ export default function BackupPage() {
   })
 
   const restoreMutation = useMutation({
-    mutationFn: () => backupApi.restoreBackup(restoreFile, restoreConfirm, restorePassword),
+    mutationFn: () => backupApi.restoreBackup(restoreFile, restoreConfirm, restorePassword, twoFAEnabled ? restoreTwoFACode : undefined),
     onSuccess: () => {
       setShowRestoreModal(false)
       setRestoreConfirm('')
       setRestorePassword('')
+      setRestoreTwoFACode('')
       queryClient.invalidateQueries({ queryKey: ['backups'] })
       setSuccessMsg('Backup restored successfully')
       setTimeout(() => setSuccessMsg(''), 4000)
@@ -292,6 +300,7 @@ export default function BackupPage() {
                 onClick={() => {
                   setRestoreConfirm('')
                   setRestorePassword('')
+                  setRestoreTwoFACode('')
                   setShowRestoreModal(true)
                 }}
                 disabled={!restoreFile}
@@ -352,6 +361,7 @@ export default function BackupPage() {
           onClick={() => {
             setWipeConfirm('')
             setWipePassword('')
+            setWipeTwoFACode('')
             setShowWipeModal(true)
           }}
           variant="danger"
@@ -381,6 +391,12 @@ export default function BackupPage() {
                 Password: admin123
               </p>
             </div>
+            {twoFAEnabled && (
+              <div className="p-3 rounded-lg bg-primary-50 border border-primary-200 flex items-center gap-2 text-body-sm text-primary-600">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                2FA verification required for this action
+              </div>
+            )}
             <div className="space-y-3">
               <div>
                 <label className="text-label-lg font-medium text-secondary-800 block mb-1">
@@ -406,6 +422,22 @@ export default function BackupPage() {
                   placeholder="Your password"
                 />
               </div>
+              {twoFAEnabled && (
+                <div>
+                  <label className="text-label-lg font-medium text-secondary-800 block mb-1">
+                    2FA Code
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={wipeTwoFACode}
+                    onChange={(e) => setWipeTwoFACode(e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3 py-2 rounded-lg border border-outline-light bg-surface-100 text-secondary-800 text-body-md font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-error-500"
+                    placeholder="000000"
+                  />
+                </div>
+              )}
             </div>
             <div className="flex gap-3 justify-end pt-2">
               <Button variant="secondary" onClick={() => setShowWipeModal(false)}>
@@ -413,7 +445,7 @@ export default function BackupPage() {
               </Button>
               <Button
                 variant="danger"
-                disabled={wipeConfirm !== 'DELETE' || !wipePassword || wipeMutation.isPending}
+                disabled={wipeConfirm !== 'DELETE' || !wipePassword || (twoFAEnabled && wipeTwoFACode.length !== 6) || wipeMutation.isPending}
                 onClick={() => wipeMutation.mutate()}
               >
                 {wipeMutation.isPending ? (
@@ -440,6 +472,12 @@ export default function BackupPage() {
               Restoring from <strong>{restoreFile}</strong> will overwrite all current data.
               This action cannot be undone.
             </p>
+            {twoFAEnabled && (
+              <div className="p-3 rounded-lg bg-warning-50 border border-warning-200 flex items-center gap-2 text-body-sm text-warning-700">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                2FA verification required for this action
+              </div>
+            )}
             <div className="space-y-3">
               <div>
                 <label className="text-label-lg font-medium text-secondary-800 block mb-1">
@@ -465,6 +503,22 @@ export default function BackupPage() {
                   placeholder="Your password"
                 />
               </div>
+              {twoFAEnabled && (
+                <div>
+                  <label className="text-label-lg font-medium text-secondary-800 block mb-1">
+                    2FA Code
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={restoreTwoFACode}
+                    onChange={(e) => setRestoreTwoFACode(e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3 py-2 rounded-lg border border-outline-light bg-surface-100 text-secondary-800 text-body-md font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-warning-500"
+                    placeholder="000000"
+                  />
+                </div>
+              )}
             </div>
             <div className="flex gap-3 justify-end pt-2">
               <Button variant="secondary" onClick={() => setShowRestoreModal(false)}>
@@ -472,7 +526,7 @@ export default function BackupPage() {
               </Button>
               <Button
                 variant="primary"
-                disabled={restoreConfirm !== 'RESTORE' || !restorePassword || restoreMutation.isPending}
+                disabled={restoreConfirm !== 'RESTORE' || !restorePassword || (twoFAEnabled && restoreTwoFACode.length !== 6) || restoreMutation.isPending}
                 onClick={() => restoreMutation.mutate()}
               >
                 {restoreMutation.isPending ? (

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ProtectedRoute, SuperAdminRoute, RedirectIfAuth } from '@/components/ProtectedRoute'
@@ -48,7 +48,10 @@ export const router = createBrowserRouter([
         path: 'scrapyards',
         element: <SuperAdminRoute><SuspenseWrapper><ScrapyardsPage /></SuspenseWrapper></SuperAdminRoute>,
       },
-      { path: 'scrapyards/:id', element: <SuspenseWrapper><ScrapyardDetailPage /></SuspenseWrapper> },
+      {
+        path: 'scrapyards/:id',
+        element: <SuperAdminRoute><SuspenseWrapper><ScrapyardDetailPage /></SuspenseWrapper></SuperAdminRoute>,
+      },
       { path: 'containers', element: <SuspenseWrapper><ContainersPage /></SuspenseWrapper> },
       { path: 'customers', element: <SuspenseWrapper><CustomersPage /></SuspenseWrapper> },
       { path: 'customers/:id/invoices', element: <SuspenseWrapper><CustomerInvoicesPage /></SuspenseWrapper> },
@@ -63,6 +66,7 @@ export const router = createBrowserRouter([
       },
       { path: 'stock', element: <SuspenseWrapper><StockPage /></SuspenseWrapper> },
       { path: 'profile', element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper> },
+      { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
 ])

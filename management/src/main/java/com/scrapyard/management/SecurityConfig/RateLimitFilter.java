@@ -18,7 +18,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final int LOGIN_MAX_REQUESTS = 5;
     private static final long LOGIN_WINDOW_MS = 60_000;
 
-    private static final int API_MAX_REQUESTS = 100;
+    private static final int API_MAX_REQUESTS = 200;
     private static final long API_WINDOW_MS = 60_000;
 
     private final ConcurrentHashMap<String, LinkedList<Long>> loginAttempts = new ConcurrentHashMap<>();
@@ -45,7 +45,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private boolean isRateLimited(String ip, ConcurrentHashMap<String, LinkedList<Long>> store, int maxRequests, long windowMs) {
+    private boolean isRateLimited(String ip, ConcurrentHashMap<String,
+            LinkedList<Long>> store, int maxRequests, long windowMs) {
         long now = System.currentTimeMillis();
         LinkedList<Long> timestamps = store.computeIfAbsent(ip, k -> new LinkedList<>());
 

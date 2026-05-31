@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { authApi } from '@/api/endpoints/auth'
-import { setInMemoryToken, clearAuth } from '@/api/client'
+import { setInMemoryToken, clearAuth, getToken } from '@/api/client'
 import type { User, LoginRequest, LoginResponse } from '@/types/models'
 import { useQueryClient } from '@tanstack/react-query'
 
 interface AuthState {
   user: User | null
   token: string | null
+  tempToken: string | null
   isAuthenticated: boolean
   isSuperAdmin: boolean
   isManager: boolean
@@ -15,6 +16,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (data: LoginRequest) => Promise<LoginResponse>
+  verify2FA: (tempToken: string, code: string) => Promise<LoginResponse>
   logout: () => void
   refreshUser: () => Promise<void>
 }
@@ -37,6 +39,7 @@ function getStoredAuth(): { token: string | null; user: User | null } {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [tempToken, setTempToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const queryClient = useQueryClient()
 
@@ -65,17 +68,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('auth', JSON.stringify({ token: t, user: u }))
   }
 
+  const buildUserFromResponse = (response: LoginResponse): User => ({
+    id: response.userId,
+    email: response.email,
+    role: response.role as User['role'],
+    yardId: response.yardId,
+    managerName: response.managerName,
+    mustChangePassword: response.mustChangePassword,
+    active: true,
+    twoFactorEnabled: response.twoFactorEnabled,
+  })
+
   const login = useCallback(async (data: LoginRequest): Promise<LoginResponse> => {
     const response = await authApi.login(data)
-    const userInfo: User = {
-      id: response.userId,
-      email: response.email,
-      role: response.role as User['role'],
-      yardId: response.yardId,
-      managerName: response.managerName,
-      mustChangePassword: response.mustChangePassword,
-      active: true,
+
+    if (response.requires2FA) {
+      setTempToken(response.tempToken ?? null)
+      return response
     }
+
+    const userInfo = buildUserFromResponse(response)
     setToken(response.token)
     setUser(userInfo)
     if (response.mustChangePassword) {
@@ -86,9 +98,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response
   }, [])
 
+  const verify2FA = useCallback(async (tToken: string, code: string): Promise<LoginResponse> => {
+    const response = await authApi.verify2FA(tToken, code)
+    const userInfo = buildUserFromResponse(response)
+    setToken(response.token)
+    setUser(userInfo)
+    setTempToken(null)
+    if (response.mustChangePassword) {
+      setInMemoryToken(response.token)
+    } else {
+      saveAuth(response.token, userInfo)
+    }
+    return response
+  }, [])
+
   const logout = useCallback(() => {
+    const currentToken = getToken()
+    if (currentToken) {
+      authApi.logout(currentToken)
+    }
     setToken(null)
     setUser(null)
+    setTempToken(null)
     clearAuth()
     queryClient.clear()
   }, [queryClient])
@@ -109,7 +140,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isAuthenticated, isSuperAdmin, isManager, loading, login, logout, refreshUser }}
+      value={{
+        user, token, tempToken, isAuthenticated, isSuperAdmin, isManager, loading,
+        login, verify2FA, logout, refreshUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

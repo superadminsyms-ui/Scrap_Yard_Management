@@ -23,10 +23,10 @@ export const backupApi = {
       method: 'DELETE',
     }),
 
-  restoreBackup: (filename: string, confirmation: string, password: string) =>
+  restoreBackup: (filename: string, confirmation: string, password: string, twoFACode?: string) =>
     apiClient<{ message: string }>(`/backup/restore/${filename}`, {
       method: 'POST',
-      body: JSON.stringify({ confirmation, password }),
+      body: JSON.stringify({ confirmation, password, twoFACode }),
     }),
 
   uploadBackup: (file: File) => {
@@ -56,9 +56,9 @@ export const backupApi = {
     })
   },
 
-  wipeData: (confirmation: string, password: string) =>
+  wipeData: (confirmation: string, password: string, twoFACode?: string) =>
     apiClient<{ message: string }>('/backup/wipe', {
       method: 'POST',
-      body: JSON.stringify({ confirmation, password }),
+      body: JSON.stringify({ confirmation, password, twoFACode }),
     }),
 }

@@ -1,17 +1,19 @@
 package com.scrapyard.management.Controllers;
-
 import com.scrapyard.management.DTO.Request.AuthDTO.ChangePasswordRequest;
 import com.scrapyard.management.DTO.Request.AuthDTO.LoginRequest;
 import com.scrapyard.management.DTO.Request.AuthDTO.RegisterRequest;
 import com.scrapyard.management.DTO.Request.AuthDTO.UpdateProfileRequest;
+import com.scrapyard.management.SecurityConfig.JwtUtil;
 import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IAuthService;
+import com.scrapyard.management.Services.ITokenRevocationService;
 import com.scrapyard.management.Services.Impl.AuthServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.ZoneId;
 import java.util.Map;
 
 @RestController
@@ -24,9 +26,18 @@ public class AuthController {
     @Autowired
     private final SecurityContextService securityContextService;
 
-    public AuthController(AuthServImpl authService, SecurityContextService securityContextService) {
+    @Autowired
+    private final JwtUtil jwtUtil;
+
+    @Autowired
+    private final ITokenRevocationService tokenRevocationService;
+
+    public AuthController(AuthServImpl authService, SecurityContextService securityContextService,
+                          JwtUtil jwtUtil, ITokenRevocationService tokenRevocationService) {
         this.authService = authService;
         this.securityContextService = securityContextService;
+        this.jwtUtil = jwtUtil;
+        this.tokenRevocationService = tokenRevocationService;
     }
 
     @PostMapping("/login")
@@ -37,6 +48,28 @@ public class AuthController {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
+        try {
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                String jti = jwtUtil.extractJti(token);
+                String userEmail = securityContextService.getCurrentUser() != null
+                        ? securityContextService.getCurrentUser().getEmail()
+                        : "unknown";
+                tokenRevocationService.revoke(
+                        jti,
+                        userEmail,
+                        jwtUtil.extractExpiration(token).toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                );
+            }
+        } catch (Exception ignored) {
+        }
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
     @PostMapping("/register")

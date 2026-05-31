@@ -20,6 +20,9 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long expiration;
 
+    private static final String PURPOSE_2FA_PENDING = "2fa-pending";
+    private static final long TEMP_TOKEN_EXPIRATION = 300000;
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -34,6 +37,7 @@ public class JwtUtil {
                 .subject(user.getId().toString())
                 .claim("role", user.getRole().name())
                 .claim("yardId", yardId)
+                .id(java.util.UUID.randomUUID().toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
@@ -71,6 +75,49 @@ public class JwtUtil {
         try {
             Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
             return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public String extractJti(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getId();
+    }
+
+    public Date extractExpiration(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getExpiration();
+    }
+
+    public String generateTempToken(User user) {
+        return Jwts.builder()
+                .subject(user.getId().toString())
+                .claim("role", user.getRole().name())
+                .claim("purpose", PURPOSE_2FA_PENDING)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + TEMP_TOKEN_EXPIRATION))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public boolean isTempToken(String token) {
+        try {
+            String purpose = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .get("purpose", String.class);
+            return PURPOSE_2FA_PENDING.equals(purpose);
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

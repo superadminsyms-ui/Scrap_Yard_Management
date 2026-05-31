@@ -16,4 +16,5 @@ public class UserInfoResponse {
     private String managerName;
     private boolean mustChangePassword;
     private boolean active;
+    private boolean twoFactorEnabled;
 }

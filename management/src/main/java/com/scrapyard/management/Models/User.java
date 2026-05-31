@@ -34,6 +34,15 @@ public class User {
     @Column(nullable = false)
     private boolean mustChangePassword = true;
 
+    @Column
+    private Boolean twoFactorEnabled = false;
+
+    @Column(length = 100)
+    private String twoFactorSecret;
+
+    @Column
+    private LocalDateTime twoFactorSetupDate;
+
     @OneToOne
     @JoinColumn(name = "manager_id")
     private ManagerSY managerSY;

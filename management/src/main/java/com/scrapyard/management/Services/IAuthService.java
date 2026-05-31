@@ -12,6 +12,7 @@ import com.scrapyard.management.Models.User;
 public interface IAuthService {
 
     LoginResponse login(LoginRequest request);
+    LoginResponse complete2FALogin(String tempToken, String code);
     RegisterResponse register(RegisterRequest request, User currentUser);
     UserInfoResponse getCurrentUserInfo(User user);
     void changePassword(ChangePasswordRequest request, User user);

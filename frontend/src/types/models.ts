@@ -251,6 +251,7 @@ export interface User {
   managerName?: string
   mustChangePassword: boolean
   active: boolean
+  twoFactorEnabled: boolean
 }
 
 export interface LoginRequest {
@@ -266,6 +267,9 @@ export interface LoginResponse {
   yardId: number | null
   managerName?: string
   mustChangePassword: boolean
+  requires2FA: boolean
+  tempToken?: string
+  twoFactorEnabled: boolean
 }
 
 export interface RegisterRequest {
@@ -332,4 +336,18 @@ export interface BackupFileInfo {
   filename: string
   sizeBytes: number
   createdAt: string
+}
+
+export interface TwoFASetupResponse {
+  secret: string
+  qrCodeUrl: string
+}
+
+export interface TwoFAStatusResponse {
+  enabled: boolean
+}
+
+export interface Disable2FARequest {
+  currentPassword: string
+  code: string
 }

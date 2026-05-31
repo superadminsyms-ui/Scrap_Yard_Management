@@ -73,6 +73,49 @@ public class AuthServImpl implements IAuthService {
             throw new IllegalArgumentException("Your account has been deactivated from the system, please contact the super admin");
         }
 
+        if (Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+            LoginResponse response = new LoginResponse();
+            response.setRequires2FA(true);
+            response.setTempToken(jwtUtil.generateTempToken(user));
+            response.setEmail(user.getEmail());
+            return response;
+        }
+
+        return buildFullLoginResponse(user);
+    }
+
+    @Override
+    public LoginResponse complete2FALogin(String tempToken, String code) {
+        if (!jwtUtil.validateToken(tempToken)) {
+            throw new IllegalArgumentException("Temporary token has expired. Please log in again.");
+        }
+
+        if (!jwtUtil.isTempToken(tempToken)) {
+            throw new IllegalArgumentException("Invalid token type");
+        }
+
+        String userId = jwtUtil.extractUserId(tempToken);
+        User user = userRepo.findById(Long.parseLong(userId))
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (code == null || code.isBlank() || code.length() != 6) {
+            throw new IllegalArgumentException("Invalid verification code");
+        }
+
+        try {
+            int providedCode = Integer.parseInt(code);
+            var googleAuth = new com.warrenstrange.googleauth.GoogleAuthenticator();
+            if (!googleAuth.authorize(user.getTwoFactorSecret(), providedCode)) {
+                throw new IllegalArgumentException("Invalid verification code");
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid verification code");
+        }
+
+        return buildFullLoginResponse(user);
+    }
+
+    private LoginResponse buildFullLoginResponse(User user) {
         String token = jwtUtil.generateToken(user);
 
         LoginResponse response = new LoginResponse();
@@ -81,6 +124,8 @@ public class AuthServImpl implements IAuthService {
         response.setEmail(user.getEmail());
         response.setRole(user.getRole().name());
         response.setMustChangePassword(user.isMustChangePassword());
+        response.setRequires2FA(false);
+        response.setTwoFactorEnabled(Boolean.TRUE.equals(user.getTwoFactorEnabled()));
 
         if (user.getManagerSY() != null) {
             response.setManagerName(user.getManagerSY().getName());
@@ -156,6 +201,7 @@ public class AuthServImpl implements IAuthService {
         response.setRole(user.getRole().name());
         response.setMustChangePassword(user.isMustChangePassword());
         response.setActive(user.isActive());
+        response.setTwoFactorEnabled(Boolean.TRUE.equals(user.getTwoFactorEnabled()));
 
         if (user.getManagerSY() != null) {
             response.setManagerName(user.getManagerSY().getName());

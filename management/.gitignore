@@ -32,5 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
+### Environment ###
+.env
+
 ### Backups (should not be inside the project) ###
 backups/

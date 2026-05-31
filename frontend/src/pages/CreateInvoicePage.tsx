@@ -7,7 +7,7 @@ import { scrapyardsApi } from '@/api/endpoints/scrapyards'
 import { managersApi } from '@/api/endpoints/managers'
 import { containersApi } from '@/api/endpoints/containers'
 import { useAuth } from '@/context/AuthContext'
-import { Button, Input, Select, Card } from '@/components/ui'
+import { Button, Input, Select, Card, ConfirmDialog } from '@/components/ui'
 import { MaterialType, UnitOfMeasure, CustomerType } from '@/types/models'
 import { ArrowLeft, Plus, Trash2, Check } from 'lucide-react'
 
@@ -46,6 +46,7 @@ export default function CreateInvoicePage() {
   const [nextKey, setNextKey] = useState(1)
   const [customerSearch, setCustomerSearch] = useState('')
   const [error, setError] = useState('')
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const { isManager, user } = useAuth()
 
   useEffect(() => {
@@ -148,6 +149,11 @@ export default function CreateInvoicePage() {
       if (d.weight <= 0) { setError('All weights must be positive'); return }
       if (d.unitPrice <= 0) { setError('All prices must be positive'); return }
     }
+    setShowConfirmDialog(true)
+  }
+
+  const handleConfirmCreate = () => {
+    setShowConfirmDialog(false)
     saveMutation.mutate()
   }
 
@@ -368,6 +374,16 @@ export default function CreateInvoicePage() {
           </Card>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={handleConfirmCreate}
+        title="Confirm Invoice Creation"
+        message="You are about to create a new invoice. Please review all data carefully as this is an irreversible operation."
+        confirmLabel="Confirm"
+        variant="primary"
+      />
     </div>
   )
 }

@@ -22,10 +22,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepo userRepo;
+    private final com.scrapyard.management.Services.ITokenRevocationService tokenRevocationService;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserRepo userRepo) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserRepo userRepo, com.scrapyard.management.Services.ITokenRevocationService tokenRevocationService) {
         this.jwtUtil = jwtUtil;
         this.userRepo = userRepo;
+        this.tokenRevocationService = tokenRevocationService;
     }
 
     @Override
@@ -44,6 +46,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (!jwtUtil.validateToken(token)) {
             filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (jwtUtil.isTempToken(token)) {
+            if (!request.getRequestURI().startsWith("/api/auth/2fa/verify")) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+        }
+
+        String jti = jwtUtil.extractJti(token);
+        if (tokenRevocationService.isRevoked(jti)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
