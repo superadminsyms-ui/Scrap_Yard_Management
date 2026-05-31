@@ -8,10 +8,12 @@ import com.scrapyard.management.Repository.*;
 import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -49,56 +51,48 @@ public class DashboardServImpl implements IDashboardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DashboardResponse getStats() {
         Long yardId = securityContextService.getCurrentYardId();
         boolean isSuperAdmin = securityContextService.isSuperAdmin();
 
         DashboardResponse response = new DashboardResponse();
 
-        List<Company> companies;
-        List<ScrapYard> yards;
-        List<Container> containers;
-        List<Customer> customers;
-        List<Invoice> invoices;
-        List<Movement> movements;
+        List<Invoice> recentInvoices;
+        List<Movement> recentMovements;
 
         if (isSuperAdmin) {
-            companies = companyRepo.findAll();
-            yards = scrapYardRepo.findAll();
-            containers = containerRepo.findAll();
-            customers = customerRepo.findAll();
-            invoices = invoiceRepo.findAll();
-            movements = movementRepo.findAll();
+            response.setTotalCompanies(companyRepo.count());
+            response.setTotalScrapyards(scrapYardRepo.count());
+            response.setTotalContainers(containerRepo.count());
+            response.setTotalCustomers(customerRepo.count());
+            response.setTotalInvoices(invoiceRepo.count());
+            response.setTotalMovements(movementRepo.count());
 
-            response.setTotalCompanies((long) companies.size());
-            response.setTotalScrapyards((long) yards.size());
+            BigDecimal totalSpent = invoiceRepo.sumTotalPaid();
+            response.setTotalSpent(totalSpent);
+
+            recentInvoices = invoiceRepo.findTop5ByOrderByCreatedAtDesc();
+            recentMovements = movementRepo.findTop5ByOrderByMovementDateDesc();
         } else {
             ScrapYard yard = scrapYardRepo.findById(yardId)
                     .orElseThrow(() -> new IllegalArgumentException("Scrap yard not found"));
 
-            yards = List.of(yard);
-            containers = yard.getContainers();
-            customers = yard.getCompany().getCustomers();
-            invoices = yard.getInvoices();
-            movements = movementRepo.findByScrapYardId(yardId);
-
             response.setScrapyardName(yard.getName());
             response.setScrapyardLocation(yard.getLocation());
+            response.setTotalContainers((long) yard.getContainers().size());
+            response.setTotalCustomers((long) yard.getCompany().getCustomers().size());
+            response.setTotalInvoices(invoiceRepo.countByScrapYardId(yardId));
+            response.setTotalMovements(movementRepo.countByScrapYardId(yardId));
+
+            BigDecimal totalSpent = invoiceRepo.sumTotalPaidByScrapYardId(yardId);
+            response.setTotalSpent(totalSpent);
+
+            recentInvoices = invoiceRepo.findTop5ByScrapYardIdOrderByCreatedAtDesc(yardId);
+            recentMovements = movementRepo.findTop5ByScrapYardIdOrderByMovementDateDesc(yardId);
         }
 
-        response.setTotalContainers((long) containers.size());
-        response.setTotalCustomers((long) customers.size());
-        response.setTotalInvoices((long) invoices.size());
-        response.setTotalMovements((long) movements.size());
-
-        BigDecimal totalSpent = invoices.stream()
-                .map(inv -> inv.getTotalPaid() != null ? inv.getTotalPaid() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        response.setTotalSpent(totalSpent);
-
-        List<InvoiceDTOResponse1> recentInvoices = invoices.stream()
-                .sorted(Comparator.comparing(Invoice::getCreatedAt).reversed())
-                .limit(5)
+        response.setRecentInvoices(recentInvoices.stream()
                 .map(inv -> new InvoiceDTOResponse1(
                         inv.getId(),
                         inv.getCustomer().getName(),
@@ -109,15 +103,11 @@ public class DashboardServImpl implements IDashboardService {
                         inv.getTotalPaid(),
                         inv.getDiscount()
                 ))
-                .toList();
-        response.setRecentInvoices(recentInvoices);
+                .toList());
 
-        List<MovementDTOResponse> recentMovements = movements.stream()
-                .sorted(Comparator.comparing(Movement::getMovementDate).reversed())
-                .limit(5)
+        response.setRecentMovements(recentMovements.stream()
                 .map(this::mapMovementToDTO)
-                .toList();
-        response.setRecentMovements(recentMovements);
+                .toList());
 
         return response;
     }

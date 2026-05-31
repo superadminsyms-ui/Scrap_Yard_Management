@@ -13,6 +13,7 @@ import com.scrapyard.management.Repository.ScrapYardRepo;
 import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IMovementService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
@@ -130,9 +131,9 @@ public class MovementServImpl implements IMovementService {
         List<Movement> movements;
 
         if (yardId != null) {
-            movements = movementRepo.findByScrapYardId(yardId);
+            movements = movementRepo.findByScrapYardId(yardId, Sort.by(Sort.Direction.DESC, "movementDate"));
         } else {
-            movements = movementRepo.findAll();
+            movements = movementRepo.findAll(Sort.by(Sort.Direction.DESC, "movementDate"));
         }
 
         if (movements.isEmpty()) {
@@ -167,7 +168,7 @@ public class MovementServImpl implements IMovementService {
         ScrapYard scrapYard = scrapYardRepo.findById(yardId)
                 .orElseThrow(() -> new IllegalArgumentException("ScrapYard not found"));
 
-        List<Movement> movements = movementRepo.findByScrapYardId(yardId);
+        List<Movement> movements = movementRepo.findByScrapYardId(yardId, Sort.by(Sort.Direction.DESC, "movementDate"));
         if (movements.isEmpty()) {
             throw new IllegalArgumentException("No movements found for this ScrapYard");
         }
@@ -187,7 +188,7 @@ public class MovementServImpl implements IMovementService {
             throw new IllegalArgumentException("Access denied to this container");
         }
 
-        List<Movement> movements = movementRepo.findByContainerId(containerId);
+        List<Movement> movements = movementRepo.findByContainerId(containerId, Sort.by(Sort.Direction.DESC, "movementDate"));
         if (movements.isEmpty()) {
             throw new IllegalArgumentException("No movements found for this Container");
         }

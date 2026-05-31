@@ -9,14 +9,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "movement")
+@Table(name = "movement", indexes = {
+    @Index(name = "idx_movement_scrapyard_id", columnList = "scrapyard_id"),
+    @Index(name = "idx_movement_container_id", columnList = "container_id"),
+    @Index(name = "idx_movement_date", columnList = "movement_date"),
+    @Index(name = "idx_movement_manager_id", columnList = "manager_id")
+})
 public class Movement {
 
     @Id
@@ -42,7 +46,14 @@ public class Movement {
     private UnitOfMeasure unitOfMeasure;
 
     @Column(nullable = false)
-    private LocalDateTime movementDate = LocalDateTime.now(ZoneOffset.UTC);
+    private LocalDateTime movementDate;
+
+    @PrePersist
+    protected void onCreate() {
+        if (movementDate == null) {
+            movementDate = LocalDateTime.now();
+        }
+    }
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "manager_id", nullable = false)

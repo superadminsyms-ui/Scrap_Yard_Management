@@ -57,6 +57,7 @@ export default function StockPage() {
       return mod.invoicesApi.getByYard(yardId!)
     },
     enabled: activeTab === 'invoices' && !!yardId,
+    select: (data) => data.content,
   })
 
   const movementsQuery = useQuery({
@@ -75,6 +76,7 @@ export default function StockPage() {
       return mod.invoicesApi.getByYard(yardId!)
     },
     enabled: activeTab === 'resume' && !!yardId,
+    select: (data) => data.content,
   })
 
   const [reportType, setReportType] = useState('PURCHASES')

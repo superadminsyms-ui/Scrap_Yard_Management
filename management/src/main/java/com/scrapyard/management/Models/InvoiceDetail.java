@@ -13,7 +13,10 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "invoice_detail")
+@Table(name = "invoice_detail", indexes = {
+    @Index(name = "idx_invoicedetail_invoice_id", columnList = "invoice_id"),
+    @Index(name = "idx_invoicedetail_container_id", columnList = "container_id")
+})
 public class InvoiceDetail {
 
     @Id
@@ -44,7 +47,7 @@ public class InvoiceDetail {
     private BigDecimal unitPrice;
 
     //Container
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "container_id",nullable = false)
     private Container container;
 

@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { scrapyardsApi } from '@/api/endpoints/scrapyards'
+import { invoicesApi, type InvoicePageParams } from '@/api/endpoints/invoices'
 import { PageHeader, Tabs, LoadingSpinner, EmptyState, Badge, StatCard, Card, Button, Select } from '@/components/ui'
 import { MaterialType, MovementType, ReportPeriod } from '@/types/models'
 import type { Container, InvoiceSummary, Movement, MaterialStockItem, ContainerStockItem, YardStockSummary, ScrapyardReport, MaterialPricing } from '@/types/models'
-import { ArrowLeft, Package, Scale, TrendingUp, Receipt, FileDown } from 'lucide-react'
+import { ArrowLeft, Package, Scale, TrendingUp, Receipt, FileDown, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const MATERIAL_LABELS: Record<MaterialType, string> = {
   [MaterialType.ALUMINIUM]: 'Aluminum',
@@ -31,6 +32,7 @@ export default function ScrapyardDetailPage() {
   const { id } = useParams<{ id: string }>()
   const yardId = Number(id)
   const [activeTab, setActiveTab] = useState('containers')
+  const [invPage, setInvPage] = useState(0)
 
   const yardQuery = useQuery({
     queryKey: ['scrapyard', yardId],
@@ -55,14 +57,7 @@ export default function ScrapyardDetailPage() {
     enabled: activeTab === 'stock',
   })
 
-  const invoicesQuery = useQuery({
-    queryKey: ['scrapyard-invoices', yardId],
-    queryFn: async () => {
-      const mod = await import('@/api/endpoints/invoices')
-      return mod.invoicesApi.getByYard(yardId)
-    },
-    enabled: activeTab === 'invoices',
-  })
+  const invParams: InvoicePageParams = { page: invPage, size: 20, sortBy: 'createdAt', direction: 'desc' }
 
   const movementsQuery = useQuery({
     queryKey: ['scrapyard-movements', yardId],
@@ -73,6 +68,12 @@ export default function ScrapyardDetailPage() {
     enabled: activeTab === 'movements',
   })
 
+  const invoicesQuery = useQuery({
+    queryKey: ['scrapyard-invoices', yardId, invParams],
+    queryFn: () => invoicesApi.getByYard(yardId, invParams),
+    enabled: activeTab === 'invoices',
+  })
+
   const resumeQuery = useQuery({
     queryKey: ['scrapyard-resume', yardId],
     queryFn: async () => {
@@ -80,6 +81,7 @@ export default function ScrapyardDetailPage() {
       return mod.invoicesApi.getByYard(yardId)
     },
     enabled: activeTab === 'resume',
+    select: (data) => data.content,
   })
 
   const [reportType, setReportType] = useState('PURCHASES')
@@ -134,6 +136,10 @@ export default function ScrapyardDetailPage() {
           <InvoicesTab
             data={invoicesQuery.data}
             isLoading={invoicesQuery.isLoading}
+            page={invPage}
+            totalPages={invoicesQuery.data?.totalPages || 0}
+            totalElements={invoicesQuery.data?.totalElements || 0}
+            onPageChange={setInvPage}
           />
         )}
         {activeTab === 'movements' && (
@@ -276,36 +282,83 @@ function StockTab({
   )
 }
 
-function InvoicesTab({ data, isLoading }: { data: InvoiceSummary[] | undefined; isLoading: boolean }) {
+function InvoicesTab({
+  data,
+  isLoading,
+  page,
+  totalPages,
+  totalElements,
+  onPageChange,
+}: {
+  data: InvoiceSummary[] | undefined | { content: InvoiceSummary[]; totalPages: number; totalElements: number }
+  isLoading: boolean
+  page: number
+  totalPages: number
+  totalElements: number
+  onPageChange: (p: number) => void
+}) {
+  const invoices: InvoiceSummary[] = (data as { content?: InvoiceSummary[] })?.content
+    ? (data as { content: InvoiceSummary[] }).content
+    : (data as InvoiceSummary[]) || []
   if (isLoading) return <LoadingSpinner />
-  if (!data?.length) return <EmptyState title="No invoices in this scrapyard" />
+  if (!invoices.length) return <EmptyState title="No invoices in this scrapyard" />
   return (
-    <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-outline bg-surface-50">
-            <th className="text-left px-6 py-3 font-medium text-secondary-600"># Invoice</th>
-            <th className="text-left px-6 py-3 font-medium text-secondary-600">Customer</th>
-            <th className="text-left px-6 py-3 font-medium text-secondary-600">Date</th>
-            <th className="text-right px-6 py-3 font-medium text-secondary-600">Total</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-outline-light">
-          {data.map((inv) => (
-            <tr key={inv.invoiceId} className="hover:bg-surface-100">
-              <td className="px-6 py-4 font-medium text-secondary-800">#{inv.invoiceId}</td>
-              <td className="px-6 py-4 text-secondary-600">{inv.customerName}</td>
-              <td className="px-6 py-4 text-secondary-600">
-                {new Date(inv.createdAt).toLocaleDateString()}
-              </td>
-              <td className="px-6 py-4 text-right font-medium text-secondary-800">
-                ${inv.totalPaid?.toFixed(2)}
-              </td>
+    <>
+      <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-outline bg-surface-50">
+              <th className="text-left px-6 py-3 font-medium text-secondary-600"># Invoice</th>
+              <th className="text-left px-6 py-3 font-medium text-secondary-600">Customer</th>
+              <th className="text-left px-6 py-3 font-medium text-secondary-600">Date</th>
+              <th className="text-right px-6 py-3 font-medium text-secondary-600">Total</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody className="divide-y divide-outline-light">
+            {invoices.map((inv) => (
+              <tr key={inv.invoiceId} className="hover:bg-surface-100">
+                <td className="px-6 py-4 font-medium text-secondary-800">#{inv.invoiceId}</td>
+                <td className="px-6 py-4 text-secondary-600">{inv.customerName}</td>
+                <td className="px-6 py-4 text-secondary-600">
+                  {new Date(inv.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 text-right font-medium text-secondary-800">
+                  ${inv.totalPaid?.toFixed(2)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 text-sm text-secondary-600">
+          <span>
+            Showing {invoices.length} of {totalElements} invoices
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => onPageChange(page - 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="px-2">
+              Page {page + 1} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages - 1}
+              onClick={() => onPageChange(page + 1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -326,7 +379,7 @@ function MovementsTab({ data, isLoading }: { data: Movement[] | undefined; isLoa
           </tr>
         </thead>
         <tbody className="divide-y divide-outline-light">
-          {data.map((m) => (
+          {[...(data || [])].sort((a, b) => new Date(b.movementDate).getTime() - new Date(a.movementDate).getTime()).map((m) => (
             <tr key={m.id} className="hover:bg-surface-100">
               <td className="px-6 py-4 text-secondary-600">
                 {new Date(m.movementDate).toLocaleDateString()}

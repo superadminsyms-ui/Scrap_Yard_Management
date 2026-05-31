@@ -18,7 +18,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "customer")
+@Table(name = "customer", indexes = {
+    @Index(name = "idx_customer_company_id", columnList = "company_id")
+})
 public class Customer {
 
     @Id

@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +26,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserRepo userRepo;
     private final com.scrapyard.management.Services.ITokenRevocationService tokenRevocationService;
+
+    @Value("${app.security.inactivity-timeout-minutes:15}")
+    private long inactivityTimeoutMinutes;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil, UserRepo userRepo, com.scrapyard.management.Services.ITokenRevocationService tokenRevocationService) {
         this.jwtUtil = jwtUtil;
@@ -73,6 +79,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         User user = userOpt.get();
+
+        LocalDateTime lastActivity = user.getLastActivityAt();
+        LocalDateTime now = LocalDateTime.now();
+        if (lastActivity != null && Duration.between(lastActivity, now).toMinutes() >= inactivityTimeoutMinutes) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
+
+        if (lastActivity == null || Duration.between(lastActivity, now).toMinutes() >= 5) {
+            user.setLastActivityAt(now);
+            userRepo.save(user);
+        }
 
         List<SimpleGrantedAuthority> authorities = List.of(
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().name())

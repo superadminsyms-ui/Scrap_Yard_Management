@@ -15,7 +15,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "invoice")
+@Table(name = "invoice", indexes = {
+    @Index(name = "idx_invoice_customer_id", columnList = "customer_id"),
+    @Index(name = "idx_invoice_scrapyard_id", columnList = "scrapyard_id"),
+    @Index(name = "idx_invoice_scrapyard_created", columnList = "scrapyard_id,created_at"),
+    @Index(name = "idx_invoice_manager_id", columnList = "manager_id")
+})
 public class Invoice {
 
     @Id
@@ -37,7 +42,7 @@ public class Invoice {
     private LocalDateTime createdAt;
 
     // Invoice details (for each metal purchased)
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<InvoiceDetail> details=new ArrayList<>();
 
     // Invoice totals

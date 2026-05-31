@@ -53,6 +53,7 @@ async function apiClient<T>(endpoint: string, options?: RequestInit): Promise<T>
     if (window.location.pathname !== '/login') {
       window.location.href = '/login'
     }
+    throw new ApiError(401, 'Unauthorized')
   }
 
   if (response.status === 429) {

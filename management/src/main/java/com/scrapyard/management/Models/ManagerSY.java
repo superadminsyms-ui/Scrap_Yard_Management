@@ -11,7 +11,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "manager_sy")
+@Table(name = "manager_sy", indexes = {
+    @Index(name = "idx_manager_sy_scrapyard_id", columnList = "scrap_yard_id")
+})
 public class ManagerSY {
 
     @Id

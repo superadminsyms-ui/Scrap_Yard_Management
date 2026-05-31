@@ -116,6 +116,9 @@ public class AuthServImpl implements IAuthService {
     }
 
     private LoginResponse buildFullLoginResponse(User user) {
+        user.setLastActivityAt(java.time.LocalDateTime.now());
+        userRepo.save(user);
+
         String token = jwtUtil.generateToken(user);
 
         LoginResponse response = new LoginResponse();

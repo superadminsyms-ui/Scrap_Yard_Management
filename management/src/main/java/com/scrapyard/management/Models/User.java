@@ -7,7 +7,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user")
+@Table(name = "user", indexes = {
+    @Index(name = "idx_user_manager_id", columnList = "manager_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -42,6 +44,9 @@ public class User {
 
     @Column
     private LocalDateTime twoFactorSetupDate;
+
+    @Column
+    private LocalDateTime lastActivityAt;
 
     @OneToOne
     @JoinColumn(name = "manager_id")

@@ -9,7 +9,11 @@ import com.scrapyard.management.Repository.*;
 import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IInvoiceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.scrapyard.management.Mapper.mapDetail;
 
 import java.math.BigDecimal;
@@ -52,29 +56,38 @@ public class InvoiceServImpl implements IInvoiceService {
     }
 
     @Override
-    public List<InvoiceDTOResponse1> getAllInvoices() {
+    @Transactional(readOnly = true)
+    public Page<InvoiceDTOResponse1> getAllInvoices(Pageable pageable) {
         Long yardId = securityContextService.getCurrentYardId();
-        List<Invoice> invoices;
+        Page<Invoice> invoicePage;
 
         if (yardId != null) {
-            ScrapYard yard = scrapYardRepo.findById(yardId).orElseThrow(() ->
-                    new IllegalArgumentException("Scrap yard not found"));
-            invoices = yard.getInvoices();
+            invoicePage = invoiceRepo.findByScrapYardId(yardId, pageable);
         } else {
-            invoices = invoiceRepo.findAll();
+            invoicePage = invoiceRepo.findAll(pageable);
         }
 
-        if (invoices.isEmpty()) {
+        if (invoicePage.isEmpty()) {
             throw new IllegalArgumentException("No invoices are registered");
         }
 
-        return invoices.stream().map(invoice -> new InvoiceDTOResponse1(invoice.getId(),
-                invoice.getCustomer().getName(),invoice.getCustomer().getTypeCustomer(),
-                invoice.getScrapYard().getName(), invoice.getScrapYard().getId(),
-                invoice.getCreatedAt(),invoice.getTotalPaid(), invoice.getDiscount())).toList();
+        List<InvoiceDTOResponse1> dtos = invoicePage.getContent().stream()
+                .map(invoice -> new InvoiceDTOResponse1(
+                        invoice.getId(),
+                        invoice.getCustomer().getName(),
+                        invoice.getCustomer().getTypeCustomer(),
+                        invoice.getScrapYard().getName(),
+                        invoice.getScrapYard().getId(),
+                        invoice.getCreatedAt(),
+                        invoice.getTotalPaid(),
+                        invoice.getDiscount()))
+                .toList();
+
+        return new PageImpl<>(dtos, pageable, invoicePage.getTotalElements());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public InvoiceDTOResponse getInvoiceById(Long id) {
 
         if(id == null || id<=0 ){
@@ -106,24 +119,31 @@ public class InvoiceServImpl implements IInvoiceService {
 
 
     @Override
-    public List<InvoiceDTOResponse1> getInvoiceByCustomer(Long customerId) {
+    @Transactional(readOnly = true)
+    public Page<InvoiceDTOResponse1> getInvoiceByCustomer(Long customerId, Pageable pageable) {
         Long yardId = securityContextService.getCurrentYardId();
 
         if (!customerRepo.existsById(customerId)) {
             throw new IllegalArgumentException("There is no customer ID: " + " " + customerId);
         }
-        List<Invoice> invoices = invoiceRepo.findByCustomerId(customerId);
 
+        Page<Invoice> invoicePage;
         if (yardId != null) {
-            invoices = invoices.stream()
-                    .filter(inv -> inv.getScrapYard().getId().equals(yardId))
+            invoicePage = invoiceRepo.findAll(pageable);
+            List<Invoice> filtered = invoicePage.getContent().stream()
+                    .filter(inv -> inv.getCustomer().getId().equals(customerId)
+                            && inv.getScrapYard().getId().equals(yardId))
                     .toList();
+            invoicePage = new PageImpl<>(filtered, pageable, invoicePage.getTotalElements());
+        } else {
+            invoicePage = invoiceRepo.findByCustomerId(customerId, pageable);
         }
 
-        if (invoices.isEmpty()) {
+        if (invoicePage.isEmpty()) {
             throw new IllegalArgumentException("No invoices are registered with this customer");
         }
-        return invoices.stream()
+
+        List<InvoiceDTOResponse1> dtos = invoicePage.getContent().stream()
                 .map(invoice -> new InvoiceDTOResponse1(
                         invoice.getId(),
                         invoice.getCustomer().getName(),
@@ -135,12 +155,15 @@ public class InvoiceServImpl implements IInvoiceService {
                         invoice.getDiscount()
                 ))
                 .toList();
+
+        return new PageImpl<>(dtos, pageable, invoicePage.getTotalElements());
     }
 
 
 
     @Override
-    public List<InvoiceDTOResponse1> getAllInvoicesByScrapYard(Long scrapYardId) {
+    @Transactional(readOnly = true)
+    public Page<InvoiceDTOResponse1> getAllInvoicesByScrapYard(Long scrapYardId, Pageable pageable) {
         Long yardId = securityContextService.getCurrentYardId();
         if (yardId != null && !yardId.equals(scrapYardId)) {
             throw new IllegalArgumentException("Access denied to this scrap yard");
@@ -154,14 +177,13 @@ public class InvoiceServImpl implements IInvoiceService {
             throw new IllegalArgumentException("There is no scrapyard ID: " + scrapYardId);
         }
 
-        ScrapYard yard = scrapYardRepo.findById(scrapYardId).get();
-        List<Invoice> invoices=yard.getInvoices();
+        Page<Invoice> invoicePage = invoiceRepo.findByScrapYardId(scrapYardId, pageable);
 
-        if (invoices.isEmpty()) {
+        if (invoicePage.isEmpty()) {
             throw new IllegalArgumentException("No invoices are registered with this scrapyard");
         }
 
-        return invoices.stream()
+        List<InvoiceDTOResponse1> dtos = invoicePage.getContent().stream()
                 .map(invoice -> new InvoiceDTOResponse1(
                         invoice.getId(),
                         invoice.getCustomer().getName(),
@@ -173,6 +195,8 @@ public class InvoiceServImpl implements IInvoiceService {
                         invoice.getDiscount()
                 ))
                 .toList();
+
+        return new PageImpl<>(dtos, pageable, invoicePage.getTotalElements());
     }
 
 

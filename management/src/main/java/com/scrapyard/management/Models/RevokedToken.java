@@ -3,6 +3,7 @@ package com.scrapyard.management.Models;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,7 +13,9 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "revoked_token")
+@Table(name = "revoked_token", indexes = {
+    @Index(name = "idx_revoked_token_expires", columnList = "expires_at")
+})
 @Getter
 @Setter
 @NoArgsConstructor
