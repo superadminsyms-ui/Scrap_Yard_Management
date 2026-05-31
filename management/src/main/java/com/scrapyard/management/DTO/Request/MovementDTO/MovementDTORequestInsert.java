@@ -4,6 +4,7 @@ import com.scrapyard.management.Models.Enums.MovementType;
 import com.scrapyard.management.Models.Enums.UnitOfMeasure;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ public class MovementDTORequestInsert {
     private Long containerId;
 
     @NotNull(message = "Destination is required")
+    @Size(max = 200, message = "Destination must be at most 200 characters")
     private String destination;
 
     @NotNull(message = "Amount moved is required")

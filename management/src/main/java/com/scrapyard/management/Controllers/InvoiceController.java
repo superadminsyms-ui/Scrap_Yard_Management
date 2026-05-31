@@ -11,11 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/invoice")
 public class InvoiceController {
 
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "createdAt", "totalPaid");
 
     @Autowired
     private final IInvoiceService invoiceServices;
@@ -33,10 +35,7 @@ public class InvoiceController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
-            Sort sort = direction.equalsIgnoreCase("asc")
-                    ? Sort.by(sortBy).ascending()
-                    : Sort.by(sortBy).descending();
-            Pageable pageable = PageRequest.of(page, size, sort);
+            Pageable pageable = buildPageable(page, size, sortBy, direction);
             return ResponseEntity.ok(invoiceServices.getAllInvoices(pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -63,10 +62,7 @@ public class InvoiceController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
-            Sort sort = direction.equalsIgnoreCase("asc")
-                    ? Sort.by(sortBy).ascending()
-                    : Sort.by(sortBy).descending();
-            Pageable pageable = PageRequest.of(page, size, sort);
+            Pageable pageable = buildPageable(page, size, sortBy, direction);
             return ResponseEntity.ok(invoiceServices.getInvoiceByCustomer(id, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -83,10 +79,7 @@ public class InvoiceController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
-            Sort sort = direction.equalsIgnoreCase("asc")
-                    ? Sort.by(sortBy).ascending()
-                    : Sort.by(sortBy).descending();
-            Pageable pageable = PageRequest.of(page, size, sort);
+            Pageable pageable = buildPageable(page, size, sortBy, direction);
             return ResponseEntity.ok(invoiceServices.getAllInvoicesByScrapYard(id, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -102,6 +95,16 @@ public class InvoiceController {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
         }
+    }
+
+    private Pageable buildPageable(int page, int size, String sortBy, String direction) {
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new IllegalArgumentException("Invalid sort field: " + sortBy);
+        }
+        Sort sort = direction.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        return PageRequest.of(page, size, sort);
     }
 
 

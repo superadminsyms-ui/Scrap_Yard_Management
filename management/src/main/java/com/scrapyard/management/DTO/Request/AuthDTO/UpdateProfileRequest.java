@@ -18,6 +18,6 @@ public class UpdateProfileRequest {
     @NotBlank(message = "Current password is required")
     private String currentPassword;
 
-    @Size(min = 6, message = "New password must be at least 6 characters")
+    @Size(min = 6, max = 72, message = "New password must be between 6 and 72 characters")
     private String newPassword;
 }

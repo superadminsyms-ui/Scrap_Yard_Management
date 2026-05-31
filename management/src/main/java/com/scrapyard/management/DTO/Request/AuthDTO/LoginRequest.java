@@ -2,6 +2,7 @@ package com.scrapyard.management.DTO.Request.AuthDTO;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,5 +17,6 @@ public class LoginRequest {
     private String email;
 
     @NotBlank(message = "Password is required")
+    @Size(max = 72, message = "Password must be at most 72 characters")
     private String password;
 }

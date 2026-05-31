@@ -14,6 +14,6 @@ public class UserUpdateRequest {
     @Email(message = "Invalid email format")
     private String email;
 
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @Size(min = 6, max = 72, message = "Password must be between 6 and 72 characters")
     private String newPassword;
 }

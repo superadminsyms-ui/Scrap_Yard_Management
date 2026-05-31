@@ -1,5 +1,4 @@
 package com.scrapyard.management.SecurityConfig;
-
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +9,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,7 +30,7 @@ public class WebSecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final RateLimitFilter rateLimitFilter;
 
-    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
 
     public WebSecurityConfig(JwtAuthenticationFilter jwtAuthFilter, RateLimitFilter rateLimitFilter) {
@@ -40,12 +41,12 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())    //was csrf.disable()
+                .csrf(AbstractHttpConfigurer::disable)    //was csrf.disable()
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'"))
-                        .frameOptions(frame -> frame.deny())
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                         .xssProtection(xss -> xss.headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
                         .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                         .contentTypeOptions(Customizer.withDefaults()))
@@ -64,14 +65,13 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/scrapyard/**").hasRole("SUPERADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/scrapyard/**").hasRole("SUPERADMIN")
                         .anyRequest().authenticated()
-                )
-                .exceptionHandling(ex -> ex
+
+                ).exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) ->
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
                         .accessDeniedHandler((request, response, accessDeniedException) ->
                                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden"))
-                )
-                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                ).addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

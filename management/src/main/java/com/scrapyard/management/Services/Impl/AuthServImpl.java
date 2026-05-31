@@ -15,7 +15,9 @@ import com.scrapyard.management.Repository.ManagerSYRepo;
 import com.scrapyard.management.Repository.ScrapYardRepo;
 import com.scrapyard.management.Repository.UserRepo;
 import com.scrapyard.management.SecurityConfig.JwtUtil;
+import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IAuthService;
+import com.scrapyard.management.Services.ITokenRevocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
@@ -23,6 +25,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.ZoneId;
 
 @Service
 public class AuthServImpl implements IAuthService {
@@ -45,13 +49,21 @@ public class AuthServImpl implements IAuthService {
     @Autowired
     private final AuthenticationManager authenticationManager;
 
-    public AuthServImpl(UserRepo userRepo, ManagerSYRepo managerSYRepo, ScrapYardRepo scrapYardRepo, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
+    @Autowired
+    private final SecurityContextService securityContextService;
+
+    @Autowired
+    private final ITokenRevocationService tokenRevocationService;
+
+    public AuthServImpl(UserRepo userRepo, ManagerSYRepo managerSYRepo, ScrapYardRepo scrapYardRepo, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, AuthenticationManager authenticationManager, SecurityContextService securityContextService, ITokenRevocationService tokenRevocationService) {
         this.userRepo = userRepo;
         this.managerSYRepo = managerSYRepo;
         this.scrapYardRepo = scrapYardRepo;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
+        this.securityContextService = securityContextService;
+        this.tokenRevocationService = tokenRevocationService;
     }
 
     @Override
@@ -227,6 +239,27 @@ public class AuthServImpl implements IAuthService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setMustChangePassword(false);
         userRepo.save(user);
+    }
+
+    @Override
+    public void logout(String authHeader) {
+        try {
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                String jti = jwtUtil.extractJti(token);
+                String userEmail = securityContextService.getCurrentUser() != null
+                        ? securityContextService.getCurrentUser().getEmail()
+                        : "unknown";
+                tokenRevocationService.revoke(
+                        jti,
+                        userEmail,
+                        jwtUtil.extractExpiration(token).toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                );
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     @Override

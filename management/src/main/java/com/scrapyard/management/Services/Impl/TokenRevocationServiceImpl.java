@@ -1,5 +1,4 @@
 package com.scrapyard.management.Services.Impl;
-
 import com.scrapyard.management.Models.RevokedToken;
 import com.scrapyard.management.Repository.RevokedTokenRepo;
 import com.scrapyard.management.Services.ITokenRevocationService;
@@ -8,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 
 @Service
@@ -41,8 +39,11 @@ public class TokenRevocationServiceImpl implements ITokenRevocationService {
 
     @Override
     public boolean isRevoked(String jti) {
+
         return jti != null && !jti.isBlank() && revokedTokenRepo.existsByJti(jti);
     }
+
+
 
     @Override
     @Scheduled(fixedRate = 3600000)

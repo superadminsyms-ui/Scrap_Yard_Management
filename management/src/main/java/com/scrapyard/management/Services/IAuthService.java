@@ -17,4 +17,8 @@ public interface IAuthService {
     UserInfoResponse getCurrentUserInfo(User user);
     void changePassword(ChangePasswordRequest request, User user);
     UserInfoResponse updateProfile(UpdateProfileRequest request, User user);
+    void logout(String authHeader);
+
+
+
 }

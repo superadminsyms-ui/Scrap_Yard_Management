@@ -13,6 +13,11 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -179,6 +184,17 @@ public class BackupServImpl implements IBackupService {
         }
 
         return path.toFile();
+    }
+
+    @Override
+    public ResponseEntity<Resource> downloadBackup(String filename) {
+        File file = getBackupFile(filename);
+        Resource resource = new FileSystemResource(file);
+        String safeFilename = filename.replaceAll("[\\r\\n]", "");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + safeFilename + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 
     @Override

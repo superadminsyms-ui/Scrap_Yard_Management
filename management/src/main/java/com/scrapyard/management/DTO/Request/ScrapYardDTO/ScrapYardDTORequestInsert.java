@@ -12,12 +12,12 @@ public class ScrapYardDTORequestInsert {
 
 
     @NotBlank(message = "Name is required")
-    @Size(min = 3, message = "Name too short")
+    @Size(min = 3, max = 100, message = "Name must be between 3 and 100 characters")
     @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9 ]+$", message = "Name must contain only letters")
     private String name;
 
     @NotBlank(message = "Location is required")
-    @Size(min = 5, message = "Location too short")
+    @Size(min = 5, max = 255, message = "Location must be between 5 and 255 characters")
     @Pattern(regexp = "^(?=.*[a-zA-ZáéíóúÁÉÍÓÚñÑ])(?=.*[0-9])[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9 ,.\\-]+$"
                         , message = "Location must contain both letters and numbers")
     private String location;

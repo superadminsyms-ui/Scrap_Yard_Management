@@ -1,11 +1,9 @@
 package com.scrapyard.management.SecurityConfig;
-
 import com.scrapyard.management.Models.User;
 import com.scrapyard.management.Models.Enums.UserRole;
 import com.scrapyard.management.Repository.UserRepo;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-
 import jakarta.annotation.PostConstruct;
 
 @Component

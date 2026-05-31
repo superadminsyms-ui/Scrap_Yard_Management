@@ -1,7 +1,7 @@
 package com.scrapyard.management.SecurityConfig;
-
 import com.scrapyard.management.Models.User;
 import com.scrapyard.management.Repository.UserRepo;
+import com.scrapyard.management.Services.ITokenRevocationService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +13,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -25,7 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepo userRepo;
-    private final com.scrapyard.management.Services.ITokenRevocationService tokenRevocationService;
+    private final ITokenRevocationService tokenRevocationService;
 
     @Value("${app.security.inactivity-timeout-minutes:15}")
     private long inactivityTimeoutMinutes;

@@ -1,6 +1,7 @@
 package com.scrapyard.management.DTO.Request.InvoiceDTO;
 import com.scrapyard.management.DTO.Request.InvoiceDetailDTO.InvoiceDetailDTORequestInsert;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -23,6 +24,7 @@ public class InvoiceDTORequestInsert {
     @Positive(message = "scrapYardId must be a positive number")
     private Long scrapYardId;
 
+    @DecimalMin(value = "0.0", message = "Discount cannot be negative")
     private BigDecimal discount;
 
     @NotEmpty(message = "details must contain at least one detail")

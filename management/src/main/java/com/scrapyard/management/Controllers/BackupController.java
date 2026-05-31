@@ -4,15 +4,11 @@ import com.scrapyard.management.DTO.BackupFileInfo;
 import com.scrapyard.management.DTO.WipeRestoreRequest;
 import com.scrapyard.management.Services.IBackupService;
 import jakarta.validation.Valid;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -40,13 +36,7 @@ public class BackupController {
 
     @GetMapping("/download/{filename}")
     public ResponseEntity<Resource> downloadBackup(@PathVariable String filename) {
-        File file = backupService.getBackupFile(filename);
-        Resource resource = new FileSystemResource(file);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
+        return backupService.downloadBackup(filename);
     }
 
     @DeleteMapping("/{filename}")
