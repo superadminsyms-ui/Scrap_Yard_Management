@@ -9,6 +9,10 @@ import type {
   TwoFASetupResponse,
   TwoFAStatusResponse,
   Disable2FARequest,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
 } from '@/types/models'
 import type { ChangePasswordRequest } from '@/types/models'
 
@@ -62,6 +66,18 @@ export const authApi = {
 
   get2FAStatus: () =>
     apiClient<TwoFAStatusResponse>('/auth/2fa/status'),
+
+  forgotPassword: (data: ForgotPasswordRequest) =>
+    apiClient<ForgotPasswordResponse>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  resetPassword: (data: ResetPasswordRequest) =>
+    apiClient<ResetPasswordResponse>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 
   logout: (token: string) =>
     fetch('/api/auth/logout', {

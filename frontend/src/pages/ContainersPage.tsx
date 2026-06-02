@@ -277,11 +277,17 @@ function ContainerForm({
         error={errors.description}
         placeholder="E.g.: Copper container #1"
       />
+      {initial && initial.materialWeight != null && initial.materialWeight > 0 && (
+        <div className="bg-amber-50 text-amber-700 text-sm p-3 rounded-xl border border-amber-200">
+          Material type cannot be changed because this container already has material assigned.
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Select
           label="Material Type"
           value={form.materialType}
           onChange={(e) => setForm({ ...form, materialType: e.target.value as MaterialType })}
+          disabled={!!initial && initial.materialWeight != null && initial.materialWeight > 0}
         >
           {Object.entries(MATERIAL_LABELS).map(([key, label]) => (
             <option key={key} value={key}>{label}</option>

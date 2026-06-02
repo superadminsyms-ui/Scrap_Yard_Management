@@ -5,6 +5,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ProtectedRoute, SuperAdminRoute, RedirectIfAuth } from '@/components/ProtectedRoute'
 
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'))
 const ChangePasswordPage = lazy(() => import('@/pages/ChangePasswordPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
 const CompaniesPage = lazy(() => import('@/pages/CompaniesPage'))
@@ -30,6 +32,14 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <RedirectIfAuth><SuspenseWrapper><LoginPage /></SuspenseWrapper></RedirectIfAuth>,
+  },
+  {
+    path: '/forgot-password',
+    element: <RedirectIfAuth><SuspenseWrapper><ForgotPasswordPage /></SuspenseWrapper></RedirectIfAuth>,
+  },
+  {
+    path: '/reset-password',
+    element: <RedirectIfAuth><SuspenseWrapper><ResetPasswordPage /></SuspenseWrapper></RedirectIfAuth>,
   },
   {
     path: '/change-password',

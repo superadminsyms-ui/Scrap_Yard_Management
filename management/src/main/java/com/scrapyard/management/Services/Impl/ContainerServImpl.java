@@ -137,8 +137,18 @@ public class ContainerServImpl implements IContainerService {
             throw new IllegalArgumentException("There cannot be blank fields");
         }
 
+        if (cont.getMaterialType() != null
+                && !cont.getMaterialType().equals(existing.getMaterialType())
+                && existing.getMaterialWeight() != null
+                && existing.getMaterialWeight().compareTo(BigDecimal.ZERO) > 0) {
+            throw new IllegalArgumentException("Cannot change material type: container already has material assigned");
+        }
+
         existing.setDescription(cont.getDescription());
-        existing.setMaterialType(cont.getMaterialType());
+
+        if (cont.getMaterialType() != null) {
+            existing.setMaterialType(cont.getMaterialType());
+        }
 
         Container updatedContainer = containerRepo.save(existing);
 

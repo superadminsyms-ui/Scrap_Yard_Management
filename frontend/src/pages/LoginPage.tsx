@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { ApiError } from '@/api/client'
 import { Warehouse, Eye, EyeOff, Lock, ShieldCheck, ArrowLeft } from 'lucide-react'
@@ -257,6 +257,15 @@ export default function LoginPage() {
             >
               {submitting ? 'Signing in...' : 'Sign in'}
             </button>
+
+            <div className="text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-primary-500 hover:text-primary-600 transition-colors"
+              >
+                Forgot your password?
+              </Link>
+            </div>
           </form>
           )}
         </div>

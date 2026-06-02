@@ -352,6 +352,23 @@ export interface Disable2FARequest {
   code: string
 }
 
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+export interface ForgotPasswordResponse {
+  message: string
+}
+
+export interface ResetPasswordRequest {
+  token: string
+  newPassword: string
+}
+
+export interface ResetPasswordResponse {
+  message: string
+}
+
 export interface PageResponse<T> {
   content: T[]
   totalElements: number

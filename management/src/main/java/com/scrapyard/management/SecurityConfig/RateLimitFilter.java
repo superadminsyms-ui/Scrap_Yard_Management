@@ -18,10 +18,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final int LOGIN_MAX_REQUESTS = 5;
     private static final long LOGIN_WINDOW_MS = 60_000;
 
+    private static final int FORGOT_PASSWORD_MAX_REQUESTS = 3;
+    private static final long FORGOT_PASSWORD_WINDOW_MS = 300_000;
+
     private static final int API_MAX_REQUESTS = 200;
     private static final long API_WINDOW_MS = 60_000;
 
     private final ConcurrentHashMap<String, LinkedList<Long>> loginAttempts = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, LinkedList<Long>> forgotPasswordAttempts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, LinkedList<Long>> apiAttempts = new ConcurrentHashMap<>();
 
     @Override
@@ -33,6 +37,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         if (path.equals("/api/auth/login") && isRateLimited(clientIp, loginAttempts, LOGIN_MAX_REQUESTS, LOGIN_WINDOW_MS)) {
+            sendRateLimitResponse(response);
+            return;
+        }
+
+        if (path.equals("/api/auth/forgot-password") && isRateLimited(clientIp, forgotPasswordAttempts, FORGOT_PASSWORD_MAX_REQUESTS, FORGOT_PASSWORD_WINDOW_MS)) {
             sendRateLimitResponse(response);
             return;
         }
