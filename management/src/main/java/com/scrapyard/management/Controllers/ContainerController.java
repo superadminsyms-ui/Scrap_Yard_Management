@@ -1,12 +1,14 @@
 package com.scrapyard.management.Controllers;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequest;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequestUpdate;
-import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDToGetContainers;
 import com.scrapyard.management.Models.Enums.MaterialType;
 import com.scrapyard.management.Services.IContainerService;
 import com.scrapyard.management.Services.Impl.ContainerServImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -24,9 +26,17 @@ public class ContainerController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<?> getAllContainers() {
+    public ResponseEntity<?> getAllContainers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
         try {
-            return ResponseEntity.ok(containerServices.getAllContainers());
+            Sort sort = direction.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            return ResponseEntity.ok(containerServices.getAllContainers(pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
@@ -47,9 +57,17 @@ public class ContainerController {
 
     @GetMapping("/by-material")
     public ResponseEntity<?> getByMaterial(
-            @RequestParam MaterialType material) {
+            @RequestParam MaterialType material,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
         try {
-            return ResponseEntity.ok(containerServices.getContainersByMaterial(material));
+            Sort sort = direction.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            return ResponseEntity.ok(containerServices.getContainersByMaterial(material, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
@@ -92,10 +110,19 @@ public class ContainerController {
     }
 
 
-    @GetMapping("/all-by-yard")
-    public ResponseEntity<?> getContainersByScrapYard( ScrapYardDToGetContainers yard) {
+    @GetMapping("/by-yard")
+    public ResponseEntity<?> getContainersByScrapYard(
+            @RequestParam Long yardId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
         try {
-            return ResponseEntity.ok(containerServices.getContainersByScrapYard(yard));
+            Sort sort = direction.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            return ResponseEntity.ok(containerServices.getContainersByScrapYard(yardId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
@@ -104,9 +131,18 @@ public class ContainerController {
     }
 
     @GetMapping("/company/{companyId}/containers")
-    public ResponseEntity<?> getContainersByCompany(@PathVariable Long companyId) {
+    public ResponseEntity<?> getContainersByCompany(
+            @PathVariable Long companyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
         try {
-            return ResponseEntity.ok(containerServices.getContainersByCompany(companyId));
+            Sort sort = direction.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            return ResponseEntity.ok(containerServices.getContainersByCompany(companyId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));

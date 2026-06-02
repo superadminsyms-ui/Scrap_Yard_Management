@@ -13,8 +13,11 @@ import com.scrapyard.management.Repository.ScrapYardRepo;
 import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IMovementService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -126,22 +129,20 @@ public class MovementServImpl implements IMovementService {
     }
 
     @Override
-    public List<MovementDTOResponse> getAllMovements() {
+    public Page<MovementDTOResponse> getAllMovements(Pageable pageable) {
         Long yardId = securityContextService.getCurrentYardId();
-        List<Movement> movements;
+        Page<Movement> movements;
 
         if (yardId != null) {
-            movements = movementRepo.findByScrapYardId(yardId, Sort.by(Sort.Direction.DESC, "movementDate"));
+            movements = movementRepo.findByScrapYardId(yardId, pageable);
         } else {
-            movements = movementRepo.findAll(Sort.by(Sort.Direction.DESC, "movementDate"));
+            movements = movementRepo.findAll(pageable);
         }
 
         if (movements.isEmpty()) {
             throw new IllegalArgumentException("No movements are registered");
         }
-        return movements.stream()
-                .map(this::mapToDTO)
-                .toList();
+        return movements.map(this::mapToDTO);
     }
 
     @Override
@@ -159,7 +160,7 @@ public class MovementServImpl implements IMovementService {
     }
 
     @Override
-    public List<MovementDTOResponse> getMovementsByScrapYard(Long yardId) {
+    public Page<MovementDTOResponse> getMovementsByScrapYard(Long yardId, Pageable pageable) {
         Long currentYardId = securityContextService.getCurrentYardId();
         if (currentYardId != null && !currentYardId.equals(yardId)) {
             throw new IllegalArgumentException("Access denied to this scrap yard");
@@ -168,17 +169,15 @@ public class MovementServImpl implements IMovementService {
         ScrapYard scrapYard = scrapYardRepo.findById(yardId)
                 .orElseThrow(() -> new IllegalArgumentException("ScrapYard not found"));
 
-        List<Movement> movements = movementRepo.findByScrapYardId(yardId, Sort.by(Sort.Direction.DESC, "movementDate"));
+        Page<Movement> movements = movementRepo.findByScrapYardId(yardId, pageable);
         if (movements.isEmpty()) {
             throw new IllegalArgumentException("No movements found for this ScrapYard");
         }
-        return movements.stream()
-                .map(this::mapToDTO)
-                .toList();
+        return movements.map(this::mapToDTO);
     }
 
     @Override
-    public List<MovementDTOResponse> getMovementsByContainer(Long containerId) {
+    public Page<MovementDTOResponse> getMovementsByContainer(Long containerId, Pageable pageable) {
         Long yardId = securityContextService.getCurrentYardId();
 
         Container container = containerRepo.findById(containerId)
@@ -188,13 +187,11 @@ public class MovementServImpl implements IMovementService {
             throw new IllegalArgumentException("Access denied to this container");
         }
 
-        List<Movement> movements = movementRepo.findByContainerId(containerId, Sort.by(Sort.Direction.DESC, "movementDate"));
+        Page<Movement> movements = movementRepo.findByContainerId(containerId, pageable);
         if (movements.isEmpty()) {
             throw new IllegalArgumentException("No movements found for this Container");
         }
-        return movements.stream()
-                .map(this::mapToDTO)
-                .toList();
+        return movements.map(this::mapToDTO);
     }
 
     private MovementDTOResponse mapToDTO(Movement movement) {

@@ -3,6 +3,9 @@ import com.scrapyard.management.DTO.Request.MovementDTO.MovementDTORequestInsert
 import com.scrapyard.management.Services.IMovementService;
 import com.scrapyard.management.Services.Impl.MovementServImpl;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -28,9 +31,17 @@ public class MovementController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<?> getAllMovements() {
+    public ResponseEntity<?> getAllMovements(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "movementDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
         try {
-            return ResponseEntity.ok(movementServImpl.getAllMovements());
+            Sort sort = direction.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            return ResponseEntity.ok(movementServImpl.getAllMovements(pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
@@ -48,9 +59,18 @@ public class MovementController {
     }
 
     @GetMapping("/yard/{yardId}")
-    public ResponseEntity<?> getMovementsByScrapYard(@PathVariable Long yardId) {
+    public ResponseEntity<?> getMovementsByScrapYard(
+            @PathVariable Long yardId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "movementDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
         try {
-            return ResponseEntity.ok(movementServImpl.getMovementsByScrapYard(yardId));
+            Sort sort = direction.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            return ResponseEntity.ok(movementServImpl.getMovementsByScrapYard(yardId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
@@ -58,9 +78,18 @@ public class MovementController {
     }
 
     @GetMapping("/container/{containerId}")
-    public ResponseEntity<?> getMovementsByContainer(@PathVariable Long containerId) {
+    public ResponseEntity<?> getMovementsByContainer(
+            @PathVariable Long containerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "movementDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
         try {
-            return ResponseEntity.ok(movementServImpl.getMovementsByContainer(containerId));
+            Sort sort = direction.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            return ResponseEntity.ok(movementServImpl.getMovementsByContainer(containerId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));

@@ -64,9 +64,10 @@ export default function StockPage() {
     queryKey: ['scrapyard-movements', yardId],
     queryFn: async () => {
       const mod = await import('@/api/endpoints/movements')
-      return mod.movementsApi.getByYard(yardId!)
+      return mod.movementsApi.getByYard(yardId!, { page: 0, size: 1000 })
     },
     enabled: activeTab === 'movements' && !!yardId,
+    select: (data) => data.content,
   })
 
   const resumeQuery = useQuery({

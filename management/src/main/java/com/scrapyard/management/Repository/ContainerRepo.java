@@ -1,6 +1,9 @@
 package com.scrapyard.management.Repository;
 import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerDTOResponse;
 import com.scrapyard.management.Models.Container;
+import com.scrapyard.management.Models.Enums.MaterialType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import java.util.List;
@@ -50,6 +53,16 @@ public interface ContainerRepo extends JpaRepository<Container,Long> {
     WHERE c.scrapYard.company.id = :companyId AND c.scrapYard.id = :yardId
 """)
     List<ContainerDTOResponse> findContainersByCompanyIdAndScrapYardId(Long companyId, Long yardId);
+
+    Page<Container> findByMaterialType(MaterialType materialType, Pageable pageable);
+
+    Page<Container> findByScrapYardId(Long scrapYardId, Pageable pageable);
+
+    Page<Container> findByScrapYard_Company_Id(Long companyId, Pageable pageable);
+
+    Page<Container> findByScrapYard_Company_IdAndScrapYard_Id(Long companyId, Long yardId, Pageable pageable);
+
+    long countByScrapYardId(Long scrapYardId);
 
     Optional<Container> findByIdAndScrapYardId(Long containerId, Long yardId);
 }

@@ -94,7 +94,7 @@ public class InvoiceServImpl implements IInvoiceService {
             throw new IllegalArgumentException("The ID cannot be null, zero, or negative.");
         }
 
-        Invoice invoice = invoiceRepo.findById(id)
+        Invoice invoice = invoiceRepo.findWithDetailsById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invoice with id " + id + " does not exist"));
 
         Long yardId = securityContextService.getCurrentYardId();
@@ -129,12 +129,7 @@ public class InvoiceServImpl implements IInvoiceService {
 
         Page<Invoice> invoicePage;
         if (yardId != null) {
-            invoicePage = invoiceRepo.findAll(pageable);
-            List<Invoice> filtered = invoicePage.getContent().stream()
-                    .filter(inv -> inv.getCustomer().getId().equals(customerId)
-                            && inv.getScrapYard().getId().equals(yardId))
-                    .toList();
-            invoicePage = new PageImpl<>(filtered, pageable, invoicePage.getTotalElements());
+            invoicePage = invoiceRepo.findByCustomerIdAndScrapYardId(customerId, yardId, pageable);
         } else {
             invoicePage = invoiceRepo.findByCustomerId(customerId, pageable);
         }
@@ -304,7 +299,6 @@ public class InvoiceServImpl implements IInvoiceService {
             c.setMaterialWeight(c.getMaterialWeight().add(weightInLbs));
             containerRepo.save(c);
         }
-
 
         List<InvoiceDetailDTOResponse> detailsDtoResponses =
                 saved.getDetails()

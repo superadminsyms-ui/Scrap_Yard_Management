@@ -7,6 +7,8 @@ import com.scrapyard.management.Models.Company;
 import com.scrapyard.management.Models.Container;
 import com.scrapyard.management.Models.Enums.MaterialType;
 import com.scrapyard.management.Models.ScrapYard;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,14 +16,14 @@ import java.util.List;
 
 public interface IContainerService {
 
-    List<ContainerDTOResponse> getAllContainers();
+    Page<ContainerDTOResponse> getAllContainers(Pageable pageable);
     ContainerDTOResponse getContainerById(Long id);
-    List<ContainerDTOResponse> getContainersByMaterial(MaterialType material);
+    Page<ContainerDTOResponse> getContainersByMaterial(MaterialType material, Pageable pageable);
     ContainerDTOResponse saveContainer(ContainerDTORequest container);
     ContainerDTOResponse updateContainer(ContainerDTORequestUpdate container, Long id);
     String deleteContainer(Long id);
-    List<ContainerDTOResponse> getContainersByScrapYard(ScrapYardDToGetContainers yard);
-    List<ContainerDTOResponse> getContainersByCompany(Long companyId);
+    Page<ContainerDTOResponse> getContainersByScrapYard(Long yardId, Pageable pageable);
+    Page<ContainerDTOResponse> getContainersByCompany(Long companyId, Pageable pageable);
     BigDecimal getMaterialWeight(ContainerDTORequest container, Long id);
 
 

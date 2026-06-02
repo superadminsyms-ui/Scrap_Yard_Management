@@ -80,8 +80,8 @@ public class DashboardServImpl implements IDashboardService {
 
             response.setScrapyardName(yard.getName());
             response.setScrapyardLocation(yard.getLocation());
-            response.setTotalContainers((long) yard.getContainers().size());
-            response.setTotalCustomers((long) yard.getCompany().getCustomers().size());
+            response.setTotalContainers(containerRepo.countByScrapYardId(yardId));
+            response.setTotalCustomers(customerRepo.countByCompanyId(yard.getCompany().getId()));
             response.setTotalInvoices(invoiceRepo.countByScrapYardId(yardId));
             response.setTotalMovements(movementRepo.countByScrapYardId(yardId));
 

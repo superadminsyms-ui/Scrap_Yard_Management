@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { containersApi } from '@/api/endpoints/containers'
+import { containersApi, type ContainerPageParams } from '@/api/endpoints/containers'
 import { scrapyardsApi } from '@/api/endpoints/scrapyards'
 import { companiesApi } from '@/api/endpoints/companies'
 import { Button, Input, Select, Modal, ConfirmDialog, PageHeader, EmptyState, LoadingSpinner, Badge } from '@/components/ui'
 import { MaterialType, ContainerSize, UnitOfMeasure } from '@/types/models'
 import type { Container, ContainerFormData } from '@/types/models'
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 
 const MATERIAL_LABELS: Record<MaterialType, string> = {
@@ -42,12 +42,16 @@ export default function ContainersPage() {
   const { isSuperAdmin } = useAuth()
   const [materialFilter, setMaterialFilter] = useState('')
   const [companyFilter, setCompanyFilter] = useState(0)
+  const [page, setPage] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingContainer, setEditingContainer] = useState<Container | null>(null)
   const [deleteId, setDeleteId] = useState<number | null>(null)
-  const { data: containers, isLoading } = useQuery({
-    queryKey: ['containers'],
-    queryFn: containersApi.getAll,
+
+  const params: ContainerPageParams = { page, size: 20, sortBy: 'id', direction: 'asc' }
+
+  const { data: containersPage, isLoading } = useQuery({
+    queryKey: ['containers', params],
+    queryFn: () => containersApi.getAll(params),
   })
 
   const { data: yards } = useQuery({
@@ -61,28 +65,33 @@ export default function ContainersPage() {
   })
 
   const materialFilteredQuery = useQuery({
-    queryKey: ['containers-by-material', materialFilter],
-    queryFn: () => containersApi.getByMaterial(materialFilter as MaterialType),
+    queryKey: ['containers-by-material', materialFilter, params],
+    queryFn: () => containersApi.getByMaterial(materialFilter as MaterialType, params),
     enabled: !!materialFilter,
   })
 
   const companyFilteredQuery = useQuery({
-    queryKey: ['containers-by-company', companyFilter],
-    queryFn: () => containersApi.getByCompany(companyFilter),
+    queryKey: ['containers-by-company', companyFilter, params],
+    queryFn: () => containersApi.getByCompany(companyFilter, params),
     enabled: companyFilter > 0,
   })
 
-  const displayedContainers = materialFilter
-    ? materialFilteredQuery.data || []
+  const activeData = materialFilter
+    ? materialFilteredQuery.data
     : companyFilter > 0
-      ? companyFilteredQuery.data || []
-      : containers || []
+      ? companyFilteredQuery.data
+      : containersPage
+
+  const displayedContainers = activeData?.content || []
+  const totalPages = activeData?.totalPages || 0
+  const totalElements = activeData?.totalElements || 0
 
   const createMutation = useMutation({
     mutationFn: (data: ContainerFormData) => containersApi.create(data),
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ['containers'] })
-      queryClient.removeQueries({ queryKey: ['containers-by-material'] })
+      queryClient.invalidateQueries({ queryKey: ['containers'] })
+      queryClient.invalidateQueries({ queryKey: ['containers-by-material'] })
+      queryClient.invalidateQueries({ queryKey: ['containers-by-company'] })
       setModalOpen(false)
       setEditingContainer(null)
     },
@@ -93,8 +102,9 @@ export default function ContainersPage() {
     mutationFn: ({ id, data }: { id: number; data: { description?: string; materialType?: MaterialType } }) =>
       containersApi.update(id, data),
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ['containers'] })
-      queryClient.removeQueries({ queryKey: ['containers-by-material'] })
+      queryClient.invalidateQueries({ queryKey: ['containers'] })
+      queryClient.invalidateQueries({ queryKey: ['containers-by-material'] })
+      queryClient.invalidateQueries({ queryKey: ['containers-by-company'] })
       setModalOpen(false)
       setEditingContainer(null)
     },
@@ -104,8 +114,9 @@ export default function ContainersPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => containersApi.delete(id),
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ['containers'] })
-      queryClient.removeQueries({ queryKey: ['containers-by-material'] })
+      queryClient.invalidateQueries({ queryKey: ['containers'] })
+      queryClient.invalidateQueries({ queryKey: ['containers-by-material'] })
+      queryClient.invalidateQueries({ queryKey: ['containers-by-company'] })
       setDeleteId(null)
     },
     onError: (err: Error) => alert('Error deleting: ' + err.message),
@@ -125,7 +136,7 @@ export default function ContainersPage() {
         {isSuperAdmin && (
           <Select
             value={companyFilter || ''}
-            onChange={(e) => { setCompanyFilter(Number(e.target.value)); setMaterialFilter('') }}
+            onChange={(e) => { setCompanyFilter(Number(e.target.value)); setMaterialFilter(''); setPage(0) }}
             label="Filter by company"
             className="max-w-xs"
           >
@@ -137,7 +148,7 @@ export default function ContainersPage() {
         )}
         <Select
           value={materialFilter}
-          onChange={(e) => setMaterialFilter(e.target.value)}
+          onChange={(e) => { setMaterialFilter(e.target.value); setPage(0) }}
           label="Filter by material"
           className="max-w-xs"
         >
@@ -155,53 +166,82 @@ export default function ContainersPage() {
           action={!materialFilter && !companyFilter ? { label: 'New Container', onClick: () => setModalOpen(true) } : undefined}
         />
       ) : (
-        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-outline bg-surface-50">
-                <th className="text-left px-6 py-3 font-medium text-secondary-600">ID</th>
-                <th className="text-left px-6 py-3 font-medium text-secondary-600">Description</th>
-                <th className="text-left px-6 py-3 font-medium text-secondary-600">Material</th>
-                <th className="text-left px-6 py-3 font-medium text-secondary-600">Size</th>
-                <th className="text-right px-6 py-3 font-medium text-secondary-600">Weight</th>
-                <th className="text-right px-6 py-3 font-medium text-secondary-600">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-light">
-              {displayedContainers.map((c) => (
-                <tr key={c.id} className="hover:bg-surface-100">
-                  <td className="px-6 py-4 font-medium text-secondary-800">#{c.id}</td>
-                  <td className="px-6 py-4 text-secondary-600">{c.description}</td>
-                  <td className="px-6 py-4">
-                    <Badge variant={MATERIAL_COLORS[c.materialType] || 'gray'}>
-                      {MATERIAL_LABELS[c.materialType] || c.materialType}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-secondary-600">{c.containerSize}</td>
-                  <td className="px-6 py-4 text-right text-secondary-800 font-medium">
-                    {c.materialWeight ?? '-'} {c.unit}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => { setEditingContainer(c); setModalOpen(true) }}
-                        className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(c.id)}
-                        className="p-2 text-secondary-400 hover:text-error-500 rounded-lg hover:bg-error-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        <>
+          <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-outline bg-surface-50">
+                  <th className="text-left px-6 py-3 font-medium text-secondary-600">ID</th>
+                  <th className="text-left px-6 py-3 font-medium text-secondary-600">Description</th>
+                  <th className="text-left px-6 py-3 font-medium text-secondary-600">Material</th>
+                  <th className="text-left px-6 py-3 font-medium text-secondary-600">Size</th>
+                  <th className="text-right px-6 py-3 font-medium text-secondary-600">Weight</th>
+                  <th className="text-right px-6 py-3 font-medium text-secondary-600">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-outline-light">
+                {displayedContainers.map((c) => (
+                  <tr key={c.id} className="hover:bg-surface-100">
+                    <td className="px-6 py-4 font-medium text-secondary-800">#{c.id}</td>
+                    <td className="px-6 py-4 text-secondary-600">{c.description}</td>
+                    <td className="px-6 py-4">
+                      <Badge variant={MATERIAL_COLORS[c.materialType] || 'gray'}>
+                        {MATERIAL_LABELS[c.materialType] || c.materialType}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-secondary-600">{c.containerSize}</td>
+                    <td className="px-6 py-4 text-right text-secondary-800 font-medium">
+                      {c.materialWeight ?? '-'} {c.unit}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => { setEditingContainer(c); setModalOpen(true) }}
+                          className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteId(c.id)}
+                          className="p-2 text-secondary-400 hover:text-error-500 rounded-lg hover:bg-error-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between text-sm text-secondary-600">
+            <span>
+              Showing {displayedContainers.length} of {totalElements} containers
+              {materialFilter ? ' (filtered by material)' : ''}
+              {companyFilter > 0 ? ' (filtered by company)' : ''}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                className="p-2 rounded-lg hover:bg-secondary-100 disabled:opacity-30 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="px-3 py-1 rounded-lg bg-secondary-50 font-medium">
+                Page {page + 1} of {totalPages || 1}
+              </span>
+              <button
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                className="p-2 rounded-lg hover:bg-secondary-100 disabled:opacity-30 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       <Modal

@@ -1,9 +1,7 @@
 package com.scrapyard.management.Services.Impl;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequest;
 import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequestUpdate;
-import com.scrapyard.management.DTO.Request.ScrapYardDTO.ScrapYardDToGetContainers;
 import com.scrapyard.management.DTO.Response.ContainerDTO.ContainerDTOResponse;
-import com.scrapyard.management.Models.Company;
 import com.scrapyard.management.Models.Container;
 import com.scrapyard.management.Models.Enums.MaterialType;
 import com.scrapyard.management.Models.Enums.UnitOfMeasure;
@@ -14,10 +12,12 @@ import com.scrapyard.management.Repository.ScrapYardRepo;
 import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IContainerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ContainerServImpl implements IContainerService {
@@ -40,26 +40,23 @@ public class ContainerServImpl implements IContainerService {
     }
 
     @Override
-    public List<ContainerDTOResponse> getAllContainers() {
+    public Page<ContainerDTOResponse> getAllContainers(Pageable pageable) {
         Long yardId = securityContextService.getCurrentYardId();
-        List<Container> containers;
+        Page<Container> containers;
 
         if (yardId != null) {
-            ScrapYard yard = scrapYardRepo.findById(yardId)
-                    .orElseThrow(() -> new IllegalArgumentException("Scrap yard not found"));
-            containers = yard.getContainers();
+            containers = containerRepo.findByScrapYardId(yardId, pageable);
         } else {
-            containers = containerRepo.findAll();
+            containers = containerRepo.findAll(pageable);
         }
 
         if (containers.isEmpty()) {
             throw new IllegalArgumentException("There are no registered containers");
         }
 
-        return containers.stream()
-                .map(cont ->
-                new ContainerDTOResponse(cont.getId(),cont.getDescription(), cont.getMaterialType()
-                ,cont.getContainerSize(), cont.getMaterialWeight(), "POUNDS")).toList();
+        return containers.map(cont ->
+                new ContainerDTOResponse(cont.getId(), cont.getDescription(), cont.getMaterialType(),
+                        cont.getContainerSize(), cont.getMaterialWeight(), "POUNDS"));
     }
 
 
@@ -83,10 +80,14 @@ public class ContainerServImpl implements IContainerService {
 
 
     @Override
-    public List<ContainerDTOResponse> getContainersByMaterial(MaterialType material) {
-        return getAllContainers().stream()
-                .filter(cont -> cont.getMaterialType() == material)
-                .collect(Collectors.toList());
+    public Page<ContainerDTOResponse> getContainersByMaterial(MaterialType material, Pageable pageable) {
+        Page<Container> containers = containerRepo.findByMaterialType(material, pageable);
+        if (containers.isEmpty()) {
+            throw new IllegalArgumentException("No containers found for material: " + material);
+        }
+        return containers.map(cont ->
+                new ContainerDTOResponse(cont.getId(), cont.getDescription(), cont.getMaterialType(),
+                        cont.getContainerSize(), cont.getMaterialWeight(), "POUNDS"));
     }
 
 
@@ -105,7 +106,6 @@ public class ContainerServImpl implements IContainerService {
         containerEntity.setContainerSize(container.getContainerSize());
         containerEntity.setMaterialType(container.getMaterialType());
 
-        // Asociar con el ScrapYard
         ScrapYard scrapYard = scrapYardRepo.findById(container.getScrapYardId())
                 .orElseThrow(() -> new IllegalArgumentException("ScrapYard not found"));
         containerEntity.setScrapYard(scrapYard);
@@ -178,22 +178,22 @@ public class ContainerServImpl implements IContainerService {
     }
 
     @Override
-    public List<ContainerDTOResponse> getContainersByScrapYard(ScrapYardDToGetContainers yard) {
-        if (yard == null || yard.getCompanyName() == null || yard.getScrapYardName().isBlank()) {
-            throw new IllegalArgumentException("Yard name or company name cannot be blank or null");
+    public Page<ContainerDTOResponse> getContainersByScrapYard(Long yardId, Pageable pageable) {
+        ScrapYard existing = scrapYardRepo.findById(yardId)
+                .orElseThrow(() -> new IllegalArgumentException("The scrapyard does not exist, please try again"));
+
+        Page<Container> containers = containerRepo.findByScrapYardId(yardId, pageable);
+        if (containers.isEmpty()) {
+            throw new IllegalArgumentException("No containers found for this ScrapYard");
         }
-
-        ScrapYard existing = scrapYardRepo.findByname(yard.getScrapYardName()).orElseThrow(() ->
-                new IllegalArgumentException("The scrapyard does not exist, please try again"));
-
-        return existing.getContainers().stream().map(cont ->
-                new ContainerDTOResponse(cont.getId(),cont.getDescription(), cont.getMaterialType(),
-                        cont.getContainerSize(), cont.getMaterialWeight(), "POUNDS")).toList();
+        return containers.map(cont ->
+                new ContainerDTOResponse(cont.getId(), cont.getDescription(), cont.getMaterialType(),
+                        cont.getContainerSize(), cont.getMaterialWeight(), "POUNDS"));
     }
 
 
     @Override
-    public List<ContainerDTOResponse> getContainersByCompany(Long companyId) {
+    public Page<ContainerDTOResponse> getContainersByCompany(Long companyId, Pageable pageable) {
         if (companyId == null || companyId <= 0) {
             throw new IllegalArgumentException("Company ID cannot be null or negative");
         }
@@ -201,10 +201,18 @@ public class ContainerServImpl implements IContainerService {
             throw new IllegalArgumentException("The company does not exist");
         }
         Long yardId = securityContextService.getCurrentYardId();
+        Page<Container> containers;
         if (yardId != null) {
-            return containerRepo.findContainersByCompanyIdAndScrapYardId(companyId, yardId);
+            containers = containerRepo.findByScrapYard_Company_IdAndScrapYard_Id(companyId, yardId, pageable);
+        } else {
+            containers = containerRepo.findByScrapYard_Company_Id(companyId, pageable);
         }
-        return containerRepo.findContainersByCompanyId(companyId);
+        if (containers.isEmpty()) {
+            throw new IllegalArgumentException("No containers found for this company");
+        }
+        return containers.map(cont ->
+                new ContainerDTOResponse(cont.getId(), cont.getDescription(), cont.getMaterialType(),
+                        cont.getContainerSize(), cont.getMaterialWeight(), "POUNDS"));
     }
 
 
@@ -221,9 +229,6 @@ public class ContainerServImpl implements IContainerService {
 
         return getContainerById(id).getMaterialWeight();
     }
-
-
-
 
 
 
