@@ -47,6 +47,9 @@ public class ScrapYard {
     @OneToMany(mappedBy = "scrapYard", fetch = FetchType.LAZY)
     private List<Invoice> invoices=new ArrayList<>();
 
+    @OneToMany(mappedBy = "scrapYard", fetch = FetchType.LAZY)
+    private List<Report> reports=new ArrayList<>();
+
     @OneToMany(mappedBy = "scrapYard", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ManagerSY> managers=new ArrayList<>();
 

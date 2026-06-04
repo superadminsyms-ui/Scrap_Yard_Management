@@ -1,5 +1,4 @@
 package com.scrapyard.management.Services;
-
 import com.scrapyard.management.DTO.Request.AuthDTO.ChangePasswordRequest;
 import com.scrapyard.management.DTO.Request.AuthDTO.LoginRequest;
 import com.scrapyard.management.DTO.Request.AuthDTO.RegisterRequest;

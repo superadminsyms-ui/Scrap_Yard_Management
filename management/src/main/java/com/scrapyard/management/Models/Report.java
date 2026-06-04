@@ -24,6 +24,14 @@ public class Report {
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "scrapyard_id", nullable = false)
+    private ScrapYard scrapYard;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "manager_id", nullable = false)
+    private ManagerSY manager;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -53,5 +61,11 @@ public class Report {
     @Size(max = 200)
     @Column
     private String notes;
+
+    @PrePersist
+    private void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
 
 }

@@ -32,7 +32,4 @@ public class Spend {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "report_id", nullable = false)
     private Report report;
-
-
-
 }

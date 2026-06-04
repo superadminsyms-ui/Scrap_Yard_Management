@@ -1,7 +1,6 @@
 package com.scrapyard.management.Repository;
 import com.scrapyard.management.Models.Company;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
 
