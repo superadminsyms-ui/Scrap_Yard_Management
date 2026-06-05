@@ -379,3 +379,51 @@ export interface PageResponse<T> {
   last: boolean
   empty: boolean
 }
+
+export interface ReportDetailResponse {
+  materialType: MaterialType
+  weight: number
+  unitPrice: number
+}
+
+export interface SpendResponse {
+  amount: number
+  description: string
+}
+
+export interface ReportResponse {
+  createdAt: string
+  scrapYardId: number
+  managerName: string
+  startingBalance: number
+  addedMoney: number
+  totalInvested: number
+  reportDetails: ReportDetailResponse[]
+  balance: number
+  spends: SpendResponse[]
+  notes: string
+}
+
+export interface ReportDetailFormItem {
+  materialType: MaterialType
+  weight: number
+  unitPrice: number
+  containerId: number
+}
+
+export interface SpendFormItem {
+  amount: number
+  description: string
+}
+
+export interface ReportFormData {
+  scrapYardId: number
+  managerId: number
+  startingBalance: number
+  addedMoney: number
+  totalInvested: number
+  balance: number
+  reportDetails: ReportDetailFormItem[]
+  spends: SpendFormItem[]
+  notes: string
+}

@@ -13,6 +13,7 @@ import {
   Scale,
   X,
   Database,
+  BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
@@ -40,6 +41,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: '/movements', label: 'Movements', icon: ArrowRightLeft, always: true },
     { to: '/backup', label: 'Backup', icon: Database, adminOnly: true },
     { to: '/stock', label: 'Stock', icon: Scale, managerOnly: true },
+    { to: '/diary', label: 'Diary', icon: BookOpen, managerOnly: true },
   ]
 
   const navItems = allItems.filter(

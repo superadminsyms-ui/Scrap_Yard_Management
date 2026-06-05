@@ -10,8 +10,16 @@ import java.time.LocalDateTime;
 public interface IReportService {
 
     Page<ReportDTOResponse> getAllReports(Pageable pageable);
+
+
+
     ReportDTOResponse getReportById(Long id);
+
+
+
     ReportDTOResponse saveReport(ReportDTORequestInsert reportDTO);
+
+
     Page<ReportDTOResponse> getAllReportsByScrapYard(Long scrapYardId, Pageable pageable);
     Page<ReportDTOResponse> getReportsByDate(LocalDate date, Pageable pageable);
     Page<ReportDTOResponse> getReportsByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);

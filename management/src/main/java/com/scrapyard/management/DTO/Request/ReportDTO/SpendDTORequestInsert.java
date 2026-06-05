@@ -19,8 +19,4 @@ public class SpendDTORequestInsert {
     @Size(min = 2, max = 100, message = "description must be between 2 and 100 characters")
     private String description;
 
-    @NotNull(message = "ReportId is required")
-    @Positive(message = "ReportId must be a positive number")
-    private Long reportId;
-
 }

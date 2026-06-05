@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 
 public interface ReportRepo extends JpaRepository <Report, Long> {
 
+    Page<Report> findByScrapYardId(Long scrapYardId, Pageable pageable);
+
     Page<Report> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
     Page<Report> findByScrapYardIdAndCreatedAtBetween(Long scrapYardId, LocalDateTime start, LocalDateTime end, Pageable pageable);

@@ -26,8 +26,8 @@ public class ReportDetailDTORequestInsert {
     @Positive(message = "unitPrice must be a positive number")
     private BigDecimal unitPrice;
 
-    @NotNull(message = "reportId is required")
-    @Positive(message = "reportId must be a positive number")
-    private Long reportId;
+    @NotNull(message = "containerId is required")
+    @Positive(message = "containerId must be a positive number")
+    private Long containerId;
 
 }

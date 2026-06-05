@@ -16,8 +16,6 @@ public class ReportDTORequestInsert {
     @Positive(message = "scrapYardId must be a positive number")
     private Long scrapYardId;
 
-    @NotNull(message = "managerId is required")
-    @Positive(message = "managerId must be a positive number")
     private Long managerId;
 
     @NotNull(message = "Starting balance is required")
@@ -39,11 +37,10 @@ public class ReportDTORequestInsert {
     @Valid
     private List<ReportDetailDTORequestInsert> reportDetails;
 
-    @NotEmpty(message = "spends must contain at least one detail")
     @Valid
     private List<SpendDTORequestInsert> spends;
 
-    @Size(min = 2, max = 200, message = "notes must be between 2 and 100 characters")
+    @Size(max = 200, message = "notes must be at most 200 characters")
     private String notes;
 
 }

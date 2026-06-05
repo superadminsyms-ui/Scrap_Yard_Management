@@ -34,5 +34,8 @@ public class ReportDetail {
     @JoinColumn(name = "report_id", nullable = false)
     private Report report;
 
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "container_id", nullable = false)
+    private Container container;
 
 }

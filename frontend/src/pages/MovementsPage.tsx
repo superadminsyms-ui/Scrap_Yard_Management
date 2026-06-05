@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { movementsApi, type MovementPageParams } from '@/api/endpoints/movements'
 import { scrapyardsApi } from '@/api/endpoints/scrapyards'
@@ -244,6 +244,15 @@ function MovementForm({ yards, onSuccess, isManager, user }: {
 
   const currentYardName = yards.find((y) => y.id === form.scrapYardId)?.name || ''
   const currentManagerName = yardManagers?.find((m: any) => m.email === user?.email)?.name || ''
+
+  useEffect(() => {
+    if (isManager && yardManagers && user?.email && form.managerId === 0) {
+      const myManager = yardManagers.find((m: any) => m.email === user.email)
+      if (myManager) {
+        setForm(prev => ({ ...prev, managerId: myManager.id }))
+      }
+    }
+  }, [isManager, yardManagers, user?.email, form.managerId])
 
   const saveMutation = useMutation({
     mutationFn: (data: MovementFormData) => movementsApi.create(data),

@@ -37,8 +37,6 @@ public class MovementDTORequestInsert {
     @NotNull(message = "Material type is required")
     private MaterialType materialType;
 
-    @NotNull(message = "Manager ID is required")
-    @Positive(message = "Manager ID must be a positive number")
     private Long managerId;
 
     @NotNull(message = "Movement type is required")

@@ -22,5 +22,11 @@ export type {
   YardStockSummary,
   ContainerStockItem,
   ScrapyardReport,
+  ReportDetailResponse,
+  SpendResponse,
+  ReportResponse,
+  ReportDetailFormItem,
+  SpendFormItem,
+  ReportFormData,
 } from './models'
 export { CustomerType, MaterialType, MovementType, ContainerSize, UnitOfMeasure, ReportPeriod } from './models'

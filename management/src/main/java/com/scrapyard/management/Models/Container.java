@@ -39,6 +39,9 @@ public class Container {
     @OneToMany(mappedBy = "container", fetch = FetchType.LAZY)
     private List<InvoiceDetail> invoiceDetails=new ArrayList<>();
 
+    @OneToMany(mappedBy = "container", fetch = FetchType.LAZY)
+    private List<ReportDetail> reportDetails = new ArrayList<>();
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ContainerSize containerSize;

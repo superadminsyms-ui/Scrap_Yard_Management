@@ -21,6 +21,7 @@ const CreateInvoicePage = lazy(() => import('@/pages/CreateInvoicePage'))
 const InvoiceDetailPage = lazy(() => import('@/pages/InvoiceDetailPage'))
 const MovementsPage = lazy(() => import('@/pages/MovementsPage'))
 const StockPage = lazy(() => import('@/pages/StockPage'))
+const DiaryPage = lazy(() => import('@/pages/DiaryPage'))
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
 const BackupPage = lazy(() => import('@/pages/BackupPage'))
 
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
         element: <SuperAdminRoute><SuspenseWrapper><BackupPage /></SuspenseWrapper></SuperAdminRoute>,
       },
       { path: 'stock', element: <SuspenseWrapper><StockPage /></SuspenseWrapper> },
+      { path: 'diary', element: <SuspenseWrapper><DiaryPage /></SuspenseWrapper> },
       { path: 'profile', element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

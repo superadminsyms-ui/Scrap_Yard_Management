@@ -26,7 +26,7 @@ public class ContainerDTORequest {
     private String description;
 
     @NotNull(message = "Material weight is required")
-    @DecimalMin(value = "0.01", message = "Material weight must be positive")
+    @DecimalMin(value = "0.0", message = "Material weight must be positive")
     private BigDecimal materialWeight;
 
     @NotNull(message = "Size is required")
