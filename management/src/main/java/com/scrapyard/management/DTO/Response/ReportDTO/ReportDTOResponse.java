@@ -14,6 +14,8 @@ public class ReportDTOResponse {
 
     private LocalDateTime createdAt;
     private Long scrapYardId;
+    private String scrapYardName;
+    private String companyName;
     private String managerName;
     private BigDecimal startingBalance;
     private BigDecimal addedMoney;

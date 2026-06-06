@@ -14,4 +14,5 @@ public interface ReportRepo extends JpaRepository <Report, Long> {
 
     Page<Report> findByScrapYardIdAndCreatedAtBetween(Long scrapYardId, LocalDateTime start, LocalDateTime end, Pageable pageable);
 
+    boolean existsByScrapYardIdAndCreatedAtBetween(Long scrapYardId, LocalDateTime start, LocalDateTime end);
 }

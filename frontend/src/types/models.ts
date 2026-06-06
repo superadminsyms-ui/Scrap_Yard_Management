@@ -394,6 +394,8 @@ export interface SpendResponse {
 export interface ReportResponse {
   createdAt: string
   scrapYardId: number
+  scrapYardName: string
+  companyName: string
   managerName: string
   startingBalance: number
   addedMoney: number
@@ -426,4 +428,15 @@ export interface ReportFormData {
   reportDetails: ReportDetailFormItem[]
   spends: SpendFormItem[]
   notes: string
+}
+
+export interface ReportDetailTemplateItem {
+  materialType: MaterialType
+  containerId: number
+  weight: number
+  unitPrice: number
+}
+
+export interface ReportTemplateResponse {
+  reportDetails: ReportDetailTemplateItem[]
 }

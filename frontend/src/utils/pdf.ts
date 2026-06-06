@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { Invoice, ScrapyardReport } from '@/types/models'
+import type { Invoice, ReportResponse, ScrapyardReport } from '@/types/models'
 import { MaterialType, UnitOfMeasure } from '@/types/models'
 
 const MATERIAL_LABELS: Record<MaterialType, string> = {
@@ -288,4 +288,181 @@ export function generateReportPDF(report: ScrapyardReport): void {
   doc.text(`Page 1 of 1`, pageWidth - margin, footerY, { align: 'right' })
 
   doc.save(`report-${report.scrapyardName.replace(/\s+/g, '-').toLowerCase()}-${report.period.toLowerCase()}.pdf`)
+}
+
+export function generateDiaryReportPDF(report: ReportResponse): void {
+  const doc = new jsPDF()
+
+  const primaryColor: [number, number, number] = [26, 115, 232]
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const margin = 16
+
+  // ========== HEADER ==========
+  doc.setFontSize(22)
+  doc.setTextColor(...primaryColor)
+  doc.text('SYMS', margin, 18)
+  doc.setFontSize(8)
+  doc.setTextColor(128, 134, 139)
+  doc.text('Scrapyard Management System', margin, 24)
+
+  doc.setFontSize(14)
+  doc.setTextColor(32, 33, 36)
+  doc.text('Diary Report', pageWidth - margin, 18, { align: 'right' })
+  doc.setFontSize(8)
+  doc.setTextColor(95, 99, 104)
+  doc.text(`Date: ${formatDate(report.createdAt)}`, pageWidth - margin, 24, { align: 'right' })
+
+  doc.setDrawColor(...primaryColor)
+  doc.setLineWidth(0.5)
+  doc.line(margin, 30, pageWidth - margin, 30)
+
+  // ========== REPORT INFO ==========
+  const infoY = 40
+  doc.setFontSize(9)
+  doc.setTextColor(32, 33, 36)
+  doc.text(`Manager: ${report.managerName}`, margin, infoY)
+  doc.text(`Yard: ${report.scrapYardName || '-'}`, margin + 70, infoY)
+  if (report.companyName) {
+    doc.setFontSize(8)
+    doc.setTextColor(128, 134, 139)
+    doc.text(`Company: ${report.companyName}`, margin, infoY + 5)
+  }
+
+  // ========== FINANCIAL SUMMARY ==========
+  const summaryY = report.companyName ? infoY + 16 : infoY + 12
+  doc.setFontSize(10)
+  doc.setTextColor(...primaryColor)
+  doc.text('Financial Summary', margin, summaryY)
+
+  const summaryStartY = summaryY + 5
+  const col2X = pageWidth / 2 + 10
+  const rowH = 6
+
+  const summaryItems: [string, string][] = [
+    ['Starting Balance', `$${(report.startingBalance || 0).toFixed(2)}`],
+    ['Added Money', `$${(report.addedMoney || 0).toFixed(2)}`],
+    ['Total Invested', `$${(report.totalInvested || 0).toFixed(2)}`],
+    ['Balance', `$${(report.balance || 0).toFixed(2)}`],
+  ]
+
+  summaryItems.forEach(([label, value], i) => {
+    const y = summaryStartY + (i % 2) * rowH
+    const x = i < 2 ? margin : col2X
+    doc.setFontSize(9)
+    doc.setTextColor(95, 99, 104)
+    doc.text(label, x, y)
+    doc.setTextColor(32, 33, 36)
+    doc.text(value, x + 38, y)
+  })
+
+  const summaryEndY = summaryStartY + rowH + 6
+
+  // ========== MATERIAL DETAILS TABLE ==========
+  if (report.reportDetails && report.reportDetails.length > 0) {
+    doc.setFontSize(10)
+    doc.setTextColor(...primaryColor)
+    doc.text('Material Details', margin, summaryEndY)
+
+    autoTable(doc, {
+      startY: summaryEndY + 4,
+      head: [['Material', 'Weight', 'Unit Price', 'Subtotal']],
+      body: report.reportDetails.map((d) => [
+        MATERIAL_LABELS[d.materialType] || d.materialType,
+        String(d.weight || 0),
+        `$${(d.unitPrice || 0).toFixed(2)}`,
+        `$${((d.weight || 0) * (d.unitPrice || 0)).toFixed(2)}`,
+      ]),
+      theme: 'striped',
+      headStyles: {
+        fillColor: primaryColor,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8,
+        cellPadding: { top: 5, right: 4, bottom: 5, left: 4 },
+      },
+      bodyStyles: {
+        fontSize: 8,
+        textColor: [32, 33, 36],
+        cellPadding: { top: 4, right: 4, bottom: 4, left: 4 },
+      },
+      alternateRowStyles: { fillColor: [248, 249, 250] },
+      columnStyles: {
+        0: { cellWidth: 46 },
+        1: { halign: 'right' as const },
+        2: { halign: 'right' as const },
+        3: { halign: 'right' as const },
+      },
+      margin: { left: margin, right: margin },
+      styles: { lineColor: [218, 220, 224], lineWidth: 0.2 },
+    })
+  }
+
+  const materialsEndY = report.reportDetails?.length
+    ? (doc as any).lastAutoTable.finalY + 8
+    : summaryEndY
+
+  // ========== SPENDS TABLE ==========
+  if (report.spends && report.spends.length > 0) {
+    doc.setFontSize(10)
+    doc.setTextColor(...primaryColor)
+    doc.text('Spends', margin, materialsEndY)
+
+    autoTable(doc, {
+      startY: materialsEndY + 4,
+      head: [['Description', 'Amount']],
+      body: report.spends.map((s) => [
+        s.description,
+        `$${(s.amount || 0).toFixed(2)}`,
+      ]),
+      theme: 'striped',
+      headStyles: {
+        fillColor: primaryColor,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8,
+        cellPadding: { top: 5, right: 4, bottom: 5, left: 4 },
+      },
+      bodyStyles: {
+        fontSize: 8,
+        textColor: [32, 33, 36],
+        cellPadding: { top: 4, right: 4, bottom: 4, left: 4 },
+      },
+      alternateRowStyles: { fillColor: [248, 249, 250] },
+      columnStyles: {
+        0: { cellWidth: 110 },
+        1: { halign: 'right' as const },
+      },
+      margin: { left: margin, right: margin },
+      styles: { lineColor: [218, 220, 224], lineWidth: 0.2 },
+    })
+  }
+
+  const spendsEndY = report.spends?.length
+    ? (doc as any).lastAutoTable.finalY + 8
+    : materialsEndY
+
+  // ========== NOTES ==========
+  if (report.notes) {
+    doc.setDrawColor(218, 220, 224)
+    doc.setLineWidth(0.3)
+    doc.line(margin, spendsEndY, pageWidth - margin, spendsEndY)
+
+    doc.setFontSize(10)
+    doc.setTextColor(...primaryColor)
+    doc.text('Notes', margin, spendsEndY + 7)
+
+    doc.setFontSize(8)
+    doc.setTextColor(95, 99, 104)
+    const splitNotes = doc.splitTextToSize(report.notes, pageWidth - margin * 2)
+    doc.text(splitNotes, margin, spendsEndY + 13)
+  }
+
+  // ========== FOOTER ==========
+  const footerY = doc.internal.pageSize.getHeight() - 10
+  doc.setFontSize(7)
+  doc.setTextColor(189, 193, 198)
+  doc.text(`Generated by SYMS on ${new Date().toLocaleDateString('en-US')}`, margin, footerY, { align: 'left' })
+  doc.text(`Page 1 of 1`, pageWidth - margin, footerY, { align: 'right' })
+
+  doc.save(`diary-report-${report.managerName.replace(/\s+/g, '-').toLowerCase()}-${formatDate(report.createdAt).replace(/\//g, '-')}.pdf`)
 }

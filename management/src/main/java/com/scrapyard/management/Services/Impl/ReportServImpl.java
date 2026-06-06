@@ -4,9 +4,11 @@ import com.scrapyard.management.DTO.Request.ReportDTO.ReportDetailDTORequestInse
 import com.scrapyard.management.DTO.Request.ReportDTO.SpendDTORequestInsert;
 import com.scrapyard.management.DTO.Response.ReportDTO.ReportDTOResponse;
 import com.scrapyard.management.DTO.Response.ReportDTO.ReportDetailDTOResponse;
+import com.scrapyard.management.DTO.Response.ReportDTO.ReportTemplateResponse;
 import com.scrapyard.management.DTO.Response.ReportDTO.SpendDTOResponse;
 import com.scrapyard.management.Models.*;
 import com.scrapyard.management.Repository.ContainerRepo;
+import com.scrapyard.management.Repository.InvoiceRepo;
 import com.scrapyard.management.Repository.ManagerSYRepo;
 import com.scrapyard.management.Repository.ReportRepo;
 import com.scrapyard.management.Repository.ScrapYardRepo;
@@ -21,8 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ReportServImpl implements IReportService {
@@ -42,14 +47,18 @@ public class ReportServImpl implements IReportService {
     @Autowired
     private final ContainerRepo containerRepo;
 
+    @Autowired
+    private final InvoiceRepo invoiceRepo;
 
 
-    public ReportServImpl(SecurityContextService securityContextService, ReportRepo reportRepo, ScrapYardRepo scrapYardRepo, ManagerSYRepo managerSYRepo, ContainerRepo containerRepo) {
+
+    public ReportServImpl(SecurityContextService securityContextService, ReportRepo reportRepo, ScrapYardRepo scrapYardRepo, ManagerSYRepo managerSYRepo, ContainerRepo containerRepo, InvoiceRepo invoiceRepo) {
         this.securityContextService = securityContextService;
         this.reportRepo = reportRepo;
         this.scrapYardRepo = scrapYardRepo;
         this.managerSYRepo = managerSYRepo;
         this.containerRepo = containerRepo;
+        this.invoiceRepo = invoiceRepo;
     }
 
 
@@ -73,6 +82,8 @@ public class ReportServImpl implements IReportService {
                 .map(report -> new ReportDTOResponse(
                         report.getCreatedAt(),
                         report.getScrapYard().getId(),
+                        report.getScrapYard().getName(),
+                        report.getScrapYard().getCompany().getName(),
                         report.getManager().getName(),
                         report.getStartingBalance(),
                         report.getAddedMoney(),
@@ -127,6 +138,12 @@ public class ReportServImpl implements IReportService {
             throw new IllegalArgumentException("Manager must belong to the yard");
         }
 
+        LocalDate today = LocalDate.now();
+        if (reportRepo.existsByScrapYardIdAndCreatedAtBetween(
+                scrapYard.getId(), today.atStartOfDay(), today.atTime(23, 59, 59))) {
+            throw new IllegalArgumentException("A report already exists for this yard today");
+        }
+
         Report report = new Report();
         report.setScrapYard(scrapYard);
         report.setManager(manager);
@@ -172,13 +189,6 @@ public class ReportServImpl implements IReportService {
 
         Report saved = reportRepo.save(report);
 
-        for (ReportDetail detail : saved.getReportDetails()) {
-            Container c = detail.getContainer();
-            BigDecimal weightInLbs = saved.getUnit().toPounds(detail.getWeight());
-            c.setMaterialWeight(c.getMaterialWeight().add(weightInLbs));
-            containerRepo.save(c);
-        }
-
         List<ReportDetailDTOResponse> detailResponses = saved.getReportDetails().stream()
                 .map(d -> new ReportDetailDTOResponse(
                         d.getMaterialType(),
@@ -197,6 +207,8 @@ public class ReportServImpl implements IReportService {
         return new ReportDTOResponse(
                 saved.getCreatedAt(),
                 saved.getScrapYard().getId(),
+                saved.getScrapYard().getName(),
+                saved.getScrapYard().getCompany().getName(),
                 saved.getManager().getName(),
                 saved.getStartingBalance(),
                 saved.getAddedMoney(),
@@ -209,18 +221,144 @@ public class ReportServImpl implements IReportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ReportTemplateResponse getReportTemplateFromInvoices(Long scrapYardId) {
+        Long yardId = securityContextService.getCurrentYardId();
+        if (yardId != null) {
+            scrapYardId = yardId;
+        }
+        if (scrapYardId == null) {
+            throw new IllegalArgumentException("Scrap yard is required");
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end = today.atTime(23, 59, 59);
+
+        List<Invoice> invoices = invoiceRepo.findByScrapYardIdAndCreatedAtBetween(scrapYardId, start, end);
+
+        if (invoices.isEmpty()) {
+            throw new IllegalArgumentException("No invoices found for this date");
+        }
+
+        Map<Long, List<InvoiceDetail>> groupedByContainer = new HashMap<>();
+        for (Invoice inv : invoices) {
+            for (InvoiceDetail detail : inv.getDetails()) {
+                groupedByContainer
+                        .computeIfAbsent(detail.getContainer().getId(), k -> new ArrayList<>())
+                        .add(detail);
+            }
+        }
+
+        List<ReportTemplateResponse.ReportDetailTemplate> templates = new ArrayList<>();
+        for (Map.Entry<Long, List<InvoiceDetail>> entry : groupedByContainer.entrySet()) {
+            Long containerId = entry.getKey();
+            List<InvoiceDetail> entries = entry.getValue();
+            BigDecimal totalWeight = BigDecimal.ZERO;
+            BigDecimal weightedPriceSum = BigDecimal.ZERO;
+
+            for (InvoiceDetail d : entries) {
+                BigDecimal w = d.getWeight();
+                totalWeight = totalWeight.add(w);
+                weightedPriceSum = weightedPriceSum.add(d.getUnitPrice().multiply(w));
+            }
+
+            BigDecimal avgUnitPrice = totalWeight.compareTo(BigDecimal.ZERO) == 0
+                    ? BigDecimal.ZERO
+                    : weightedPriceSum.divide(totalWeight, 2, RoundingMode.HALF_UP);
+
+            ReportTemplateResponse.ReportDetailTemplate template = new ReportTemplateResponse.ReportDetailTemplate();
+            template.setMaterialType(entries.get(0).getMaterialType());
+            template.setContainerId(containerId);
+            template.setWeight(totalWeight);
+            template.setUnitPrice(avgUnitPrice);
+            templates.add(template);
+        }
+
+        return new ReportTemplateResponse(templates);
+    }
+
+    @Override
     public Page<ReportDTOResponse> getAllReportsByScrapYard(Long scrapYardId, Pageable pageable) {
         return null;
     }
 
     @Override
-    public Page<ReportDTOResponse> getReportsByDate(LocalDate date, Pageable pageable) {
-        return null;
+    public boolean existsReportToday(Long scrapYardId) {
+        Long yardId = securityContextService.getCurrentYardId();
+        if (yardId != null) {
+            scrapYardId = yardId;
+        }
+        if (scrapYardId == null) {
+            return false;
+        }
+        LocalDate today = LocalDate.now();
+        return reportRepo.existsByScrapYardIdAndCreatedAtBetween(
+                scrapYardId, today.atStartOfDay(), today.atTime(23, 59, 59));
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<ReportDTOResponse> getReportsByDate(LocalDate date, Pageable pageable) {
+        Long yardId = securityContextService.getCurrentYardId();
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.atTime(23, 59, 59);
+        Page<Report> reportPage;
+
+        if (yardId != null) {
+            reportPage = reportRepo.findByScrapYardIdAndCreatedAtBetween(yardId, start, end, pageable);
+        } else {
+            reportPage = reportRepo.findByCreatedAtBetween(start, end, pageable);
+        }
+
+        return mapToResponsePage(reportPage, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ReportDTOResponse> getReportsByDateRange(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        return null;
+        Long yardId = securityContextService.getCurrentYardId();
+        Page<Report> reportPage;
+
+        if (yardId != null) {
+            reportPage = reportRepo.findByScrapYardIdAndCreatedAtBetween(yardId, startDate, endDate, pageable);
+        } else {
+            reportPage = reportRepo.findByCreatedAtBetween(startDate, endDate, pageable);
+        }
+
+        return mapToResponsePage(reportPage, pageable);
+    }
+
+    private Page<ReportDTOResponse> mapToResponsePage(Page<Report> reportPage, Pageable pageable) {
+        List<ReportDTOResponse> dtos = reportPage.getContent().stream()
+                .map(report -> new ReportDTOResponse(
+                        report.getCreatedAt(),
+                        report.getScrapYard().getId(),
+                        report.getScrapYard().getName(),
+                        report.getScrapYard().getCompany().getName(),
+                        report.getManager().getName(),
+                        report.getStartingBalance(),
+                        report.getAddedMoney(),
+                        report.getTotalInvested(),
+                        report.getReportDetails().stream()
+                                .map(d -> new ReportDetailDTOResponse(
+                                        d.getMaterialType(),
+                                        d.getWeight(),
+                                        d.getUnitPrice()
+                                ))
+                                .toList(),
+                        report.getBalance(),
+                        report.getSpends().stream()
+                                .map(s -> new SpendDTOResponse(
+                                        s.getAmount(),
+                                        s.getDescription()
+                                ))
+                                .toList(),
+                        report.getNotes()
+                ))
+                .toList();
+
+        return new PageImpl<>(dtos, pageable, reportPage.getTotalElements());
     }
 
     @Override
