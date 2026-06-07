@@ -401,6 +401,7 @@ export interface ReportResponse {
   addedMoney: number
   totalInvested: number
   reportDetails: ReportDetailResponse[]
+  totalDiscount: number
   balance: number
   spends: SpendResponse[]
   notes: string
@@ -427,6 +428,7 @@ export interface ReportFormData {
   balance: number
   reportDetails: ReportDetailFormItem[]
   spends: SpendFormItem[]
+  totalDiscount: number
   notes: string
 }
 
@@ -439,4 +441,5 @@ export interface ReportDetailTemplateItem {
 
 export interface ReportTemplateResponse {
   reportDetails: ReportDetailTemplateItem[]
+  totalDiscount: number
 }

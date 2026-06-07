@@ -40,6 +40,8 @@ public class ReportDTORequestInsert {
     @Valid
     private List<SpendDTORequestInsert> spends;
 
+    private BigDecimal totalDiscount;
+
     @Size(max = 200, message = "notes must be at most 200 characters")
     private String notes;
 

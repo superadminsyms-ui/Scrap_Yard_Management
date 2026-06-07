@@ -12,6 +12,7 @@ import java.util.List;
 @Data
 public class ReportTemplateResponse {
     private List<ReportDetailTemplate> reportDetails;
+    private BigDecimal totalDiscount;
 
     @AllArgsConstructor
     @NoArgsConstructor

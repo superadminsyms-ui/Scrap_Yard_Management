@@ -401,14 +401,47 @@ export function generateDiaryReportPDF(report: ReportResponse): void {
     ? (doc as any).lastAutoTable.finalY + 8
     : summaryEndY
 
+  if (report.reportDetails?.length) {
+    const detailsTotal = report.reportDetails.reduce((sum, d) => sum + (d.weight || 0) * (d.unitPrice || 0), 0)
+    const discountAmount = report.totalDiscount || 0
+    const totalPaid = detailsTotal - discountAmount
+    const rightX = pageWidth - margin
+
+    doc.setFontSize(9)
+    doc.setTextColor(95, 99, 104)
+    doc.text('Subtotal', margin + 10, materialsEndY)
+    doc.setTextColor(32, 33, 36)
+    doc.text(`$${detailsTotal.toFixed(2)}`, rightX, materialsEndY, { align: 'right' })
+
+    doc.setFontSize(9)
+    doc.setTextColor(95, 99, 104)
+    doc.text('Discounts', margin + 10, materialsEndY + 7)
+    doc.setTextColor(217, 48, 37)
+    doc.text(`- $${discountAmount.toFixed(2)}`, rightX, materialsEndY + 7, { align: 'right' })
+
+    doc.setDrawColor(218, 220, 224)
+    doc.setLineWidth(0.3)
+    doc.line(margin + 10, materialsEndY + 12, rightX, materialsEndY + 12)
+
+    doc.setFontSize(10)
+    doc.setTextColor(32, 33, 36)
+    doc.text('Total Paid', margin + 10, materialsEndY + 20)
+    doc.setTextColor(30, 142, 62)
+    doc.text(`$${totalPaid.toFixed(2)}`, rightX, materialsEndY + 20, { align: 'right' })
+  }
+
+  const afterMaterialsY = report.reportDetails?.length
+    ? materialsEndY + 28
+    : summaryEndY
+
   // ========== SPENDS TABLE ==========
   if (report.spends && report.spends.length > 0) {
     doc.setFontSize(10)
     doc.setTextColor(...primaryColor)
-    doc.text('Spends', margin, materialsEndY)
+    doc.text('Spends', margin, afterMaterialsY)
 
     autoTable(doc, {
-      startY: materialsEndY + 4,
+      startY: afterMaterialsY + 4,
       head: [['Description', 'Amount']],
       body: report.spends.map((s) => [
         s.description,
@@ -439,7 +472,7 @@ export function generateDiaryReportPDF(report: ReportResponse): void {
 
   const spendsEndY = report.spends?.length
     ? (doc as any).lastAutoTable.finalY + 8
-    : materialsEndY
+    : afterMaterialsY
 
   // ========== NOTES ==========
   if (report.notes) {

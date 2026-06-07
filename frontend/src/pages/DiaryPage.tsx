@@ -260,32 +260,39 @@ function AllReportsTab() {
                                 </div>
                                 Material Details
                               </h4>
-                              {r.reportDetails && r.reportDetails.length > 0 ? (
-                                <table className="w-full text-xs">
-                                  <thead>
-                                    <tr className="border-b border-outline-light">
-                                      <th className="text-left py-1.5 font-medium text-secondary-500">Material</th>
-                                      <th className="text-right py-1.5 font-medium text-secondary-500">Weight</th>
-                                      <th className="text-right py-1.5 font-medium text-secondary-500">Unit Price</th>
-                                      <th className="text-right py-1.5 font-medium text-secondary-500">Subtotal</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-outline-light">
-                                    {r.reportDetails.map((d, j) => (
-                                      <tr key={j}>
-                                        <td className="py-1.5">
-                                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium border ${MATERIAL_COLORS[d.materialType]}`}>
-                                            {MATERIAL_LABELS[d.materialType] || d.materialType}
-                                          </span>
-                                        </td>
-                                        <td className="text-right py-1.5">{d.weight}</td>
-                                        <td className="text-right py-1.5">${d.unitPrice?.toFixed(2)}</td>
-                                        <td className="text-right py-1.5 font-semibold text-emerald-600">${((d.weight || 0) * (d.unitPrice || 0)).toFixed(2)}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              ) : (
+                               {r.reportDetails && r.reportDetails.length > 0 ? (
+                                 <>
+                                 <table className="w-full text-xs">
+                                   <thead>
+                                     <tr className="border-b border-outline-light">
+                                       <th className="text-left py-1.5 font-medium text-secondary-500">Material</th>
+                                       <th className="text-right py-1.5 font-medium text-secondary-500">Weight</th>
+                                       <th className="text-right py-1.5 font-medium text-secondary-500">Unit Price</th>
+                                       <th className="text-right py-1.5 font-medium text-secondary-500">Subtotal</th>
+                                     </tr>
+                                   </thead>
+                                   <tbody className="divide-y divide-outline-light">
+                                     {r.reportDetails.map((d, j) => (
+                                       <tr key={j}>
+                                         <td className="py-1.5">
+                                           <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium border ${MATERIAL_COLORS[d.materialType]}`}>
+                                             {MATERIAL_LABELS[d.materialType] || d.materialType}
+                                           </span>
+                                         </td>
+                                         <td className="text-right py-1.5">{d.weight}</td>
+                                         <td className="text-right py-1.5">${d.unitPrice?.toFixed(2)}</td>
+                                         <td className="text-right py-1.5 font-semibold text-emerald-600">${((d.weight || 0) * (d.unitPrice || 0)).toFixed(2)}</td>
+                                       </tr>
+                                     ))}
+                                   </tbody>
+                                 </table>
+                                 <div className="mt-2 space-y-0.5 text-right">
+                                    <p className="text-xs font-semibold text-emerald-700">Subtotal: ${r.reportDetails?.reduce((sum, d) => sum + (d.weight || 0) * (d.unitPrice || 0), 0).toFixed(2) ?? '0.00'}</p>
+                                   <p className="text-xs font-semibold text-red-500">Discounts: -${(r.totalDiscount || 0).toFixed(2)}</p>
+                                    <p className="text-xs font-semibold text-blue-700">Total Paid: ${(() => { const st = r.reportDetails?.reduce((sum, d) => sum + (d.weight || 0) * (d.unitPrice || 0), 0) ?? 0; return (st - (r.totalDiscount || 0)).toFixed(2); })()}</p>
+                                 </div>
+                                 </>
+                               ) : (
                                 <p className="text-xs text-secondary-400">No material details</p>
                               )}
                             </Card>
@@ -399,6 +406,7 @@ function NewReportTab({ isManager, user, onSuccess }: {
   const [notes, setNotes] = useState('')
   const [details, setDetails] = useState<DetailRow[]>([])
   const [spends, setSpends] = useState<SpendRow[]>([])
+  const [totalDiscount, setTotalDiscount] = useState(0)
   const [nextSpendKey, setNextSpendKey] = useState(1)
   const [error, setError] = useState('')
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -454,6 +462,7 @@ function NewReportTab({ isManager, user, onSuccess }: {
         containerId: d.containerId,
       }))
       setDetails(newDetails)
+      setTotalDiscount(template.totalDiscount || 0)
       setIsDataLoaded(true)
     } catch (err: any) {
       setError(err.message || 'No invoices found for this date')
@@ -474,6 +483,7 @@ function NewReportTab({ isManager, user, onSuccess }: {
         balance,
         reportDetails: details.map(({ key, ...d }) => d),
         spends: spends.map(({ key, ...s }) => s),
+        totalDiscount,
         notes,
       }
       return reportsApi.create(data)
@@ -520,6 +530,14 @@ function NewReportTab({ isManager, user, onSuccess }: {
       if (!s.description.trim()) { setError('All spends must have a description'); return }
       if (s.amount <= 0) { setError('All spend amounts must be positive'); return }
     }
+
+    const expectedTotalInvested = totalPaid + spendsTotal
+    const diff = Math.abs(totalInvested - expectedTotalInvested)
+    if (diff > 3500) {
+      setError(`Total Invested ($${totalInvested.toFixed(2)}) differs from expected ($${expectedTotalInvested.toFixed(2)}). Total Paid ($${totalPaid.toFixed(2)}) + Spends ($${spendsTotal.toFixed(2)}). Difference: $${diff.toFixed(2)}. Max allowed: ±$3,500.00`)
+      return
+    }
+
     setShowConfirmDialog(true)
   }
 
@@ -531,6 +549,7 @@ function NewReportTab({ isManager, user, onSuccess }: {
   const currentYardName = yards?.find(y => y.id === scrapYardId)?.name || ''
   const currentManagerName = yardManagers?.find((m: any) => m.id === managerId)?.name || ''
   const detailsTotal = details.reduce((sum, d) => sum + (d.weight || 0) * (d.unitPrice || 0), 0)
+  const totalPaid = detailsTotal - (totalDiscount || 0)
   const spendsTotal = spends.reduce((sum, s) => sum + (s.amount || 0), 0)
   const containerMap = (yardContainers || []).reduce((acc: Record<number, string>, c: any) => {
     acc[c.id] = `#${c.id} - ${c.description}`
@@ -725,10 +744,22 @@ function NewReportTab({ isManager, user, onSuccess }: {
         )}
 
         {isDataLoaded && details.length > 0 && (
-          <div className="mt-3 flex justify-end">
-            <span className="text-sm font-semibold text-emerald-700">
-              Details subtotal: ${detailsTotal.toFixed(2)}
-            </span>
+          <div className="mt-3 space-y-0.5">
+            <div className="flex justify-end">
+              <span className="text-sm font-semibold text-emerald-700">
+                Details subtotal: ${detailsTotal.toFixed(2)}
+              </span>
+            </div>
+            <div className="flex justify-end">
+              <span className="text-sm font-semibold text-red-500">
+                Total Discounts: -${(totalDiscount || 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="flex justify-end">
+              <span className="text-sm font-semibold text-blue-700">
+                Total Paid: ${totalPaid.toFixed(2)}
+              </span>
+            </div>
           </div>
         )}
       </Card>
@@ -860,6 +891,14 @@ function NewReportTab({ isManager, user, onSuccess }: {
               <span className="font-bold">${detailsTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
+              <span className="text-white/70">Total Discounts</span>
+              <span className="font-bold">-${(totalDiscount || 0).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-white/70">Total Paid</span>
+              <span className="font-bold">${totalPaid.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
               <span className="text-white/70">Spends Total</span>
               <span className="font-bold">${spendsTotal.toFixed(2)}</span>
             </div>
@@ -894,6 +933,7 @@ function NewReportTab({ isManager, user, onSuccess }: {
         notes={notes}
         details={details}
         spends={spends}
+        totalDiscount={totalDiscount}
         containerMap={containerMap}
       />
     </div>

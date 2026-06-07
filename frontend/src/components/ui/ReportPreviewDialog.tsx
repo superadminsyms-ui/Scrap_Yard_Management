@@ -40,6 +40,7 @@ interface ReportPreviewDialogProps {
   notes: string
   details: PreviewDetail[]
   spends: PreviewSpend[]
+  totalDiscount: number
   containerMap: Record<number, string>
 }
 
@@ -56,11 +57,13 @@ export function ReportPreviewDialog({
   notes,
   details,
   spends,
+  totalDiscount,
   containerMap,
 }: ReportPreviewDialogProps) {
   if (!open) return null
 
   const detailsTotal = details.reduce((sum, d) => sum + (d.weight || 0) * (d.unitPrice || 0), 0)
+  const totalPaid = detailsTotal - (totalDiscount || 0)
   const spendsTotal = spends.reduce((sum, s) => sum + (s.amount || 0), 0)
 
   return (
@@ -152,7 +155,11 @@ export function ReportPreviewDialog({
               </div>
             )}
             {details.length > 0 && (
-              <p className="text-right text-xs font-semibold text-emerald-700 mt-1">Subtotal: ${detailsTotal.toFixed(2)}</p>
+              <div className="space-y-0.5 mt-1">
+                <p className="text-right text-xs font-semibold text-emerald-700">Subtotal: ${detailsTotal.toFixed(2)}</p>
+                <p className="text-right text-xs font-semibold text-red-500">Discounts: -${(totalDiscount || 0).toFixed(2)}</p>
+                <p className="text-right text-xs font-semibold text-blue-700">Total Paid: ${totalPaid.toFixed(2)}</p>
+              </div>
             )}
           </div>
 

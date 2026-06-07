@@ -21,6 +21,7 @@ public class ReportDTOResponse {
     private BigDecimal addedMoney;
     private BigDecimal totalInvested;
     private List<ReportDetailDTOResponse> reportDetails;
+    private BigDecimal totalDiscount;
     private BigDecimal balance;
     private List<SpendDTOResponse> spends;
     private String notes;

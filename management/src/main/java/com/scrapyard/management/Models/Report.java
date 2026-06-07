@@ -57,6 +57,9 @@ public class Report {
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Spend> spends=new ArrayList<>();
 
+    @Column
+    private BigDecimal totalDiscount;
+
     @Size(max = 200)
     @Column
     private String notes;

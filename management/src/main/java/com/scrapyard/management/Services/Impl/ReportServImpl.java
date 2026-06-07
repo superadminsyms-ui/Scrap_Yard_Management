@@ -20,12 +20,11 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -95,6 +94,7 @@ public class ReportServImpl implements IReportService {
                                         d.getUnitPrice()
                                 ))
                                 .toList(),
+                        report.getTotalDiscount(),
                         report.getBalance(),
                         report.getSpends().stream()
                                 .map(s -> new SpendDTOResponse(
@@ -144,12 +144,33 @@ public class ReportServImpl implements IReportService {
             throw new IllegalArgumentException("A report already exists for this yard today");
         }
 
+        BigDecimal detailsSubtotal = BigDecimal.ZERO;
+        for (ReportDetailDTORequestInsert detail : reportDTO.getReportDetails()) {
+            detailsSubtotal = detailsSubtotal.add(detail.getWeight().multiply(detail.getUnitPrice()));
+        }
+        BigDecimal totalPaid = detailsSubtotal.subtract(
+                reportDTO.getTotalDiscount() != null ? reportDTO.getTotalDiscount() : BigDecimal.ZERO);
+        BigDecimal totalSpends = BigDecimal.ZERO;
+        if (reportDTO.getSpends() != null) {
+            for (SpendDTORequestInsert spend : reportDTO.getSpends()) {
+                totalSpends = totalSpends.add(spend.getAmount());
+            }
+        }
+        BigDecimal expectedTotalInvested = totalPaid.add(totalSpends);
+        BigDecimal difference = reportDTO.getTotalInvested().subtract(expectedTotalInvested).abs();
+        if (difference.compareTo(new BigDecimal("3500")) > 0) {
+            throw new IllegalArgumentException(
+                    "Total Invested differs from expected amount by $" + difference
+                    + ". Max allowed: $3,500");
+        }
+
         Report report = new Report();
         report.setScrapYard(scrapYard);
         report.setManager(manager);
         report.setStartingBalance(reportDTO.getStartingBalance());
         report.setAddedMoney(reportDTO.getAddedMoney());
         report.setTotalInvested(reportDTO.getTotalInvested());
+        report.setTotalDiscount(reportDTO.getTotalDiscount());
         report.setBalance(reportDTO.getBalance());
         report.setNotes(reportDTO.getNotes());
 
@@ -214,6 +235,7 @@ public class ReportServImpl implements IReportService {
                 saved.getAddedMoney(),
                 saved.getTotalInvested(),
                 detailResponses,
+                saved.getTotalDiscount(),
                 saved.getBalance(),
                 spendResponses,
                 saved.getNotes()
@@ -241,41 +263,35 @@ public class ReportServImpl implements IReportService {
             throw new IllegalArgumentException("No invoices found for this date");
         }
 
-        Map<Long, List<InvoiceDetail>> groupedByContainer = new HashMap<>();
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+        Map<String, ReportTemplateResponse.ReportDetailTemplate> grouped = new LinkedHashMap<>();
+
         for (Invoice inv : invoices) {
+            if (inv.getDiscount() != null) {
+                totalDiscount = totalDiscount.add(inv.getDiscount());
+            }
             for (InvoiceDetail detail : inv.getDetails()) {
-                groupedByContainer
-                        .computeIfAbsent(detail.getContainer().getId(), k -> new ArrayList<>())
-                        .add(detail);
+                String key = detail.getContainer().getId() + "_"
+                           + detail.getMaterialType() + "_"
+                           + detail.getUnitPrice().toString();
+                if (grouped.containsKey(key)) {
+                    ReportTemplateResponse.ReportDetailTemplate existing = grouped.get(key);
+                    existing.setWeight(existing.getWeight().add(detail.getWeight()));
+                } else {
+                    ReportTemplateResponse.ReportDetailTemplate template = new ReportTemplateResponse.ReportDetailTemplate();
+                    template.setMaterialType(detail.getMaterialType());
+                    template.setContainerId(detail.getContainer().getId());
+                    template.setWeight(detail.getWeight());
+                    template.setUnitPrice(detail.getUnitPrice());
+                    grouped.put(key, template);
+                }
             }
         }
 
-        List<ReportTemplateResponse.ReportDetailTemplate> templates = new ArrayList<>();
-        for (Map.Entry<Long, List<InvoiceDetail>> entry : groupedByContainer.entrySet()) {
-            Long containerId = entry.getKey();
-            List<InvoiceDetail> entries = entry.getValue();
-            BigDecimal totalWeight = BigDecimal.ZERO;
-            BigDecimal weightedPriceSum = BigDecimal.ZERO;
-
-            for (InvoiceDetail d : entries) {
-                BigDecimal w = d.getWeight();
-                totalWeight = totalWeight.add(w);
-                weightedPriceSum = weightedPriceSum.add(d.getUnitPrice().multiply(w));
-            }
-
-            BigDecimal avgUnitPrice = totalWeight.compareTo(BigDecimal.ZERO) == 0
-                    ? BigDecimal.ZERO
-                    : weightedPriceSum.divide(totalWeight, 2, RoundingMode.HALF_UP);
-
-            ReportTemplateResponse.ReportDetailTemplate template = new ReportTemplateResponse.ReportDetailTemplate();
-            template.setMaterialType(entries.get(0).getMaterialType());
-            template.setContainerId(containerId);
-            template.setWeight(totalWeight);
-            template.setUnitPrice(avgUnitPrice);
-            templates.add(template);
-        }
-
-        return new ReportTemplateResponse(templates);
+        ReportTemplateResponse response = new ReportTemplateResponse();
+        response.setReportDetails(new ArrayList<>(grouped.values()));
+        response.setTotalDiscount(totalDiscount);
+        return response;
     }
 
     @Override
@@ -347,6 +363,7 @@ public class ReportServImpl implements IReportService {
                                         d.getUnitPrice()
                                 ))
                                 .toList(),
+                        report.getTotalDiscount(),
                         report.getBalance(),
                         report.getSpends().stream()
                                 .map(s -> new SpendDTOResponse(
