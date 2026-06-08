@@ -246,7 +246,7 @@ export default function CreateInvoicePage() {
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 sticky top-0 z-10 bg-white rounded-t-lg pt-1">
               <h2 className="text-sm font-semibold text-secondary-800">Invoice Details</h2>
               <Button size="sm" variant="secondary" onClick={addDetail}>
                 <Plus className="w-3 h-3" /> Add line

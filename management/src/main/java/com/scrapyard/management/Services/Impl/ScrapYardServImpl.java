@@ -166,7 +166,7 @@ public class ScrapYardServImpl implements IScrapYardService {
 
 
     @Override
-    public List<ScrapYardDTOResponse> getAllYardByCompany(Long companyID) {
+    public List<dtoResponseId> getAllYardByCompany(Long companyID) {
         Long yardId = securityContextService.getCurrentYardId();
 
         Company entity = companyRepo.findById(companyID).orElseThrow(() -> new IllegalArgumentException
@@ -178,8 +178,8 @@ public class ScrapYardServImpl implements IScrapYardService {
             yards = yards.stream().filter(y -> y.getId().equals(yardId)).toList();
         }
 
-        return yards.stream().map(yard -> new ScrapYardDTOResponse(
-                yard.getCompany().getName(),yard.getName(),yard.getLocation(), yard.isActive()
+        return yards.stream().map(yard -> new dtoResponseId(
+                yard.getId(), yard.getCompany().getName(), yard.getName(), yard.getLocation(), yard.isActive()
         )).toList();
     }
 

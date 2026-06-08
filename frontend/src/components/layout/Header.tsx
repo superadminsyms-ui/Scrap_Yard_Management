@@ -28,16 +28,10 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-2">
-          <span className={cn('w-2 h-2 rounded-full shrink-0', theme.dot)} />
-          <h1 className="text-label-lg text-secondary-500">
-            SY Management System
-          </h1>
-        </div>
       </div>
 
       {stats?.scrapyardName && (
-        <div className="hidden md:flex flex-1 items-center justify-center">
+        <div className="hidden md:flex flex-1 items-center justify-start">
           <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-100 border border-outline">
             <span className={cn('w-2 h-2 rounded-full', theme.dot)} />
             <span className="text-sm font-semibold text-secondary-800">{stats.scrapyardName}</span>
@@ -51,7 +45,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       <div className="hidden md:flex items-center gap-3">
         <div className="text-right">
           <p className="text-sm font-medium text-secondary-800">
-            Welcome to SY Management System,{' '}
+            Welcome to Scrap Yard Management System,{' '}
             {user?.role === 'SUPERADMIN' ? 'Super Admin' : user?.managerName}
           </p>
           <p className="text-xs text-secondary-400">{user?.email}</p>

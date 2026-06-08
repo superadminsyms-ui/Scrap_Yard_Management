@@ -1,5 +1,5 @@
 import { apiClient } from '../client'
-import type { Invoice, InvoiceSummary, PageResponse } from '@/types/models'
+import type { Invoice, InvoiceSummary, InvoiceFormData, PageResponse } from '@/types/models'
 
 export interface InvoicePageParams {
   page?: number

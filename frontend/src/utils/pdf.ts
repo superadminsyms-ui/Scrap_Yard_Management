@@ -435,6 +435,8 @@ export function generateDiaryReportPDF(report: ReportResponse): void {
     : summaryEndY
 
   // ========== SPENDS TABLE ==========
+  let spendsEndY = afterMaterialsY
+
   if (report.spends && report.spends.length > 0) {
     doc.setFontSize(10)
     doc.setTextColor(...primaryColor)
@@ -468,11 +470,23 @@ export function generateDiaryReportPDF(report: ReportResponse): void {
       margin: { left: margin, right: margin },
       styles: { lineColor: [218, 220, 224], lineWidth: 0.2 },
     })
-  }
 
-  const spendsEndY = report.spends?.length
-    ? (doc as any).lastAutoTable.finalY + 8
-    : afterMaterialsY
+    const spendsTotalAmount = report.spends.reduce((sum, s) => sum + (s.amount || 0), 0)
+    const tableEndY = (doc as any).lastAutoTable.finalY + 4
+    const rightX = pageWidth - margin
+
+    doc.setDrawColor(218, 220, 224)
+    doc.setLineWidth(0.3)
+    doc.line(margin + 10, tableEndY, rightX, tableEndY)
+
+    doc.setFontSize(10)
+    doc.setTextColor(32, 33, 36)
+    doc.text('Total Spends', margin + 10, tableEndY + 7)
+    doc.setTextColor(30, 142, 62)
+    doc.text(`$${spendsTotalAmount.toFixed(2)}`, rightX, tableEndY + 7, { align: 'right' })
+
+    spendsEndY = tableEndY + 14
+  }
 
   // ========== NOTES ==========
   if (report.notes) {

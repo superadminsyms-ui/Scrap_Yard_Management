@@ -518,8 +518,10 @@ function NewReportTab({ isManager, user, onSuccess }: {
     if (!isDataLoaded) { setError('Load invoice data first'); return }
     if (!scrapYardId) { setError('Select a yard'); return }
     if (!managerId) { setError('Select a manager'); return }
+    if (startingBalance < 0) { setError('Starting Balance cannot be negative'); return }
+    if (addedMoney < 0) { setError('Added Money cannot be negative'); return }
     if (totalInvested <= 0) { setError('Total invested must be positive'); return }
-    if (balance <= 0) { setError('Balance must be positive'); return }
+    if (balance < 0) { setError('Balance cannot be negative'); return }
     if (!details.length) { setError('Add at least one material detail'); return }
     for (const d of details) {
       if (!d.containerId) { setError('Complete all material details (container required)'); return }
@@ -531,10 +533,22 @@ function NewReportTab({ isManager, user, onSuccess }: {
       if (s.amount <= 0) { setError('All spend amounts must be positive'); return }
     }
 
+    const maxInvested = startingBalance + addedMoney
+    if (totalInvested > maxInvested) {
+      setError(`Total Invested ($${totalInvested.toFixed(2)}) cannot exceed Starting Balance + Added Money ($${maxInvested.toFixed(2)})`)
+      return
+    }
+
+    const expectedBalance = startingBalance + addedMoney - totalInvested
+    if (Math.abs(balance - expectedBalance) > 0.01) {
+      setError(`Balance not allowed, expected: $${expectedBalance.toFixed(2)}`)
+      return
+    }
+
     const expectedTotalInvested = totalPaid + spendsTotal
     const diff = Math.abs(totalInvested - expectedTotalInvested)
-    if (diff > 3500) {
-      setError(`Total Invested ($${totalInvested.toFixed(2)}) differs from expected ($${expectedTotalInvested.toFixed(2)}). Total Paid ($${totalPaid.toFixed(2)}) + Spends ($${spendsTotal.toFixed(2)}). Difference: $${diff.toFixed(2)}. Max allowed: ±$3,500.00`)
+    if (diff > 2000) {
+      setError(`Total Invested ($${totalInvested.toFixed(2)}) differs from expected ($${expectedTotalInvested.toFixed(2)}). Total Paid ($${totalPaid.toFixed(2)}) + Spends ($${spendsTotal.toFixed(2)}). Difference: $${diff.toFixed(2)}. Max allowed: ±$2,000.00`)
       return
     }
 
@@ -636,6 +650,7 @@ function NewReportTab({ isManager, user, onSuccess }: {
             label="Starting Balance"
             type="number"
             step="0.01"
+            min="0"
             value={startingBalance || ''}
             onChange={(e) => setStartingBalance(parseFloat(e.target.value) || 0)}
             placeholder="0.00"
@@ -645,6 +660,7 @@ function NewReportTab({ isManager, user, onSuccess }: {
             label="Added Money"
             type="number"
             step="0.01"
+            min="0"
             value={addedMoney || ''}
             onChange={(e) => setAddedMoney(parseFloat(e.target.value) || 0)}
             placeholder="0.00"
@@ -654,6 +670,7 @@ function NewReportTab({ isManager, user, onSuccess }: {
             label="Total Invested"
             type="number"
             step="0.01"
+            min="0.01"
             value={totalInvested || ''}
             onChange={(e) => setTotalInvested(parseFloat(e.target.value) || 0)}
             placeholder="0.00"
@@ -663,6 +680,7 @@ function NewReportTab({ isManager, user, onSuccess }: {
             label="Balance"
             type="number"
             step="0.01"
+            min="0"
             value={balance || ''}
             onChange={(e) => setBalance(parseFloat(e.target.value) || 0)}
             placeholder="0.00"

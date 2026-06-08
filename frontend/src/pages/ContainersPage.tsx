@@ -39,9 +39,9 @@ const MATERIAL_COLORS: Record<MaterialType, 'green' | 'red' | 'blue' | 'yellow' 
 
 export default function ContainersPage() {
   const queryClient = useQueryClient()
-  const { isSuperAdmin } = useAuth()
-  const [materialFilter, setMaterialFilter] = useState('')
+  const { isSuperAdmin, isManager, user } = useAuth()
   const [companyFilter, setCompanyFilter] = useState(0)
+  const [scrapYardFilter, setScrapYardFilter] = useState(0)
   const [page, setPage] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingContainer, setEditingContainer] = useState<Container | null>(null)
@@ -59,39 +59,65 @@ export default function ContainersPage() {
     queryFn: scrapyardsApi.getAll,
   })
 
+  const { data: yardsByCompany } = useQuery({
+    queryKey: ['scrapyards-by-company', companyFilter],
+    queryFn: () => scrapyardsApi.getByCompany(companyFilter),
+    enabled: companyFilter > 0,
+  })
+
   const { data: companies } = useQuery({
     queryKey: ['companies'],
     queryFn: companiesApi.getAll,
   })
 
-  const materialFilteredQuery = useQuery({
-    queryKey: ['containers-by-material', materialFilter, params],
-    queryFn: () => containersApi.getByMaterial(materialFilter as MaterialType, params),
-    enabled: !!materialFilter,
-  })
-
   const companyFilteredQuery = useQuery({
     queryKey: ['containers-by-company', companyFilter, params],
     queryFn: () => containersApi.getByCompany(companyFilter, params),
-    enabled: companyFilter > 0,
+    enabled: isSuperAdmin && companyFilter > 0 && !scrapYardFilter,
   })
 
-  const activeData = materialFilter
-    ? materialFilteredQuery.data
-    : companyFilter > 0
-      ? companyFilteredQuery.data
+  const yardFilteredQuery = useQuery({
+    queryKey: ['containers-by-yard', scrapYardFilter, params],
+    queryFn: () => containersApi.getByYard(scrapYardFilter, params),
+    enabled: isSuperAdmin && scrapYardFilter > 0,
+  })
+
+  const managerYardQuery = useQuery({
+    queryKey: ['containers-by-yard', user?.yardId, params],
+    queryFn: () => containersApi.getByYard(user!.yardId!, params),
+    enabled: isManager && !!user?.yardId,
+  })
+
+  const activeData = isManager
+    ? managerYardQuery.data
+    : isSuperAdmin
+      ? scrapYardFilter > 0
+        ? yardFilteredQuery.data
+        : companyFilter > 0
+          ? companyFilteredQuery.data
+          : containersPage
       : containersPage
 
   const displayedContainers = activeData?.content || []
   const totalPages = activeData?.totalPages || 0
   const totalElements = activeData?.totalElements || 0
 
+  const isFilterLoading = isManager
+    ? managerYardQuery.isLoading
+    : isSuperAdmin
+      ? scrapYardFilter > 0
+        ? yardFilteredQuery.isLoading
+        : companyFilter > 0
+          ? companyFilteredQuery.isLoading
+          : isLoading
+      : isLoading
+
   const createMutation = useMutation({
     mutationFn: (data: ContainerFormData) => containersApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['containers'] })
-      queryClient.invalidateQueries({ queryKey: ['containers-by-material'] })
       queryClient.invalidateQueries({ queryKey: ['containers-by-company'] })
+      queryClient.invalidateQueries({ queryKey: ['containers-by-yard'] })
       setModalOpen(false)
       setEditingContainer(null)
     },
@@ -103,8 +129,8 @@ export default function ContainersPage() {
       containersApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['containers'] })
-      queryClient.invalidateQueries({ queryKey: ['containers-by-material'] })
       queryClient.invalidateQueries({ queryKey: ['containers-by-company'] })
+      queryClient.invalidateQueries({ queryKey: ['containers-by-yard'] })
       setModalOpen(false)
       setEditingContainer(null)
     },
@@ -115,14 +141,14 @@ export default function ContainersPage() {
     mutationFn: (id: number) => containersApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['containers'] })
-      queryClient.invalidateQueries({ queryKey: ['containers-by-material'] })
       queryClient.invalidateQueries({ queryKey: ['containers-by-company'] })
+      queryClient.invalidateQueries({ queryKey: ['containers-by-yard'] })
       setDeleteId(null)
     },
     onError: (err: Error) => alert('Error deleting: ' + err.message),
   })
 
-  if (isLoading) return <LoadingSpinner />
+  if (isFilterLoading) return <LoadingSpinner />
 
   return (
     <div>
@@ -134,36 +160,43 @@ export default function ContainersPage() {
 
       <div className="mb-4 flex gap-3 flex-wrap">
         {isSuperAdmin && (
-          <Select
-            value={companyFilter || ''}
-            onChange={(e) => { setCompanyFilter(Number(e.target.value)); setMaterialFilter(''); setPage(0) }}
-            label="Filter by company"
-            className="max-w-xs"
-          >
-            <option value="">All companies</option>
-            {companies?.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </Select>
+          <>
+            <Select
+              value={companyFilter || ''}
+              onChange={(e) => { setCompanyFilter(Number(e.target.value)); setScrapYardFilter(0); setPage(0) }}
+              label="Filter by company"
+              className="max-w-xs"
+            >
+              <option value="">All companies</option>
+              {companies?.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </Select>
+            <Select
+              value={scrapYardFilter || ''}
+              onChange={(e) => { setScrapYardFilter(Number(e.target.value)); setPage(0) }}
+              label="Filter by yard"
+              className="max-w-xs"
+            >
+              <option value="">All yards</option>
+              {(companyFilter > 0 ? yardsByCompany : yards)?.map((y) => (
+                <option key={y.id} value={y.id}>{y.name}</option>
+              ))}
+            </Select>
+          </>
         )}
-        <Select
-          value={materialFilter}
-          onChange={(e) => { setMaterialFilter(e.target.value); setPage(0) }}
-          label="Filter by material"
-          className="max-w-xs"
-        >
-          <option value="">All materials</option>
-          {Object.entries(MATERIAL_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </Select>
+        {isManager && user?.yardId && (
+          <span className="text-sm text-secondary-600 self-end pb-1">
+            Viewing containers for your yard
+          </span>
+        )}
       </div>
 
       {!displayedContainers.length ? (
         <EmptyState
           title="No containers"
-          description={materialFilter || companyFilter > 0 ? 'No containers match the filter' : 'Create the first container'}
-          action={!materialFilter && !companyFilter ? { label: 'New Container', onClick: () => setModalOpen(true) } : undefined}
+          description={companyFilter > 0 || scrapYardFilter > 0 || isManager ? 'No containers found' : 'Create the first container'}
+          action={!isManager && !companyFilter && !scrapYardFilter ? { label: 'New Container', onClick: () => setModalOpen(true) } : undefined}
         />
       ) : (
         <>
@@ -218,8 +251,8 @@ export default function ContainersPage() {
           <div className="mt-4 flex items-center justify-between text-sm text-secondary-600">
             <span>
               Showing {displayedContainers.length} of {totalElements} containers
-              {materialFilter ? ' (filtered by material)' : ''}
-              {companyFilter > 0 ? ' (filtered by company)' : ''}
+              {scrapYardFilter > 0 ? ' (filtered by yard)' : ''}
+              {companyFilter > 0 && !scrapYardFilter ? ' (filtered by company)' : ''}
             </span>
             <div className="flex items-center gap-2">
               <button

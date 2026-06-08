@@ -64,9 +64,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     )}>
       <div className="flex items-center justify-between gap-3 h-16 px-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shadow-elevation-2', theme.iconBg)}>
-            <Warehouse className={cn('w-5 h-5', theme.iconText)} />
-          </div>
+          <img src="/recycling_logo.png" alt="SYMS" className="w-9 h-9 object-contain" />
           <span className="text-title-lg text-sidebar-textActive font-medium">SYMS</span>
         </div>
         <button

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { ApiError } from '@/api/client'
-import { Warehouse, Eye, EyeOff, Lock, ShieldCheck, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Lock, ShieldCheck, ArrowLeft } from 'lucide-react'
 import { OTPInput } from '@/components/OTPInput'
 
 export default function LoginPage() {
@@ -126,11 +126,10 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="bg-surface/85 backdrop-blur-md rounded-2xl border border-outline-light shadow-elevation-1 p-8">
           <div className="flex flex-col items-center mb-6">
-            <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-elevation-2 mb-4">
-              <Warehouse className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-secondary-800">SY Management System</h1>
-            <p className="text-sm text-secondary-500 mt-1">Sign in to your account</p>
+              <img src="/recycling_logo.png" alt="SYMS" className="w-16 h-16 object-contain mb-4" />
+            <h1 className="text-xl font-bold text-secondary-800">SYMS</h1>
+            <p className="text-sm text-secondary-500 mt-1">Scrap Yard Management System</p>
+            <p className="text-xs text-secondary-400 mt-0.5">Sign in to your account</p>
           </div>
 
           {lockedOut ? (
@@ -180,7 +179,7 @@ export default function LoginPage() {
                 <OTPInput
                   value={twoFACode}
                   onChange={setTwoFACode}
-                  error={!!error}
+                  error={error || undefined}
                   disabled={submitting}
                 />
               </div>

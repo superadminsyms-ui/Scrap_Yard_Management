@@ -144,6 +144,19 @@ public class ReportServImpl implements IReportService {
             throw new IllegalArgumentException("A report already exists for this yard today");
         }
 
+        BigDecimal maxInvested = reportDTO.getStartingBalance()
+                .add(reportDTO.getAddedMoney() != null ? reportDTO.getAddedMoney() : BigDecimal.ZERO);
+        if (reportDTO.getTotalInvested().compareTo(maxInvested) > 0) {
+            throw new IllegalArgumentException(
+                    "Total Invested cannot exceed the sum of Starting Balance and Added Money");
+        }
+
+        BigDecimal expectedBalance = maxInvested.subtract(reportDTO.getTotalInvested());
+        if (reportDTO.getBalance().compareTo(expectedBalance) != 0) {
+            throw new IllegalArgumentException(
+                    "Balance not allowed, expected: $" + expectedBalance);
+        }
+
         BigDecimal detailsSubtotal = BigDecimal.ZERO;
         for (ReportDetailDTORequestInsert detail : reportDTO.getReportDetails()) {
             detailsSubtotal = detailsSubtotal.add(detail.getWeight().multiply(detail.getUnitPrice()));
@@ -158,10 +171,10 @@ public class ReportServImpl implements IReportService {
         }
         BigDecimal expectedTotalInvested = totalPaid.add(totalSpends);
         BigDecimal difference = reportDTO.getTotalInvested().subtract(expectedTotalInvested).abs();
-        if (difference.compareTo(new BigDecimal("3500")) > 0) {
+        if (difference.compareTo(new BigDecimal("2000")) > 0) {
             throw new IllegalArgumentException(
                     "Total Invested differs from expected amount by $" + difference
-                    + ". Max allowed: $3,500");
+                    + ". Max allowed: $2,000");
         }
 
         Report report = new Report();
@@ -295,8 +308,13 @@ public class ReportServImpl implements IReportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ReportDTOResponse> getAllReportsByScrapYard(Long scrapYardId, Pageable pageable) {
-        return null;
+        Page<Report> reportPage = reportRepo.findByScrapYardId(scrapYardId, pageable);
+        if (reportPage.isEmpty()) {
+            throw new IllegalArgumentException("No reports found for this yard");
+        }
+        return mapToResponsePage(reportPage, pageable);
     }
 
     @Override
@@ -384,7 +402,12 @@ public class ReportServImpl implements IReportService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ReportDTOResponse> getReportsByScrapYardAndDateRange(Long scrapYardId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        return null;
+        Page<Report> reportPage = reportRepo.findByScrapYardIdAndCreatedAtBetween(scrapYardId, startDate, endDate, pageable);
+        if (reportPage.isEmpty()) {
+            throw new IllegalArgumentException("No reports found for this yard in the specified date range");
+        }
+        return mapToResponsePage(reportPage, pageable);
     }
 }

@@ -9,10 +9,11 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className, id, ...props }, ref) => {
+  ({ label, error, className, id, type: inputType, ...rest }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
     const [showPassword, setShowPassword] = useState(false)
-    const isPassword = props.type === 'password'
+    const isPassword = inputType === 'password'
+    const resolvedType = isPassword ? (showPassword ? 'text' : 'password') : inputType
 
     return (
       <div className="w-full">
@@ -25,7 +26,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
-            type={isPassword ? (showPassword ? 'text' : 'password') : props.type}
+            type={resolvedType}
             className={cn(
               'w-full rounded-lg border bg-surface px-4 py-2.5 text-body-md text-secondary-800 placeholder:text-secondary-400 transition-all duration-200 ease-emphasized focus:outline-none focus:ring-2 focus:ring-offset-0',
               isPassword && 'pr-10',
@@ -34,7 +35,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 : 'border-outline focus:ring-primary-500 focus:border-primary-500',
               className,
             )}
-            {...{ ...props, type: undefined }}
+            {...rest}
           />
           {isPassword && (
             <button

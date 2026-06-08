@@ -78,6 +78,41 @@ public class ReportController {
     }
 
 
+    @GetMapping("/by-yard/{yardId}")
+    public ResponseEntity<?> getReportsByYard(
+            @PathVariable Long yardId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        try {
+            Pageable pageable = buildPageable(page, size, sortBy, direction);
+            return ResponseEntity.ok(reportService.getAllReportsByScrapYard(yardId, pageable));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("Error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/by-yard/{yardId}/date-range")
+    public ResponseEntity<?> getReportsByYardAndDateRange(
+            @PathVariable Long yardId,
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        try {
+            Pageable pageable = buildPageable(page, size, sortBy, direction);
+            return ResponseEntity.ok(reportService.getReportsByScrapYardAndDateRange(
+                    yardId, startDate.atStartOfDay(), endDate.atTime(23, 59, 59), pageable));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("Error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/template-from-invoices")
     public ResponseEntity<?> getTemplateFromInvoices(
             @RequestParam Long scrapYardId) {

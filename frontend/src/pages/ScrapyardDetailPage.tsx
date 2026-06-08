@@ -3,10 +3,12 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { scrapyardsApi } from '@/api/endpoints/scrapyards'
 import { invoicesApi, type InvoicePageParams } from '@/api/endpoints/invoices'
+import { reportsApi, type ReportPageParams } from '@/api/endpoints/reports'
 import { PageHeader, Tabs, LoadingSpinner, EmptyState, Badge, StatCard, Card, Button, Select } from '@/components/ui'
 import { MaterialType, MovementType, ReportPeriod } from '@/types/models'
-import type { Container, InvoiceSummary, Movement, MaterialStockItem, ContainerStockItem, YardStockSummary, ScrapyardReport, MaterialPricing } from '@/types/models'
-import { ArrowLeft, Package, Scale, TrendingUp, Receipt, FileDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import type { Container, InvoiceSummary, Movement, MaterialStockItem, ContainerStockItem, YardStockSummary, ScrapyardReport, MaterialPricing, ReportResponse } from '@/types/models'
+import { generateDiaryReportPDF } from '@/utils/pdf'
+import { ArrowLeft, Package, Scale, TrendingUp, Receipt, FileDown, ChevronLeft, ChevronRight, FileText, ChevronDown, ChevronUp, Search, X, DollarSign, Printer, Calendar, Wallet } from 'lucide-react'
 
 const MATERIAL_LABELS: Record<MaterialType, string> = {
   [MaterialType.ALUMINIUM]: 'Aluminum',
@@ -20,6 +22,20 @@ const MATERIAL_LABELS: Record<MaterialType, string> = {
   [MaterialType.BRASS]: 'Brass',
   [MaterialType.CATALYST]: 'Catalyst',
   [MaterialType.ALUMINIUM_CANS]: 'Aluminum Cans',
+}
+
+const MATERIAL_COLORS: Record<MaterialType, string> = {
+  [MaterialType.ALUMINIUM]: 'bg-slate-100 text-slate-700 border-slate-200',
+  [MaterialType.IRON]: 'bg-orange-100 text-orange-700 border-orange-200',
+  [MaterialType.MOTOR]: 'bg-red-100 text-red-700 border-red-200',
+  [MaterialType.BATTERY]: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  [MaterialType.STAINLESS_STEEL]: 'bg-gray-100 text-gray-700 border-gray-200',
+  [MaterialType.REFER]: 'bg-sky-100 text-sky-700 border-sky-200',
+  [MaterialType.CIRCUIT_BOARD]: 'bg-green-100 text-green-700 border-green-200',
+  [MaterialType.COPPER]: 'bg-rose-100 text-rose-700 border-rose-200',
+  [MaterialType.BRASS]: 'bg-amber-100 text-amber-700 border-amber-200',
+  [MaterialType.CATALYST]: 'bg-purple-100 text-purple-700 border-purple-200',
+  [MaterialType.ALUMINIUM_CANS]: 'bg-indigo-100 text-indigo-700 border-indigo-200',
 }
 
 const MOVEMENT_TYPE_LABELS: Record<MovementType, string> = {
@@ -88,6 +104,25 @@ export default function ScrapyardDetailPage() {
   const [reportType, setReportType] = useState('PURCHASES')
   const [reportPeriod, setReportPeriod] = useState('MONTHLY')
 
+  const [diaryPage, setDiaryPage] = useState(0)
+  const [diaryDateMode, setDiaryDateMode] = useState<'all' | 'single' | 'range'>('all')
+  const [diarySingleDate, setDiarySingleDate] = useState('')
+  const [diaryStartDate, setDiaryStartDate] = useState('')
+  const [diaryEndDate, setDiaryEndDate] = useState('')
+
+  const diaryParams: ReportPageParams = { page: diaryPage, size: 20, sortBy: 'createdAt', direction: 'desc' }
+  const diaryDateFilterActive = (diaryDateMode === 'single' && !!diarySingleDate) || (diaryDateMode === 'range' && !!diaryStartDate && !!diaryEndDate)
+
+  const diaryQuery = useQuery({
+    queryKey: ['scrapyard-diary', yardId, diaryDateMode, diarySingleDate, diaryStartDate, diaryEndDate, diaryParams],
+    queryFn: () => {
+      if (diaryDateMode === 'single' && diarySingleDate) return reportsApi.getByYardDateRange(yardId, diarySingleDate, diarySingleDate, diaryParams)
+      if (diaryDateMode === 'range' && diaryStartDate && diaryEndDate) return reportsApi.getByYardDateRange(yardId, diaryStartDate, diaryEndDate, diaryParams)
+      return reportsApi.getByYard(yardId, diaryParams)
+    },
+    enabled: activeTab === 'diary',
+  })
+
   const reportQuery = useQuery({
     queryKey: ['scrapyard-report', yardId, reportType, reportPeriod],
     queryFn: () => scrapyardsApi.getReport(yardId, reportType, reportPeriod),
@@ -100,7 +135,8 @@ export default function ScrapyardDetailPage() {
     { key: 'invoices', label: 'Invoices' },
     { key: 'movements', label: 'Movements' },
     { key: 'resume', label: 'Resume' },
-    { key: 'reports', label: 'Reports' },
+    { key: 'reports', label: 'Statistics' },
+    { key: 'diary', label: 'Diary' },
   ]
 
   return (
@@ -163,6 +199,23 @@ export default function ScrapyardDetailPage() {
             reportPeriod={reportPeriod}
             onReportTypeChange={setReportType}
             onReportPeriodChange={setReportPeriod}
+          />
+        )}
+        {activeTab === 'diary' && (
+          <DiaryTab
+            data={diaryQuery.data}
+            isLoading={diaryQuery.isLoading}
+            page={diaryPage}
+            dateMode={diaryDateMode}
+            singleDate={diarySingleDate}
+            startDate={diaryStartDate}
+            endDate={diaryEndDate}
+            dateFilterActive={diaryDateFilterActive}
+            onPageChange={setDiaryPage}
+            onDateModeChange={setDiaryDateMode}
+            onSingleDateChange={setDiarySingleDate}
+            onStartDateChange={setDiaryStartDate}
+            onEndDateChange={setDiaryEndDate}
           />
         )}
       </Tabs>
@@ -557,6 +610,325 @@ function ReportsTab({
             </Card>
           )}
         </>
+      )}
+    </div>
+  )
+}
+
+function DiaryTab({
+  data,
+  isLoading,
+  page,
+  dateMode,
+  singleDate,
+  startDate,
+  endDate,
+  dateFilterActive,
+  onPageChange,
+  onDateModeChange,
+  onSingleDateChange,
+  onStartDateChange,
+  onEndDateChange,
+}: {
+  data: { content: ReportResponse[]; totalPages: number; totalElements: number } | undefined
+  isLoading: boolean
+  page: number
+  dateMode: 'all' | 'single' | 'range'
+  singleDate: string
+  startDate: string
+  endDate: string
+  dateFilterActive: boolean
+  onPageChange: (p: number) => void
+  onDateModeChange: (m: 'all' | 'single' | 'range') => void
+  onSingleDateChange: (d: string) => void
+  onStartDateChange: (d: string) => void
+  onEndDateChange: (d: string) => void
+}) {
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const reports = data?.content || []
+  const totalPages = data?.totalPages || 0
+  const totalElements = data?.totalElements || 0
+
+  const filteredReports = searchQuery
+    ? reports.filter(r => r.managerName.toLowerCase().includes(searchQuery.toLowerCase()))
+    : reports
+
+  const toggleRow = (idx: number) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev)
+      if (next.has(idx)) next.delete(idx)
+      else next.add(idx)
+      return next
+    })
+  }
+
+  const clearDateFilter = () => {
+    onDateModeChange('all')
+    onSingleDateChange('')
+    onStartDateChange('')
+    onEndDateChange('')
+    onPageChange(0)
+  }
+
+  const formatDisplayDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T00:00:00')
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  const getDateFilterLabel = () => {
+    if (dateMode === 'single' && singleDate) return `Showing reports for ${formatDisplayDate(singleDate)}`
+    if (dateMode === 'range' && startDate && endDate) return `Showing reports from ${formatDisplayDate(startDate)} to ${formatDisplayDate(endDate)}`
+    return null
+  }
+
+  if (isLoading) return <LoadingSpinner />
+
+  return (
+    <div className="space-y-6">
+      <StatCard
+        title="Total Reports"
+        value={totalElements}
+        icon={<FileText className="w-5 h-5 text-blue-500" />}
+        className="border-l-4 border-l-blue-500 max-w-sm"
+      />
+
+      <div className="flex flex-wrap gap-3 items-end">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary-400" />
+          <input
+            type="text"
+            placeholder="Search by manager..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border border-outline bg-surface pl-9 pr-4 py-2.5 text-body-md text-secondary-800 placeholder:text-secondary-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          />
+        </div>
+
+        <Select value={dateMode} onChange={(e) => { onDateModeChange(e.target.value as 'all' | 'single' | 'range'); onPageChange(0) }} className="w-auto min-w-[150px]">
+          <option value="all">All Dates</option>
+          <option value="single">Specific Date</option>
+          <option value="range">Date Range</option>
+        </Select>
+
+        {dateMode === 'single' && (
+          <input
+            type="date"
+            value={singleDate}
+            onChange={(e) => { onSingleDateChange(e.target.value); onPageChange(0) }}
+            className="rounded-lg border border-outline bg-surface px-4 py-2.5 text-body-md text-secondary-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          />
+        )}
+
+        {dateMode === 'range' && (
+          <>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => { onStartDateChange(e.target.value); onPageChange(0) }}
+              className="rounded-lg border border-outline bg-surface px-4 py-2.5 text-body-md text-secondary-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+            <span className="self-center text-secondary-400 text-sm px-1">to</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => { onEndDateChange(e.target.value); onPageChange(0) }}
+              className="rounded-lg border border-outline bg-surface px-4 py-2.5 text-body-md text-secondary-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </>
+        )}
+
+        {dateMode !== 'all' && (
+          <button
+            onClick={clearDateFilter}
+            className="flex items-center gap-1 px-3 py-2.5 text-sm text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 rounded-lg transition-colors"
+          >
+            <X className="w-4 h-4" /> Clear
+          </button>
+        )}
+      </div>
+
+      {dateFilterActive && getDateFilterLabel() && (
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">
+            <Calendar className="w-3.5 h-3.5" />
+            {getDateFilterLabel()}
+          </span>
+        </div>
+      )}
+
+      {!filteredReports.length ? (
+        <EmptyState
+          title="No reports found"
+          description={searchQuery || dateFilterActive ? 'Try adjusting your filters' : 'No diary reports for this yard yet'}
+        />
+      ) : (
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-outline bg-gradient-to-r from-blue-50 to-transparent">
+                  <th className="text-left px-4 py-3 font-medium text-secondary-600 w-8"></th>
+                  <th className="text-left px-4 py-3 font-medium text-secondary-600">Date</th>
+                  <th className="text-left px-4 py-3 font-medium text-secondary-600">Manager</th>
+                  <th className="text-right px-4 py-3 font-medium text-secondary-600">Start Balance</th>
+                  <th className="text-right px-4 py-3 font-medium text-secondary-600">Added</th>
+                  <th className="text-right px-4 py-3 font-medium text-secondary-600">Total Invested</th>
+                  <th className="text-right px-4 py-3 font-medium text-secondary-600">Balance</th>
+                  <th className="text-left px-4 py-3 font-medium text-secondary-600">Notes</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-light">
+                {filteredReports.map((r, i) => (
+                  <>
+                    <tr key={i} className="hover:bg-blue-50/30 cursor-pointer transition-colors" onClick={() => toggleRow(i)}>
+                      <td className="px-4 py-4 text-secondary-400">
+                        {expandedRows.has(i) ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </td>
+                      <td className="px-4 py-4 text-secondary-600 whitespace-nowrap font-medium">
+                        {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                      <td className="px-4 py-4 text-secondary-600">{r.managerName}</td>
+                      <td className="px-4 py-4 text-right text-secondary-800">${r.startingBalance?.toFixed(2)}</td>
+                      <td className="px-4 py-4 text-right text-secondary-800">${r.addedMoney?.toFixed(2) || '0.00'}</td>
+                      <td className="px-4 py-4 text-right text-secondary-800 font-semibold">${r.totalInvested?.toFixed(2) || '0.00'}</td>
+                      <td className="px-4 py-4 text-right">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${(r.balance ?? 0) >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                          ${r.balance?.toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-secondary-600 max-w-[200px] truncate">{r.notes || '-'}</td>
+                    </tr>
+                    {expandedRows.has(i) && (
+                      <tr key={`expanded-${i}`}>
+                        <td colSpan={8} className="px-6 py-4 bg-gradient-to-b from-blue-50/50 to-surface">
+                          <div className="flex justify-end mb-3">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); generateDiaryReportPDF(r) }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Printer className="w-3.5 h-3.5" /> Print Report
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                            <Card className="p-4 border-l-4 border-l-emerald-500">
+                              <h4 className="text-xs font-semibold text-secondary-600 mb-3 flex items-center gap-1.5">
+                                <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center">
+                                  <Package className="w-3 h-3 text-emerald-600" />
+                                </div>
+                                Material Details
+                              </h4>
+                              {r.reportDetails && r.reportDetails.length > 0 ? (
+                                <>
+                                  <table className="w-full text-xs">
+                                    <thead>
+                                      <tr className="border-b border-outline-light">
+                                        <th className="text-left py-1.5 font-medium text-secondary-500">Material</th>
+                                        <th className="text-right py-1.5 font-medium text-secondary-500">Weight</th>
+                                        <th className="text-right py-1.5 font-medium text-secondary-500">Unit Price</th>
+                                        <th className="text-right py-1.5 font-medium text-secondary-500">Subtotal</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-outline-light">
+                                      {r.reportDetails.map((d, j) => (
+                                        <tr key={j}>
+                                          <td className="py-1.5">
+                                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium border ${MATERIAL_COLORS[d.materialType]}`}>
+                                              {MATERIAL_LABELS[d.materialType] || d.materialType}
+                                            </span>
+                                          </td>
+                                          <td className="text-right py-1.5">{d.weight}</td>
+                                          <td className="text-right py-1.5">${d.unitPrice?.toFixed(2)}</td>
+                                          <td className="text-right py-1.5 font-semibold text-emerald-600">${((d.weight || 0) * (d.unitPrice || 0)).toFixed(2)}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                  <div className="mt-2 space-y-0.5 text-right">
+                                    <p className="text-xs font-semibold text-emerald-700">Subtotal: ${r.reportDetails?.reduce((sum, d) => sum + (d.weight || 0) * (d.unitPrice || 0), 0).toFixed(2) ?? '0.00'}</p>
+                                    <p className="text-xs font-semibold text-red-500">Discounts: -${(r.totalDiscount || 0).toFixed(2)}</p>
+                                    <p className="text-xs font-semibold text-blue-700">Total Paid: ${(() => { const st = r.reportDetails?.reduce((sum, d) => sum + (d.weight || 0) * (d.unitPrice || 0), 0) ?? 0; return (st - (r.totalDiscount || 0)).toFixed(2); })()}</p>
+                                  </div>
+                                </>
+                              ) : (
+                                <p className="text-xs text-secondary-400">No material details</p>
+                              )}
+                            </Card>
+                            <Card className="p-4 border-l-4 border-l-amber-500">
+                              <h4 className="text-xs font-semibold text-secondary-600 mb-3 flex items-center gap-1.5">
+                                <div className="w-5 h-5 rounded bg-amber-100 flex items-center justify-center">
+                                  <DollarSign className="w-3 h-3 text-amber-600" />
+                                </div>
+                                Spends
+                              </h4>
+                              {r.spends && r.spends.length > 0 ? (
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="border-b border-outline-light">
+                                      <th className="text-left py-1.5 font-medium text-secondary-500">Description</th>
+                                      <th className="text-right py-1.5 font-medium text-secondary-500">Amount</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-outline-light">
+                                    {r.spends.map((s, j) => (
+                                      <tr key={j}>
+                                        <td className="py-1.5 text-secondary-600">{s.description}</td>
+                                        <td className="text-right py-1.5 font-semibold text-amber-600">${s.amount?.toFixed(2)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              ) : (
+                                <p className="text-xs text-secondary-400">No spends registered</p>
+                              )}
+                            </Card>
+                          </div>
+                          {r.notes && (
+                            <Card className="p-4 border-l-4 border-l-blue-500 mt-4">
+                              <h4 className="text-xs font-semibold text-secondary-600 mb-2 flex items-center gap-1.5">
+                                <div className="w-5 h-5 rounded bg-blue-100 flex items-center justify-center">
+                                  <FileText className="w-3 h-3 text-blue-600" />
+                                </div>
+                                Notes
+                              </h4>
+                              <p className="text-sm text-secondary-700 whitespace-pre-wrap">{r.notes}</p>
+                            </Card>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-secondary-600">
+          <span>Showing {filteredReports.length} of {totalElements} reports</span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page === 0}
+              onClick={() => onPageChange(Math.max(0, page - 1))}
+              className="p-2 rounded-lg hover:bg-secondary-100 disabled:opacity-30 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-3 py-1 rounded-lg bg-blue-50 font-medium text-blue-700">
+              Page {page + 1} of {totalPages || 1}
+            </span>
+            <button
+              disabled={page + 1 >= totalPages}
+              onClick={() => onPageChange(page + 1)}
+              className="p-2 rounded-lg hover:bg-secondary-100 disabled:opacity-30 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

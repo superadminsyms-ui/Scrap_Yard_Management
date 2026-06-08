@@ -312,7 +312,7 @@ function MovementForm({ yards, onSuccess, isManager, user }: {
           error={errors.containerId}
         >
           <option value="">Select container...</option>
-          {yardContainers?.map((c: any) => (
+          {yardContainers?.map((c) => (
             <option key={c.id} value={c.id}>
               #{c.id} - {c.description} ({MATERIAL_LABELS[c.materialType] || c.materialType})
             </option>

@@ -54,4 +54,25 @@ export const reportsApi = {
 
   existsToday: (scrapYardId: number) =>
     apiClient<{ exists: boolean }>(`/report/exists-today?scrapYardId=${scrapYardId}`),
+
+  getByYard: (yardId: number, params?: ReportPageParams) => {
+    const searchParams = new URLSearchParams()
+    if (params?.page !== undefined) searchParams.set('page', String(params.page))
+    if (params?.size !== undefined) searchParams.set('size', String(params.size))
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy)
+    if (params?.direction) searchParams.set('direction', params.direction)
+    const qs = searchParams.toString()
+    return apiClient<PageResponse<ReportResponse>>(`/report/by-yard/${yardId}${qs ? `?${qs}` : ''}`)
+  },
+
+  getByYardDateRange: (yardId: number, startDate: string, endDate: string, params?: ReportPageParams) => {
+    const searchParams = new URLSearchParams()
+    searchParams.set('startDate', startDate)
+    searchParams.set('endDate', endDate)
+    if (params?.page !== undefined) searchParams.set('page', String(params.page))
+    if (params?.size !== undefined) searchParams.set('size', String(params.size))
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy)
+    if (params?.direction) searchParams.set('direction', params.direction)
+    return apiClient<PageResponse<ReportResponse>>(`/report/by-yard/${yardId}/date-range?${searchParams.toString()}`)
+  },
 }

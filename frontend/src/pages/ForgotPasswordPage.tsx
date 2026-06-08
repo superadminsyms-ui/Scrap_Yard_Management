@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { authApi } from '@/api/endpoints/auth'
-import { Warehouse, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -36,9 +36,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="bg-surface/85 backdrop-blur-md rounded-2xl border border-outline-light shadow-elevation-1 p-8">
           <div className="flex flex-col items-center mb-6">
-            <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center shadow-elevation-2 mb-4">
-              <Warehouse className="w-7 h-7 text-white" />
-            </div>
+              <img src="/recycling_logo.png" alt="SYMS" className="w-12 h-12 object-contain mb-4" />
             <h1 className="text-xl font-bold text-secondary-800">Reset Password</h1>
             <p className="text-sm text-secondary-500 mt-1">
               {sent ? 'Check your email' : 'Enter your email to reset'}

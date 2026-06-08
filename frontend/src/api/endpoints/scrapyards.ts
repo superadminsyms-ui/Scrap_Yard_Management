@@ -24,7 +24,7 @@ export const scrapyardsApi = {
     apiClient<ScrapYard[]>(`/scrapyard/search?name=${encodeURIComponent(name)}`),
 
   getByCompany: (companyId: number) =>
-    apiClient<ScrapYard[]>(`/scrapyard/all-yards-by-company/${companyId}`),
+    apiClient<ScrapYardListItem[]>(`/scrapyard/all-yards-by-company/${companyId}`),
 
   create: (data: ScrapYardFormData) =>
     apiClient<ScrapYard>('/scrapyard/save', {

@@ -407,6 +407,20 @@ export interface ReportResponse {
   notes: string
 }
 
+export interface ScrapyardReport {
+  reportType: string
+  period: string
+  scrapyardName: string
+  companyName: string
+  managerName: string
+  startDate: string
+  endDate: string
+  totalInvested: number
+  invoiceCount: number
+  invoices: InvoiceSummary[]
+  materialPricing: MaterialPricing[]
+}
+
 export interface ReportDetailFormItem {
   materialType: MaterialType
   weight: number
