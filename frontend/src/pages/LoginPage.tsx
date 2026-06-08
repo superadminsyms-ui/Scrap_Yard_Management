@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { APP_VERSION } from '@/config/version'
 import { ApiError } from '@/api/client'
 import { Eye, EyeOff, Lock, ShieldCheck, ArrowLeft } from 'lucide-react'
 import { OTPInput } from '@/components/OTPInput'
@@ -129,6 +130,7 @@ export default function LoginPage() {
               <img src="/recycling_logo.png" alt="SYMS" className="w-16 h-16 object-contain mb-4" />
             <h1 className="text-xl font-bold text-secondary-800">SYMS</h1>
             <p className="text-sm text-secondary-500 mt-1">Scrap Yard Management System</p>
+            <p className="text-xs text-emerald-500 font-medium mt-0.5">{APP_VERSION}</p>
             <p className="text-xs text-secondary-400 mt-0.5">Sign in to your account</p>
           </div>
 

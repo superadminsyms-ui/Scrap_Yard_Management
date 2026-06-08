@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useRoleTheme } from '@/hooks/useRoleTheme'
 import { Badge } from '@/components/ui'
+import { APP_VERSION } from '@/config/version'
 
 interface SidebarProps {
   isOpen: boolean
@@ -66,6 +67,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex items-center gap-3">
           <img src="/recycling_logo.png" alt="SYMS" className="w-9 h-9 object-contain" />
           <span className="text-title-lg text-sidebar-textActive font-medium">SYMS</span>
+          <span className="text-emerald-500 text-label-sm font-normal ml-1.5">{APP_VERSION}</span>
         </div>
         <button
           onClick={onClose}

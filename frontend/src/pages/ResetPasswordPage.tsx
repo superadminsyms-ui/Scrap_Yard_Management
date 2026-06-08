@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { authApi } from '@/api/endpoints/auth'
 import { ArrowLeft, CheckCircle2, Eye, EyeOff } from 'lucide-react'
+import { APP_VERSION } from '@/config/version'
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -87,6 +88,7 @@ export default function ResetPasswordPage() {
             <p className="text-sm text-secondary-500 mt-1">
               {done ? 'Password reset successful' : 'Choose a new password'}
             </p>
+            <p className="text-xs text-emerald-500 font-medium mt-0.5">{APP_VERSION}</p>
           </div>
 
           {done ? (

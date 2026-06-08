@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { authApi } from '@/api/endpoints/auth'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { APP_VERSION } from '@/config/version'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -41,6 +42,7 @@ export default function ForgotPasswordPage() {
             <p className="text-sm text-secondary-500 mt-1">
               {sent ? 'Check your email' : 'Enter your email to reset'}
             </p>
+            <p className="text-xs text-emerald-500 font-medium mt-0.5">{APP_VERSION}</p>
           </div>
 
           {sent ? (
