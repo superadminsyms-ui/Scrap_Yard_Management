@@ -5,6 +5,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @ToString(exclude = "scrapYard")
@@ -37,6 +40,8 @@ public class ManagerSY {
     @JoinColumn(name = "scrap_yard_id", nullable = false)
     private ScrapYard scrapYard;
 
+    @OneToMany(mappedBy = "manager", fetch = FetchType.LAZY)
+    private List<CashFlow> cashFlows=new ArrayList<>();
 
 
 

@@ -1,11 +1,10 @@
 package com.scrapyard.management.Controllers;
 import com.scrapyard.management.DTO.Request.ReportDTO.ReportDTORequestInsert;
 import com.scrapyard.management.Services.IReportService;
+import com.scrapyard.management.Util.PageableUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,7 +34,7 @@ public class ReportController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
-            Pageable pageable = buildPageable(page, size, sortBy, direction);
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
             return ResponseEntity.ok(reportService.getAllReports(pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -51,7 +50,7 @@ public class ReportController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
-            Pageable pageable = buildPageable(page, size, sortBy, direction);
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
             return ResponseEntity.ok(reportService.getReportsByDate(date, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -68,7 +67,7 @@ public class ReportController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
-            Pageable pageable = buildPageable(page, size, sortBy, direction);
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
             return ResponseEntity.ok(reportService.getReportsByDateRange(
                     startDate.atStartOfDay(), endDate.atTime(23, 59, 59), pageable));
         } catch (IllegalArgumentException e) {
@@ -86,7 +85,7 @@ public class ReportController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
-            Pageable pageable = buildPageable(page, size, sortBy, direction);
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
             return ResponseEntity.ok(reportService.getAllReportsByScrapYard(yardId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -104,7 +103,7 @@ public class ReportController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
-            Pageable pageable = buildPageable(page, size, sortBy, direction);
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
             return ResponseEntity.ok(reportService.getReportsByScrapYardAndDateRange(
                     yardId, startDate.atStartOfDay(), endDate.atTime(23, 59, 59), pageable));
         } catch (IllegalArgumentException e) {
@@ -137,16 +136,6 @@ public class ReportController {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
         }
-    }
-
-    private Pageable buildPageable(int page, int size, String sortBy, String direction) {
-        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
-            throw new IllegalArgumentException("Invalid sort field: " + sortBy);
-        }
-        Sort sort = direction.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-        return PageRequest.of(page, size, sort);
     }
 
 }

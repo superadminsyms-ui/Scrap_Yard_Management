@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { reportsApi, type ReportPageParams } from '@/api/endpoints/reports'
+import { cashFlowApi, type CashFlowPageParams } from '@/api/endpoints/cashflow'
 import { scrapyardsApi } from '@/api/endpoints/scrapyards'
 import { managersApi } from '@/api/endpoints/managers'
 import { useAuth } from '@/context/AuthContext'
 import { PageHeader, Tabs, LoadingSpinner, EmptyState, Badge, Button, Card, Input, Select, ConfirmDialog, ReportPreviewDialog, StatCard } from '@/components/ui'
 import { MaterialType } from '@/types/models'
-import type { ReportResponse, ReportFormData } from '@/types/models'
+import type { ReportResponse, ReportFormData, CashFlowResponse, CashFlowFormData } from '@/types/models'
 import { generateDiaryReportPDF } from '@/utils/pdf'
 import { Plus, ChevronLeft, ChevronRight, FileText, DollarSign, ChevronDown, ChevronUp, Search, Package, Trash2, Wallet, Calendar, X, Printer, AlertTriangle } from 'lucide-react'
 
@@ -45,6 +46,7 @@ export default function DiaryPage() {
   const tabs = [
     { key: 'all', label: 'All Reports' },
     { key: 'new', label: 'New Report' },
+    { key: 'cashflow', label: 'CashFlow' },
   ]
 
   return (
@@ -59,6 +61,9 @@ export default function DiaryPage() {
             user={user}
             onSuccess={() => setActiveTab('all')}
           />
+        )}
+        {activeTab === 'cashflow' && (
+          <CashFlowTab isManager={isManager} user={user} />
         )}
       </Tabs>
     </div>
@@ -954,6 +959,282 @@ function NewReportTab({ isManager, user, onSuccess }: {
         totalDiscount={totalDiscount}
         containerMap={containerMap}
       />
+    </div>
+  )
+}
+
+function CashFlowTab({ isManager, user }: { isManager: boolean; user: any }) {
+  const queryClient = useQueryClient()
+  const [page, setPage] = useState(0)
+  const params: CashFlowPageParams = { page, size: 20, sortBy: 'createdAt', direction: 'desc' }
+
+  const { data: cashFlowPage, isLoading } = useQuery({
+    queryKey: ['cashflows', params],
+    queryFn: () => cashFlowApi.getAll(params),
+  })
+
+  const cashFlows = cashFlowPage?.content || []
+  const totalPages = cashFlowPage?.totalPages || 0
+  const totalElements = cashFlowPage?.totalElements || 0
+
+  const initialYardId = isManager && user?.yardId ? user.yardId : 0
+
+  const [scrapYardId, setScrapYardId] = useState(initialYardId)
+  const [managerId, setManagerId] = useState(0)
+  const [startingBalance, setStartingBalance] = useState(0)
+  const [cashReceived, setCashReceived] = useState(0)
+  const [cashReceivedFrom, setCashReceivedFrom] = useState('')
+  const [totalSpendInDay, setTotalSpendInDay] = useState(0)
+  const [createError, setCreateError] = useState('')
+  const [createSuccess, setCreateSuccess] = useState('')
+
+  const { data: yards } = useQuery({
+    queryKey: ['scrapyards'],
+    queryFn: scrapyardsApi.getAll,
+  })
+
+  const { data: yardManagers } = useQuery({
+    queryKey: ['yard-managers-cashflow', scrapYardId],
+    queryFn: () => managersApi.getByYard(scrapYardId),
+    enabled: !!scrapYardId,
+  })
+
+  useEffect(() => {
+    if (isManager && yardManagers && user?.email && managerId === 0) {
+      const myManager = yardManagers.find((m: any) => m.email === user.email)
+      if (myManager) setManagerId(myManager.id)
+    }
+  }, [isManager, yardManagers, user?.email, managerId])
+
+  const saveMutation = useMutation({
+    mutationFn: () => {
+      const data: CashFlowFormData = {
+        scrapYardId,
+        managerId,
+        startingBalance,
+        cashReceived,
+        cashReceivedFrom,
+        totalSpendInDay,
+      }
+      return cashFlowApi.create(data)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cashflows'] })
+      setCreateError('')
+      setCreateSuccess('CashFlow registered successfully')
+      setStartingBalance(0)
+      setCashReceived(0)
+      setCashReceivedFrom('')
+      setTotalSpendInDay(0)
+      setPage(0)
+      setTimeout(() => setCreateSuccess(''), 4000)
+    },
+    onError: (err: any) => {
+      setCreateError(err.message || 'Error creating cash flow')
+    },
+  })
+
+  const handleSubmit = () => {
+    setCreateError('')
+    setCreateSuccess('')
+    if (!scrapYardId) { setCreateError('Select a yard'); return }
+    if (!managerId) { setCreateError('Select a manager'); return }
+    if (startingBalance < 0) { setCreateError('Starting Balance cannot be negative'); return }
+    if (cashReceived < 0) { setCreateError('Cash Received cannot be negative'); return }
+    if (!cashReceivedFrom.trim()) { setCreateError('Cash Received From is required'); return }
+    if (cashReceivedFrom.length > 75) { setCreateError('Cash Received From must be at most 75 characters'); return }
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9 .,&()#\-]+$/.test(cashReceivedFrom)) { setCreateError('Cash Received From contains invalid characters'); return }
+    if (totalSpendInDay < 0) { setCreateError('Total Spend cannot be negative'); return }
+    saveMutation.mutate()
+  }
+
+  const currentYardName = yards?.find((y: any) => y.id === scrapYardId)?.name || ''
+
+  if (isLoading) return <LoadingSpinner />
+
+  return (
+    <div className="space-y-6">
+      <StatCard
+        title="Total Cash Flows"
+        value={totalElements}
+        icon={<Wallet className="w-5 h-5 text-emerald-500" />}
+        className="border-l-4 border-l-emerald-500 max-w-sm"
+      />
+
+      <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-outline bg-gradient-to-r from-emerald-50 to-transparent">
+                <th className="text-left px-4 py-3 font-medium text-secondary-600">Date</th>
+                <th className="text-left px-4 py-3 font-medium text-secondary-600">Manager</th>
+                <th className="text-right px-4 py-3 font-medium text-secondary-600">Start Balance</th>
+                <th className="text-right px-4 py-3 font-medium text-secondary-600">Cash Received</th>
+                <th className="text-left px-4 py-3 font-medium text-secondary-600">From</th>
+                <th className="text-right px-4 py-3 font-medium text-secondary-600">Total Spent</th>
+                <th className="text-right px-4 py-3 font-medium text-secondary-600">Balance</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-outline-light">
+              {cashFlows.length === 0 ? (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyState
+                      title="No cash flows found"
+                      description="Register the first cash flow for today"
+                    />
+                  </td>
+                </tr>
+              ) : (
+                cashFlows.map((cf) => (
+                  <tr key={cf.id} className="hover:bg-emerald-50/30 transition-colors">
+                    <td className="px-4 py-4 text-secondary-600 whitespace-nowrap font-medium">
+                      {new Date(cf.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td className="px-4 py-4 text-secondary-600">{cf.managerName}</td>
+                    <td className="px-4 py-4 text-right text-secondary-800">${cf.startingBalance?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-right text-secondary-800">${cf.cashReceived?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-secondary-600 max-w-[150px] truncate">{cf.cashReceivedFrom}</td>
+                    <td className="px-4 py-4 text-right text-secondary-800">${cf.totalSpendInDay?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-right">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${cf.totalBalance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        ${cf.totalBalance?.toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-secondary-600">
+          <span>Showing {cashFlows.length} of {totalElements} cash flows</span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page === 0}
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              className="p-2 rounded-lg hover:bg-secondary-100 disabled:opacity-30 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-3 py-1 rounded-lg bg-emerald-50 font-medium text-emerald-700">
+              Page {page + 1} of {totalPages || 1}
+            </span>
+            <button
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage(p => p + 1)}
+              className="p-2 rounded-lg hover:bg-secondary-100 disabled:opacity-30 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <Card className="p-6 border-t-4 border-t-emerald-500">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+            <Wallet className="w-4 h-4 text-white" />
+          </div>
+          <h2 className="text-base font-semibold text-secondary-800">New Cash Flow</h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {isManager ? (
+            <Select label="Yard" value={scrapYardId || ''} disabled>
+              <option value={scrapYardId || ''}>{currentYardName}</option>
+            </Select>
+          ) : (
+            <Select
+              label="Yard"
+              value={scrapYardId || ''}
+              onChange={(e) => { setScrapYardId(Number(e.target.value)); setManagerId(0) }}
+            >
+              <option value="">Select yard...</option>
+              {yards?.map((y: any) => (
+                <option key={y.id} value={y.id}>{y.name} - {y.companyName}</option>
+              ))}
+            </Select>
+          )}
+          {isManager ? (
+            <Select label="Manager" value={managerId || ''} disabled>
+              <option value={managerId || ''}>
+                {yardManagers?.find((m: any) => m.id === managerId)?.name || ''}
+              </option>
+            </Select>
+          ) : (
+            <Select
+              label="Manager"
+              value={managerId || ''}
+              onChange={(e) => setManagerId(Number(e.target.value))}
+            >
+              <option value="">Select manager...</option>
+              {yardManagers?.map((m: any) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </Select>
+          )}
+          <Input
+            label="Starting Balance"
+            type="number"
+            step="0.01"
+            min="0"
+            value={startingBalance || ''}
+            onChange={(e) => setStartingBalance(parseFloat(e.target.value) || 0)}
+            placeholder="0.00"
+          />
+          <Input
+            label="Cash Received"
+            type="number"
+            step="0.01"
+            min="0"
+            value={cashReceived || ''}
+            onChange={(e) => setCashReceived(parseFloat(e.target.value) || 0)}
+            placeholder="0.00"
+          />
+          <Input
+            label="Cash Received From"
+            value={cashReceivedFrom}
+            onChange={(e) => setCashReceivedFrom(e.target.value)}
+            placeholder="e.g. Customer Name Inc."
+            maxLength={75}
+          />
+          <Input
+            label="Total Spend in Day"
+            type="number"
+            step="0.01"
+            min="0"
+            value={totalSpendInDay || ''}
+            onChange={(e) => setTotalSpendInDay(parseFloat(e.target.value) || 0)}
+            placeholder="0.00"
+          />
+        </div>
+
+        {createError && (
+          <div className="mt-4 bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2 border border-red-200">
+            {createError}
+          </div>
+        )}
+
+        {createSuccess && (
+          <div className="mt-4 bg-emerald-50 text-emerald-700 text-sm rounded-lg px-3 py-2 border border-emerald-200">
+            {createSuccess}
+          </div>
+        )}
+
+        <Button
+          onClick={handleSubmit}
+          disabled={saveMutation.isPending}
+          variant="primary"
+          className="mt-4"
+          loading={saveMutation.isPending}
+        >
+          {saveMutation.isPending ? 'Saving...' : 'Save Cash Flow'}
+        </Button>
+      </Card>
     </div>
   )
 }

@@ -15,6 +15,7 @@ public class CompanyDTORequestInsert {
     @Size(max = 100, message = "Name must be at most 100 characters")
     @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "Only letters are allowed")
     private String name;
+
     @NotBlank(message = "Location is required")
     @Size(max = 200, message = "Location must be at most 200 characters")
     @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "Only letters are allowed")

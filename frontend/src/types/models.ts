@@ -446,6 +446,27 @@ export interface ReportFormData {
   notes: string
 }
 
+export interface CashFlowResponse {
+  id: number
+  createdAt: string
+  scrapYardName: string
+  managerName: string
+  startingBalance: number
+  cashReceived: number
+  cashReceivedFrom: string
+  totalSpendInDay: number
+  totalBalance: number
+}
+
+export interface CashFlowFormData {
+  scrapYardId: number
+  managerId: number
+  startingBalance: number
+  cashReceived: number
+  cashReceivedFrom: string
+  totalSpendInDay: number
+}
+
 export interface ReportDetailTemplateItem {
   materialType: MaterialType
   containerId: number

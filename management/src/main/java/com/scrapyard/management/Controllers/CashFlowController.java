@@ -1,9 +1,9 @@
 package com.scrapyard.management.Controllers;
-import com.scrapyard.management.DTO.Request.MovementDTO.MovementDTORequestInsert;
-import com.scrapyard.management.Services.IMovementService;
-import com.scrapyard.management.Services.Impl.MovementServImpl;
+import com.scrapyard.management.DTO.Request.CashFlow.CashFlowRequestInsert;
+import com.scrapyard.management.Services.ICashFlowService;
 import com.scrapyard.management.Util.PageableUtil;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,21 +12,22 @@ import java.util.Map;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/movement")
-public class MovementController {
+@RequestMapping("/api/cashflow")
+public class CashFlowController {
 
-    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "movementDate");
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "createdAt");
 
-    private final IMovementService movementServImpl;
+    @Autowired
+    private final ICashFlowService cashFlowService;
 
-    public MovementController(MovementServImpl movementServImpl) {
-        this.movementServImpl = movementServImpl;
+    public CashFlowController(ICashFlowService cashFlowService) {
+        this.cashFlowService = cashFlowService;
     }
 
     @PostMapping("/save")
-    public ResponseEntity<?> createMovement(@Valid @RequestBody MovementDTORequestInsert dto) {
+    public ResponseEntity<?> saveCashFlow(@Valid @RequestBody CashFlowRequestInsert dto) {
         try {
-            return ResponseEntity.ok(movementServImpl.createMovement(dto));
+            return ResponseEntity.ok(cashFlowService.saveCashFlow(dto));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
@@ -34,24 +35,30 @@ public class MovementController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<?> getAllMovements(
+    public ResponseEntity<?> getAllCashFlow(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "movementDate") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
             Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
-            return ResponseEntity.ok(movementServImpl.getAllMovements(pageable));
+            return ResponseEntity.ok(cashFlowService.getAllCashFlow(pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
         }
     }
 
-    @GetMapping("/id/{id}")
-    public ResponseEntity<?> getMovementById(@PathVariable Long id) {
+    @GetMapping("/manager/{managerId}")
+    public ResponseEntity<?> getAllCashFlowByManagerId(
+            @PathVariable Long managerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
         try {
-            return ResponseEntity.ok(movementServImpl.getMovementById(id));
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
+            return ResponseEntity.ok(cashFlowService.getAllCashFlowByManagerId(managerId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
@@ -59,34 +66,19 @@ public class MovementController {
     }
 
     @GetMapping("/yard/{yardId}")
-    public ResponseEntity<?> getMovementsByScrapYard(
+    public ResponseEntity<?> getAllCashFlowByScrapYard(
             @PathVariable Long yardId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "movementDate") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         try {
             Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
-            return ResponseEntity.ok(movementServImpl.getMovementsByScrapYard(yardId, pageable));
+            return ResponseEntity.ok(cashFlowService.getAllCashFlowByScrapYard(yardId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("Error", e.getMessage()));
         }
     }
 
-    @GetMapping("/container/{containerId}")
-    public ResponseEntity<?> getMovementsByContainer(
-            @PathVariable Long containerId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "movementDate") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
-        try {
-            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
-            return ResponseEntity.ok(movementServImpl.getMovementsByContainer(containerId, pageable));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("Error", e.getMessage()));
-        }
-    }
 }

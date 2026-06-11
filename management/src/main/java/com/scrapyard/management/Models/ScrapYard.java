@@ -56,6 +56,9 @@ public class ScrapYard {
     @OneToMany(mappedBy = "scrapYard" , cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
     private List<Movement> movements=new ArrayList<>();
 
+    @OneToMany(mappedBy = "scrapYard", fetch = FetchType.LAZY)
+    private List<CashFlow> cashFlows=new ArrayList<>();
+
 
 
 }

@@ -17,12 +17,7 @@ public interface IReportService {
                                                   Pageable pageable);
     Page<ReportDTOResponse> getReportsByDate(LocalDate date, Pageable pageable);
 
-
-
-
     ReportDTOResponse getReportById(Long id);
-
-
 
     ReportDTOResponse saveReport(ReportDTORequestInsert reportDTO);
 
@@ -32,9 +27,7 @@ public interface IReportService {
 
     Page<ReportDTOResponse> getAllReportsByScrapYard(Long scrapYardId, Pageable pageable);
 
-
     Page<ReportDTOResponse> getReportsByManager(Long managerId, Pageable pageable);
-
 
     Page<ReportDTOResponse> getReportsByScrapYardAndDateRange(Long scrapYardId,
                                                               LocalDateTime startDate,
