@@ -6,6 +6,7 @@ interface ConfirmDialogProps {
   message: string
   confirmLabel?: string
   variant?: 'danger' | 'primary'
+  children?: React.ReactNode
 }
 
 export function ConfirmDialog({
@@ -16,6 +17,7 @@ export function ConfirmDialog({
   message,
   confirmLabel = 'Confirm',
   variant = 'danger',
+  children,
 }: ConfirmDialogProps) {
   if (!open) return null
   return (
@@ -24,6 +26,7 @@ export function ConfirmDialog({
       <div className="relative z-10 w-full max-w-sm mx-4 bg-surface rounded-3xl shadow-elevation-4 p-6">
         <h3 className="text-title-lg text-secondary-800">{title}</h3>
         <p className="mt-2 text-body-md text-secondary-600">{message}</p>
+        {children && <div className="mt-4">{children}</div>}
         <div className="mt-6 flex justify-end gap-3">
           <button
             onClick={onClose}

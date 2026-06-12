@@ -254,7 +254,7 @@ public class AuthServImpl implements IAuthService {
                         jti,
                         userEmail,
                         jwtUtil.extractExpiration(token).toInstant()
-                                .atZone(ZoneId.systemDefault())
+                                .atZone(ZoneId.of("UTC"))
                                 .toLocalDateTime()
                 );
             }

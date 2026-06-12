@@ -23,7 +23,7 @@ export function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   if (user?.mustChangePassword && location.pathname !== '/change-password') {
     return <Navigate to="/change-password" replace />
   }
-  if (!isSuperAdmin) return <Navigate to="/" replace />
+  if (!isSuperAdmin) return <Navigate to="/app" replace />
   return <>{children}</>
 }
 
@@ -35,7 +35,7 @@ export function RedirectIfAuth({ children }: { children: React.ReactNode }) {
     if (user?.mustChangePassword) {
       return <Navigate to="/change-password" replace />
     }
-    return <Navigate to="/" replace />
+    return <Navigate to="/app" replace />
   }
   return <>{children}</>
 }

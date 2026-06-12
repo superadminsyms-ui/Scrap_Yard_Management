@@ -81,4 +81,9 @@ public class CashFlowController {
         }
     }
 
+    @GetMapping("/exists-today")
+    public ResponseEntity<?> existsCashFlowToday(@RequestParam Long scrapYardId) {
+        return ResponseEntity.ok(Map.of("exists", cashFlowService.existsCashFlowToday(scrapYardId)));
+    }
+
 }

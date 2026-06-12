@@ -4,9 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import { scrapyardsApi } from '@/api/endpoints/scrapyards'
 import { invoicesApi, type InvoicePageParams } from '@/api/endpoints/invoices'
 import { reportsApi, type ReportPageParams } from '@/api/endpoints/reports'
+import { cashFlowApi, type CashFlowPageParams } from '@/api/endpoints/cashflow'
 import { PageHeader, Tabs, LoadingSpinner, EmptyState, Badge, StatCard, Card, Button, Select } from '@/components/ui'
 import { MaterialType, MovementType, ReportPeriod } from '@/types/models'
-import type { Container, InvoiceSummary, Movement, MaterialStockItem, ContainerStockItem, YardStockSummary, ScrapyardReport, MaterialPricing, ReportResponse } from '@/types/models'
+import type { Container, InvoiceSummary, Movement, MaterialStockItem, ContainerStockItem, YardStockSummary, ScrapyardReport, MaterialPricing, ReportResponse, CashFlowResponse } from '@/types/models'
 import { generateDiaryReportPDF } from '@/utils/pdf'
 import { ArrowLeft, Package, Scale, TrendingUp, Receipt, FileDown, ChevronLeft, ChevronRight, FileText, ChevronDown, ChevronUp, Search, X, DollarSign, Printer, Calendar, Wallet } from 'lucide-react'
 
@@ -109,6 +110,8 @@ export default function ScrapyardDetailPage() {
   const [diarySingleDate, setDiarySingleDate] = useState('')
   const [diaryStartDate, setDiaryStartDate] = useState('')
   const [diaryEndDate, setDiaryEndDate] = useState('')
+  const [diarySubTab, setDiarySubTab] = useState<'reports' | 'cashflow'>('reports')
+  const [cfPage, setCfPage] = useState(0)
 
   const diaryParams: ReportPageParams = { page: diaryPage, size: 20, sortBy: 'createdAt', direction: 'desc' }
   const diaryDateFilterActive = (diaryDateMode === 'single' && !!diarySingleDate) || (diaryDateMode === 'range' && !!diaryStartDate && !!diaryEndDate)
@@ -121,6 +124,14 @@ export default function ScrapyardDetailPage() {
       return reportsApi.getByYard(yardId, diaryParams)
     },
     enabled: activeTab === 'diary',
+  })
+
+  const cfParams: CashFlowPageParams = { page: cfPage, size: 20, sortBy: 'createdAt', direction: 'desc' }
+
+  const cashFlowQuery = useQuery({
+    queryKey: ['cashflows-yard', yardId, cfParams],
+    queryFn: () => cashFlowApi.getByYard(yardId, cfParams),
+    enabled: activeTab === 'diary' && diarySubTab === 'cashflow',
   })
 
   const reportQuery = useQuery({
@@ -202,21 +213,56 @@ export default function ScrapyardDetailPage() {
           />
         )}
         {activeTab === 'diary' && (
-          <DiaryTab
-            data={diaryQuery.data}
-            isLoading={diaryQuery.isLoading}
-            page={diaryPage}
-            dateMode={diaryDateMode}
-            singleDate={diarySingleDate}
-            startDate={diaryStartDate}
-            endDate={diaryEndDate}
-            dateFilterActive={diaryDateFilterActive}
-            onPageChange={setDiaryPage}
-            onDateModeChange={setDiaryDateMode}
-            onSingleDateChange={setDiarySingleDate}
-            onStartDateChange={setDiaryStartDate}
-            onEndDateChange={setDiaryEndDate}
-          />
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setDiarySubTab('reports'); setDiaryPage(0) }}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  diarySubTab === 'reports'
+                    ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                    : 'bg-surface text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 border border-outline'
+                }`}
+              >
+                <FileText className="w-4 h-4" /> Total Reports
+              </button>
+              <button
+                onClick={() => { setDiarySubTab('cashflow'); setCfPage(0) }}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  diarySubTab === 'cashflow'
+                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                    : 'bg-surface text-secondary-500 hover:text-secondary-700 hover:bg-secondary-100 border border-outline'
+                }`}
+              >
+                <Wallet className="w-4 h-4" /> Total CashFlows
+              </button>
+            </div>
+
+            {diarySubTab === 'reports' && (
+              <DiaryTab
+                data={diaryQuery.data}
+                isLoading={diaryQuery.isLoading}
+                page={diaryPage}
+                dateMode={diaryDateMode}
+                singleDate={diarySingleDate}
+                startDate={diaryStartDate}
+                endDate={diaryEndDate}
+                dateFilterActive={diaryDateFilterActive}
+                onPageChange={setDiaryPage}
+                onDateModeChange={setDiaryDateMode}
+                onSingleDateChange={setDiarySingleDate}
+                onStartDateChange={setDiaryStartDate}
+                onEndDateChange={setDiaryEndDate}
+              />
+            )}
+            {diarySubTab === 'cashflow' && (
+              <YardCashFlowTab
+                data={cashFlowQuery.data}
+                isLoading={cashFlowQuery.isLoading}
+                page={cfPage}
+                onPageChange={setCfPage}
+              />
+            )}
+          </div>
         )}
       </Tabs>
     </div>
@@ -413,6 +459,104 @@ function InvoicesTab({
         </div>
       )}
     </>
+  )
+}
+
+function YardCashFlowTab({
+  data,
+  isLoading,
+  page,
+  onPageChange,
+}: {
+  data: { content: CashFlowResponse[]; totalPages: number; totalElements: number } | undefined
+  isLoading: boolean
+  page: number
+  onPageChange: (p: number) => void
+}) {
+  const cashFlows = data?.content || []
+  const totalPages = data?.totalPages || 0
+  const totalElements = data?.totalElements || 0
+
+  if (isLoading) return <LoadingSpinner />
+
+  return (
+    <div className="space-y-6">
+      <StatCard
+        title="Total CashFlows"
+        value={totalElements}
+        icon={<Wallet className="w-5 h-5 text-emerald-500" />}
+        className="border-l-4 border-l-emerald-500 max-w-sm"
+      />
+
+      {!cashFlows.length ? (
+        <EmptyState
+          title="No cash flows found"
+          description="No cash flow entries for this yard yet"
+        />
+      ) : (
+        <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-outline bg-gradient-to-r from-emerald-50 to-transparent">
+                  <th className="text-left px-4 py-3 font-medium text-secondary-600">Date</th>
+                  <th className="text-left px-4 py-3 font-medium text-secondary-600">Manager</th>
+                  <th className="text-right px-4 py-3 font-medium text-secondary-600">Start Balance</th>
+                  <th className="text-right px-4 py-3 font-medium text-secondary-600">Cash Received</th>
+                  <th className="text-left px-4 py-3 font-medium text-secondary-600">From</th>
+                  <th className="text-right px-4 py-3 font-medium text-secondary-600">Total Spent</th>
+                  <th className="text-right px-4 py-3 font-medium text-secondary-600">Balance</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-outline-light">
+                {cashFlows.map((cf) => (
+                  <tr key={cf.id} className="hover:bg-emerald-50/30 transition-colors">
+                    <td className="px-4 py-4 text-secondary-600 whitespace-nowrap font-medium">
+                      {new Date(cf.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td className="px-4 py-4 text-secondary-600">{cf.managerName}</td>
+                    <td className="px-4 py-4 text-right text-secondary-800">${cf.startingBalance?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-right text-secondary-800">${cf.cashReceived?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-secondary-600 max-w-[250px] truncate" title={cf.cashReceivedFrom}>{cf.cashReceivedFrom || '--'}</td>
+                    <td className="px-4 py-4 text-right text-secondary-800">${cf.totalSpendInDay?.toFixed(2)}</td>
+                    <td className="px-4 py-4 text-right">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${cf.totalBalance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        ${cf.totalBalance?.toFixed(2)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-secondary-600">
+          <span>Showing {cashFlows.length} of {totalElements} cash flows</span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page === 0}
+              onClick={() => onPageChange(Math.max(0, page - 1))}
+              className="p-2 rounded-lg hover:bg-secondary-100 disabled:opacity-30 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-3 py-1 rounded-lg bg-emerald-50 font-medium text-emerald-700">
+              Page {page + 1} of {totalPages || 1}
+            </span>
+            <button
+              disabled={page + 1 >= totalPages}
+              onClick={() => onPageChange(page + 1)}
+              className="p-2 rounded-lg hover:bg-secondary-100 disabled:opacity-30 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

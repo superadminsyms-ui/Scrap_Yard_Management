@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface CashFlowRepo extends JpaRepository<CashFlow,Long> {
@@ -20,5 +21,7 @@ public interface CashFlowRepo extends JpaRepository<CashFlow,Long> {
     @Override
     @EntityGraph(attributePaths = {"scrapYard", "manager"})
     Page<CashFlow> findAll(Pageable pageable);
+
+    boolean existsByScrapYardIdAndCreatedAtBetween(Long scrapYardId, LocalDateTime start, LocalDateTime end);
 
 }

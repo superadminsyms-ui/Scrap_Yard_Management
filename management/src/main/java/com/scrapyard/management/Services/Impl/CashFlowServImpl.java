@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 public class CashFlowServImpl implements ICashFlowService {
@@ -60,17 +62,38 @@ public class CashFlowServImpl implements ICashFlowService {
             throw new IllegalArgumentException("Manager must belong to the yard");
         }
 
-        BigDecimal startingBalance = cashFlowRepo
-                .findTopByScrapYardIdOrderByCreatedAtDesc(scrapYard.getId())
-                .map(CashFlow::getTotalBalance)
-                .orElse(dto.getStartingBalance());
+        BigDecimal startingBalance = dto.getStartingBalance();
+        BigDecimal totalSpendInDay = dto.getTotalSpendInDay();
+
+        if (totalSpendInDay == null) {
+            throw new IllegalArgumentException("Total spend is required");
+        }
+        if (totalSpendInDay.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Total spend cannot be negative");
+        }
+        if (totalSpendInDay.compareTo(startingBalance.add(dto.getCashReceived())) > 0) {
+            throw new IllegalArgumentException("Total spend cannot exceed starting balance + cash received");
+        }
+        if (dto.getCashReceived().compareTo(BigDecimal.ZERO) > 0
+                && (dto.getCashReceivedFrom() == null || dto.getCashReceivedFrom().isBlank())) {
+            throw new IllegalArgumentException("Cash received from is required when cash is received");
+        }
+
+        LocalDate today = LocalDate.now();
+        if (cashFlowRepo.existsByScrapYardIdAndCreatedAtBetween(
+                scrapYard.getId(), today.atStartOfDay(), today.atTime(23, 59, 59))) {
+            throw new IllegalArgumentException("A cash flow already exists for this yard today");
+        }
 
         CashFlow cashFlow = new CashFlow();
         cashFlow.setScrapYard(scrapYard);
         cashFlow.setManager(manager);
         cashFlow.setStartingBalance(startingBalance);
         cashFlow.setCashReceived(dto.getCashReceived());
-        cashFlow.setCashReceivedFrom(dto.getCashReceivedFrom());
+        cashFlow.setCashReceivedFrom(
+                dto.getCashReceivedFrom() != null && !dto.getCashReceivedFrom().isBlank()
+                        ? dto.getCashReceivedFrom() : ""
+        );
         cashFlow.setTotalSpendInDay(dto.getTotalSpendInDay());
 
         CashFlow saved = cashFlowRepo.save(cashFlow);
@@ -143,6 +166,21 @@ public class CashFlowServImpl implements ICashFlowService {
         }
 
         return cashFlowPage.map(this::mapToDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsCashFlowToday(Long scrapYardId) {
+        Long yardId = securityContextService.getCurrentYardId();
+        if (yardId != null) {
+            scrapYardId = yardId;
+        }
+        if (scrapYardId == null) {
+            return false;
+        }
+        LocalDate today = LocalDate.now();
+        return cashFlowRepo.existsByScrapYardIdAndCreatedAtBetween(
+                scrapYardId, today.atStartOfDay(), today.atTime(23, 59, 59));
     }
 
     private CashFlowDTOResponse mapToDTO(CashFlow cashFlow) {

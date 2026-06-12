@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ProtectedRoute, SuperAdminRoute, RedirectIfAuth } from '@/components/ProtectedRoute'
 
+const LandingPage = lazy(() => import('@/pages/LandingPage'))
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'))
@@ -31,6 +32,10 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
 
 export const router = createBrowserRouter([
   {
+    path: '/',
+    element: <SuspenseWrapper><LandingPage /></SuspenseWrapper>,
+  },
+  {
     path: '/login',
     element: <RedirectIfAuth><SuspenseWrapper><LoginPage /></SuspenseWrapper></RedirectIfAuth>,
   },
@@ -47,7 +52,7 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute><SuspenseWrapper><ChangePasswordPage /></SuspenseWrapper></ProtectedRoute>,
   },
   {
-    path: '/',
+    path: '/app',
     element: <ProtectedRoute><AppLayout /></ProtectedRoute>,
     children: [
       { index: true, element: <SuspenseWrapper><DashboardPage /></SuspenseWrapper> },
@@ -78,7 +83,7 @@ export const router = createBrowserRouter([
       { path: 'stock', element: <SuspenseWrapper><StockPage /></SuspenseWrapper> },
       { path: 'diary', element: <SuspenseWrapper><DiaryPage /></SuspenseWrapper> },
       { path: 'profile', element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper> },
-      { path: '*', element: <Navigate to="/" replace /> },
+      { path: '*', element: <Navigate to="/app" replace /> },
     ],
   },
 ])

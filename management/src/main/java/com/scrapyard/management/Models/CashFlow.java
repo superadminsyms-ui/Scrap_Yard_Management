@@ -38,7 +38,6 @@ public class CashFlow {
     @Column(nullable = false)
     private BigDecimal cashReceived;
 
-    @NotBlank
     @Size(max = 75)
     @Column(nullable = false)
     private String cashReceivedFrom;

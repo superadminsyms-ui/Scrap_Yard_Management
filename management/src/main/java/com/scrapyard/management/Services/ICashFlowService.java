@@ -10,5 +10,6 @@ CashFlowDTOResponse saveCashFlow (CashFlowRequestInsert cashFlow);
 Page<CashFlowDTOResponse> getAllCashFlow(Pageable pageable);
 Page<CashFlowDTOResponse> getAllCashFlowByManagerId(Long managerId, Pageable pageable);
 Page<CashFlowDTOResponse> getAllCashFlowByScrapYard(Long yardId, Pageable pageable);
+boolean existsCashFlowToday(Long scrapYardId);
 
 }

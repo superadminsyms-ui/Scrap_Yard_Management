@@ -32,17 +32,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const theme = useRoleTheme()
 
   const allItems = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard, always: true },
-    { to: '/companies', label: 'Companies', icon: Building2, adminOnly: true },
-    { to: '/scrapyards', label: 'Scrapyards', icon: Warehouse, adminOnly: true },
-    { to: '/containers', label: 'Containers', icon: Box, always: true },
-    { to: '/customers', label: 'Customers', icon: Users, always: true },
-    { to: '/managers', label: 'Managers', icon: UserCog, always: true },
-    { to: '/invoices', label: 'Invoices', icon: Receipt, always: true },
-    { to: '/movements', label: 'Movements', icon: ArrowRightLeft, always: true },
-    { to: '/backup', label: 'Backup', icon: Database, adminOnly: true },
-    { to: '/stock', label: 'Stock', icon: Scale, managerOnly: true },
-    { to: '/diary', label: 'Diary', icon: BookOpen, managerOnly: true },
+    { to: '/app', label: 'Dashboard', icon: LayoutDashboard, always: true },
+    { to: '/app/companies', label: 'Companies', icon: Building2, adminOnly: true },
+    { to: '/app/scrapyards', label: 'Scrapyards', icon: Warehouse, adminOnly: true },
+    { to: '/app/containers', label: 'Containers', icon: Box, always: true },
+    { to: '/app/customers', label: 'Customers', icon: Users, always: true },
+    { to: '/app/managers', label: 'Managers', icon: UserCog, always: true },
+    { to: '/app/invoices', label: 'Invoices', icon: Receipt, always: true },
+    { to: '/app/movements', label: 'Movements', icon: ArrowRightLeft, always: true },
+    { to: '/app/backup', label: 'Backup', icon: Database, adminOnly: true },
+    { to: '/app/stock', label: 'Stock', icon: Scale, managerOnly: true },
+    { to: '/app/diary', label: 'Diary', icon: BookOpen, managerOnly: true },
   ]
 
   const navItems = allItems.filter(
@@ -51,7 +51,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const handleLogout = () => {
     logout()
-    navigate('/login')
+    navigate('/')
     onClose()
   }
 
@@ -81,7 +81,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === '/'}
+            end={item.to === '/app'}
             onClick={handleNavClick}
             className={({ isActive }) =>
               cn(
@@ -108,7 +108,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         <div className="space-y-0.5">
           <NavLink
-            to="/profile"
+            to="/app/profile"
             onClick={handleNavClick}
             className={({ isActive }) =>
               cn(

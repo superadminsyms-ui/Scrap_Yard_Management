@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { APP_VERSION } from '@/config/version'
 import { ApiError } from '@/api/client'
-import { Eye, EyeOff, Lock, ShieldCheck, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Lock, ShieldCheck, ArrowLeft, Home } from 'lucide-react'
 import { OTPInput } from '@/components/OTPInput'
 
 export default function LoginPage() {
@@ -71,7 +71,7 @@ export default function LoginPage() {
       } else if (response.mustChangePassword) {
         navigate('/change-password')
       } else {
-        navigate('/')
+        navigate('/app')
       }
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 429) {
@@ -99,7 +99,7 @@ export default function LoginPage() {
       if (response.mustChangePassword) {
         navigate('/change-password')
       } else {
-        navigate('/')
+        navigate('/app')
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -121,9 +121,18 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat"
+      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: "url('/login_image.jpg')" }}
     >
+      <div className="absolute top-0 left-0 right-0 flex items-center px-6 py-4">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface/85 backdrop-blur-md border border-outline-light text-sm font-medium text-secondary-700 hover:text-emerald-500 hover:border-emerald-300 shadow-elevation-1 transition-all"
+        >
+          <Home className="w-4 h-4" />
+          Home
+        </Link>
+      </div>
       <div className="w-full max-w-sm">
         <div className="bg-surface/85 backdrop-blur-md rounded-2xl border border-outline-light shadow-elevation-1 p-8">
           <div className="flex flex-col items-center mb-6">

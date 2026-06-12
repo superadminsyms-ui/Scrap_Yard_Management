@@ -37,7 +37,7 @@ export default function ChangePasswordPage() {
       await authApi.changePassword({ currentPassword, newPassword })
       passwordChanged.current = true
       await refreshUser()
-      navigate('/')
+      navigate('/app')
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message)

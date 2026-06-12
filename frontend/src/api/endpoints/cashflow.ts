@@ -38,4 +38,7 @@ export const cashFlowApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  existsToday: (scrapYardId: number) =>
+    apiClient<{ exists: boolean }>(`/cashflow/exists-today?scrapYardId=${scrapYardId}`),
 }
