@@ -41,7 +41,7 @@ export default function InvoiceDetailPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <Link to="/invoices" className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50">
+        <Link to="/app/invoices" className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex-1">

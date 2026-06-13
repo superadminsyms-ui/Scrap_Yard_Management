@@ -76,7 +76,7 @@ export default function DashboardPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-secondary-800">Recent Invoices</h2>
-            <Link to="/invoices" className="text-xs text-primary-500 hover:underline">View all</Link>
+            <Link to="/app/invoices" className="text-xs text-primary-500 hover:underline">View all</Link>
           </div>
           {!recentInvoices.length ? (
             <p className="text-sm text-secondary-400 py-4 text-center">No invoices yet</p>
@@ -85,7 +85,7 @@ export default function DashboardPage() {
               {recentInvoices.map((inv) => (
                 <Link
                   key={inv.invoiceId}
-                  to={`/invoices/${inv.invoiceId}`}
+                  to={`/app/invoices/${inv.invoiceId}`}
                   className="flex items-center justify-between py-2 border-b border-outline-light last:border-0 hover:bg-surface-100 rounded px-2 transition-colors"
                 >
                   <div className="flex items-center gap-3">
@@ -102,7 +102,7 @@ export default function DashboardPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-secondary-800">Recent Movements</h2>
-            <Link to="/movements" className="text-xs text-primary-500 hover:underline">View all</Link>
+            <Link to="/app/movements" className="text-xs text-primary-500 hover:underline">View all</Link>
           </div>
           {!recentMovements.length ? (
             <p className="text-sm text-secondary-400 py-4 text-center">No movements yet</p>
@@ -144,7 +144,7 @@ export default function DashboardPage() {
 
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
         <Link
-          to="/invoices/new"
+          to="/app/invoices/new"
           className={cn(
             'flex items-center justify-center gap-2 py-3 px-4 rounded-full text-label-lg font-medium transition-colors shadow-elevation-1 hover:shadow-elevation-2',
             theme.btnPrimary,
@@ -153,7 +153,7 @@ export default function DashboardPage() {
           <Receipt className="w-4 h-4" /> New Invoice
         </Link>
         <Link
-          to="/movements"
+          to="/app/movements"
           className="flex items-center justify-center gap-2 py-3 px-4 bg-success-600 text-white rounded-full text-label-lg font-medium hover:bg-success-700 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
         >
           <ArrowRightLeft className="w-4 h-4" /> New Movement
@@ -161,13 +161,13 @@ export default function DashboardPage() {
         {isSuperAdmin ? (
           <>
             <Link
-              to="/scrapyards"
+              to="/app/scrapyards"
               className="flex items-center justify-center gap-2 py-3 px-4 bg-secondary-700 text-white rounded-full text-label-lg font-medium hover:bg-secondary-800 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
             >
               <Warehouse className="w-4 h-4" /> View Inventory
             </Link>
             <Link
-              to="/companies"
+              to="/app/companies"
               className="flex items-center justify-center gap-2 py-3 px-4 bg-secondary-700 text-white rounded-full text-label-lg font-medium hover:bg-secondary-800 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
             >
               <Building2 className="w-4 h-4" /> Manage Companies
@@ -176,13 +176,13 @@ export default function DashboardPage() {
         ) : (
           <>
             <Link
-              to="/containers"
+              to="/app/containers"
               className="flex items-center justify-center gap-2 py-3 px-4 bg-secondary-700 text-white rounded-full text-label-lg font-medium hover:bg-secondary-800 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
             >
               <Box className="w-4 h-4" /> View Containers
             </Link>
             <Link
-              to="/customers"
+              to="/app/customers"
               className="flex items-center justify-center gap-2 py-3 px-4 bg-secondary-700 text-white rounded-full text-label-lg font-medium hover:bg-secondary-800 transition-colors shadow-elevation-1 hover:shadow-elevation-2"
             >
               <Users className="w-4 h-4" /> Manage Customers

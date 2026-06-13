@@ -45,7 +45,7 @@ export default function InvoicesPage() {
   return (
     <div>
       <PageHeader title="Invoices" description="Invoice management">
-        <Button onClick={() => navigate('/invoices/new')}>
+        <Button onClick={() => navigate('/app/invoices/new')}>
           <Plus className="w-4 h-4" /> New Invoice
         </Button>
       </PageHeader>
@@ -69,7 +69,7 @@ export default function InvoicesPage() {
         <EmptyState
           title="No invoices"
           description="Create the first invoice to get started"
-          action={{ label: 'New Invoice', onClick: () => navigate('/invoices/new') }}
+          action={{ label: 'New Invoice', onClick: () => navigate('/app/invoices/new') }}
         />
       ) : (
         <>
@@ -112,7 +112,7 @@ export default function InvoicesPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-1">
                         <Link
-                          to={`/invoices/${inv.invoiceId}`}
+                          to={`/app/invoices/${inv.invoiceId}`}
                           className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50"
                         >
                           <Eye className="w-4 h-4" />

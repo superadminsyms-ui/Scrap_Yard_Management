@@ -149,7 +149,7 @@ export default function CustomersPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
                       <Link
-                        to={`/customers/${customer.id}/invoices`}
+                        to={`/app/customers/${customer.id}/invoices`}
                         className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50"
                         title="View invoices"
                       >

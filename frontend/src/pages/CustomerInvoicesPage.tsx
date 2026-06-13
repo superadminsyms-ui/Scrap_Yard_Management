@@ -34,7 +34,7 @@ export default function CustomerInvoicesPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <Link to="/customers" className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50">
+        <Link to="/app/customers" className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
@@ -63,7 +63,7 @@ export default function CustomerInvoicesPage() {
                 {invoices.map((inv) => (
                   <tr key={inv.invoiceId} className="hover:bg-surface-100">
                     <td className="px-6 py-4">
-                      <Link to={`/invoices/${inv.invoiceId}`} className="font-medium text-primary-500 hover:underline">
+                      <Link to={`/app/invoices/${inv.invoiceId}`} className="font-medium text-primary-500 hover:underline">
                         #{inv.invoiceId}
                       </Link>
                     </td>

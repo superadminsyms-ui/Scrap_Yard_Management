@@ -160,7 +160,7 @@ export default function ScrapyardsPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
                       <Link
-                        to={`/scrapyards/${yard.id}`}
+                        to={`/app/scrapyards/${yard.id}`}
                         className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50"
                         title="View detail"
                       >

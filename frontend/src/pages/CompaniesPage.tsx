@@ -101,14 +101,14 @@ export default function CompaniesPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
                       <Link
-                        to={`/scrapyards?companyId=${company.id}`}
+                        to={`/app/scrapyards?companyId=${company.id}`}
                         className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50"
                         title="View scrapyards"
                       >
                         <Warehouse className="w-4 h-4" />
                       </Link>
                       <Link
-                        to={`/customers?companyId=${company.id}`}
+                        to={`/app/customers?companyId=${company.id}`}
                         className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50"
                         title="View customers"
                       >

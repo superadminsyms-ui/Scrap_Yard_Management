@@ -153,7 +153,7 @@ export default function ScrapyardDetailPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <Link to="/scrapyards" className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50">
+        <Link to="/app/scrapyards" className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
