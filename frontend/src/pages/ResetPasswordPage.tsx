@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { authApi } from '@/api/endpoints/auth'
 import { ArrowLeft, CheckCircle2, Eye, EyeOff } from 'lucide-react'
+import { PasswordRequirements } from '@/components/ui/PasswordRequirements'
 import { APP_VERSION } from '@/config/version'
 
 export default function ResetPasswordPage() {
@@ -33,8 +34,20 @@ export default function ResetPasswordPage() {
     e.preventDefault()
     setError('')
 
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters')
+      return
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      setError('Password must contain at least one uppercase letter')
+      return
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      setError('Password must contain at least one lowercase letter')
+      return
+    }
+    if (!/\d/.test(newPassword)) {
+      setError('Password must contain at least one digit')
       return
     }
 
@@ -142,9 +155,9 @@ export default function ResetPasswordPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={8}
                     className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                    placeholder="At least 6 characters"
+                    placeholder="At least 8 characters"
                   />
                   <button
                     type="button"
@@ -155,6 +168,7 @@ export default function ResetPasswordPage() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                <PasswordRequirements password={newPassword} />
               </div>
 
               <div>
@@ -168,7 +182,7 @@ export default function ResetPasswordPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={8}
                     className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     placeholder="Repeat your password"
                   />

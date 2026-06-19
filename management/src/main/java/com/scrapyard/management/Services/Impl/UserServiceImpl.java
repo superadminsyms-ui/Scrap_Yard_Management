@@ -6,6 +6,7 @@ import com.scrapyard.management.Models.Enums.UserRole;
 import com.scrapyard.management.Models.User;
 import com.scrapyard.management.Repository.UserRepo;
 import com.scrapyard.management.Services.IUserService;
+import com.scrapyard.management.Utils.PasswordValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -91,7 +92,9 @@ public class UserServiceImpl implements IUserService {
         }
 
         if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            PasswordValidator.validate(request.getNewPassword());
             user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            user.setPasswordChangedAt(java.time.LocalDateTime.now());
             user.setMustChangePassword(true);
             changed = true;
         }

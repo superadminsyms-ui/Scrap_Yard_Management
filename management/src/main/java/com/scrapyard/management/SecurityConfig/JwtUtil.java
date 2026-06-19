@@ -37,6 +37,9 @@ public class JwtUtil {
                 .subject(user.getId().toString())
                 .claim("role", user.getRole().name())
                 .claim("yardId", yardId)
+                .claim("pwdAt", user.getPasswordChangedAt() != null
+                        ? user.getPasswordChangedAt().toString()
+                        : null)
                 .id(java.util.UUID.randomUUID().toString())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
@@ -107,6 +110,15 @@ public class JwtUtil {
                 .expiration(new Date(System.currentTimeMillis() + TEMP_TOKEN_EXPIRATION))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String extractPasswordChangedAt(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("pwdAt", String.class);
     }
 
     public boolean isTempToken(String token) {

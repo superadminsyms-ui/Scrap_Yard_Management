@@ -6,6 +6,7 @@ import com.scrapyard.management.Repository.PasswordResetTokenRepo;
 import com.scrapyard.management.Repository.UserRepo;
 import com.scrapyard.management.Services.IEmailService;
 import com.scrapyard.management.Services.IPasswordRecoveryService;
+import com.scrapyard.management.Utils.PasswordValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +75,8 @@ public class PasswordRecoveryServiceImpl implements IPasswordRecoveryService {
     @Override
     @Transactional
     public String resetPassword(String token, String newPassword) {
+        PasswordValidator.validate(newPassword);
+
         PasswordResetToken resetToken = tokenRepo.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token."));
 
@@ -92,6 +95,7 @@ public class PasswordRecoveryServiceImpl implements IPasswordRecoveryService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setMustChangePassword(false);
+        user.setPasswordChangedAt(LocalDateTime.now());
         userRepo.save(user);
 
         resetToken.setUsed(true);

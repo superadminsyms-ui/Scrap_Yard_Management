@@ -18,6 +18,7 @@ import com.scrapyard.management.SecurityConfig.JwtUtil;
 import com.scrapyard.management.SecurityConfig.SecurityContextService;
 import com.scrapyard.management.Services.IAuthService;
 import com.scrapyard.management.Services.ITokenRevocationService;
+import com.scrapyard.management.Utils.PasswordValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
@@ -232,12 +233,11 @@ public class AuthServImpl implements IAuthService {
             throw new IllegalArgumentException("Current password is incorrect");
         }
 
-        if (request.getNewPassword().isBlank() || request.getNewPassword().length() < 6) {
-            throw new IllegalArgumentException("New password must be at least 6 characters");
-        }
+        PasswordValidator.validate(request.getNewPassword());
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         user.setMustChangePassword(false);
+        user.setPasswordChangedAt(java.time.LocalDateTime.now());
         userRepo.save(user);
     }
 
@@ -280,7 +280,9 @@ public class AuthServImpl implements IAuthService {
         }
 
         if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            PasswordValidator.validate(request.getNewPassword());
             user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            user.setPasswordChangedAt(java.time.LocalDateTime.now());
         user.setMustChangePassword(true);
             changed = true;
         }

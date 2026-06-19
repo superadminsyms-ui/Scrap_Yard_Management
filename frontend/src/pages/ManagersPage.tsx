@@ -7,6 +7,7 @@ import { adminApi } from '@/api/endpoints/admin'
 import { useAuth } from '@/context/AuthContext'
 import { UserRole, type UserListResponse, type UserUpdateRequest } from '@/types/models'
 import { Button, Input, Select, Modal, ConfirmDialog, PageHeader, EmptyState, LoadingSpinner, Badge, Tabs } from '@/components/ui'
+import { PasswordRequirements } from '@/components/ui/PasswordRequirements'
 import { Plus, Search, Pencil, CheckCircle, XCircle, AlertTriangle, Eye } from 'lucide-react'
 
 export default function ManagersPage() {
@@ -587,7 +588,7 @@ function EditCredentialsForm({
         value={newPassword}
         onChange={(e) => setNewPassword(e.target.value)}
         error={errors.newPassword}
-        placeholder="At least 6 characters"
+        placeholder="At least 8 characters"
       />
       <div className="flex justify-end gap-3 pt-2">
         <Button type="submit" disabled={isLoading}>
@@ -616,8 +617,11 @@ function NewSuperAdminForm({
     const newErrors: Record<string, string> = {}
     if (!form.email.trim()) newErrors.email = 'Email required'
     if (!/^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(form.email)) newErrors.email = 'Invalid email'
-    if (!form.password) newErrors.password = 'Password required'
-    else if (form.password.length < 6) newErrors.password = 'At least 6 characters'
+     if (!form.password) newErrors.password = 'Password required'
+    else if (form.password.length < 8) newErrors.password = 'At least 8 characters'
+    else if (!/[A-Z]/.test(form.password)) newErrors.password = 'Missing uppercase letter'
+    else if (!/[a-z]/.test(form.password)) newErrors.password = 'Missing lowercase letter'
+    else if (!/\d/.test(form.password)) newErrors.password = 'Missing a digit'
     if (form.password !== form.confirmPassword) newErrors.confirmPassword = 'Passwords do not match'
     if (Object.keys(newErrors).length) { setErrors(newErrors); return }
     onSubmit({ email: form.email, password: form.password })
@@ -644,8 +648,9 @@ function NewSuperAdminForm({
         value={form.password}
         onChange={(e) => setForm({ ...form, password: e.target.value })}
         error={errors.password}
-        placeholder="At least 6 characters"
+        placeholder="At least 8 characters"
       />
+      <PasswordRequirements password={form.password} />
       <Input
         label="Confirm Password"
         type="password"
@@ -700,8 +705,11 @@ function NewManagerForm({
     if (!/^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(form.email)) newErrors.email = 'Invalid email'
     if (!form.phone.trim()) newErrors.phone = 'Phone required'
     if (!form.scrapYardId) newErrors.scrapYardId = 'Select a yard'
-    if (!form.password) newErrors.password = 'Password required'
-    else if (form.password.length < 6) newErrors.password = 'At least 6 characters'
+     if (!form.password) newErrors.password = 'Password required'
+    else if (form.password.length < 8) newErrors.password = 'At least 8 characters'
+    else if (!/[A-Z]/.test(form.password)) newErrors.password = 'Missing uppercase letter'
+    else if (!/[a-z]/.test(form.password)) newErrors.password = 'Missing lowercase letter'
+    else if (!/\d/.test(form.password)) newErrors.password = 'Missing a digit'
     if (form.password !== form.confirmPassword) newErrors.confirmPassword = 'Passwords do not match'
     if (Object.keys(newErrors).length) { setErrors(newErrors); return }
     onSubmit({
@@ -759,8 +767,9 @@ function NewManagerForm({
         value={form.password}
         onChange={(e) => setForm({ ...form, password: e.target.value })}
         error={errors.password}
-        placeholder="At least 6 characters"
+        placeholder="At least 8 characters"
       />
+      <PasswordRequirements password={form.password} />
       <Input
         label="Confirm Password"
         type="password"

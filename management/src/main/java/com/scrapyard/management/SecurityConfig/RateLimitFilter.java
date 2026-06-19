@@ -4,12 +4,15 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -27,6 +30,26 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final ConcurrentHashMap<String, LinkedList<Long>> loginAttempts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, LinkedList<Long>> forgotPasswordAttempts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, LinkedList<Long>> apiAttempts = new ConcurrentHashMap<>();
+
+    @Value("${app.security.trusted-proxies:}")
+    private String trustedProxies;
+
+    @Scheduled(fixedRate = 600_000)
+    public void cleanupMaps() {
+        cleanupMap(loginAttempts, LOGIN_WINDOW_MS);
+        cleanupMap(forgotPasswordAttempts, FORGOT_PASSWORD_WINDOW_MS);
+        cleanupMap(apiAttempts, API_WINDOW_MS);
+    }
+
+    private void cleanupMap(ConcurrentHashMap<String, LinkedList<Long>> map, long windowMs) {
+        long now = System.currentTimeMillis();
+        map.forEach((key, timestamps) -> {
+            synchronized (timestamps) {
+                timestamps.removeIf(t -> now - t > windowMs);
+            }
+        });
+        map.values().removeIf(List::isEmpty);
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -83,14 +106,20 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            return xForwardedFor.split(",")[0].trim();
+        String remoteAddr = request.getRemoteAddr();
+        if (trustedProxies != null && !trustedProxies.isBlank()) {
+            List<String> trusted = List.of(trustedProxies.split(","));
+            if (trusted.contains(remoteAddr)) {
+                String xForwardedFor = request.getHeader("X-Forwarded-For");
+                if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+                    return xForwardedFor.split(",")[0].trim();
+                }
+                String xRealIp = request.getHeader("X-Real-IP");
+                if (xRealIp != null && !xRealIp.isBlank()) {
+                    return xRealIp.trim();
+                }
+            }
         }
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isBlank()) {
-            return xRealIp.trim();
-        }
-        return request.getRemoteAddr();
+        return remoteAddr;
     }
 }

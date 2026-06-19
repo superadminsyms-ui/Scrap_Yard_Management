@@ -1,5 +1,4 @@
 package com.scrapyard.management.Models;
-
 import com.scrapyard.management.Models.Enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,6 +47,9 @@ public class User {
     @Column
     private LocalDateTime lastActivityAt;
 
+    @Column(nullable = false)
+    private LocalDateTime passwordChangedAt;
+
     @OneToOne
     @JoinColumn(name = "manager_id")
     private ManagerSY managerSY;
@@ -62,6 +64,9 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (passwordChangedAt == null) {
+            passwordChangedAt = LocalDateTime.now();
+        }
     }
 
     @PreUpdate

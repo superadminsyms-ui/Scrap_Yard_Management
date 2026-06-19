@@ -76,6 +76,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleIllegalArgument(
             IllegalArgumentException ex) {
 
+        log.warn("Bad request: {}", ex.getMessage());
+
         Map<String, Object> error = new HashMap<>();
 
         error.put("timestamp", LocalDateTime.now());
@@ -131,10 +133,12 @@ public class GlobalExceptionHandler {
     // BACKUP / RESTORE / WIPE ERRORS
     @ExceptionHandler(java.io.IOException.class)
     public ResponseEntity<?> handleIOException(java.io.IOException ex) {
+        log.error("IO error: {}", ex.getMessage(), ex);
+
         Map<String, Object> error = new HashMap<>();
         error.put("timestamp", LocalDateTime.now());
         error.put("status", 500);
-        error.put("message", "Backup operation failed: " + ex.getMessage());
+        error.put("message", "An internal error occurred. Please try again later.");
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

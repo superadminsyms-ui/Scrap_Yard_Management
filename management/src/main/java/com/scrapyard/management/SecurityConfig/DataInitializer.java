@@ -2,6 +2,9 @@ package com.scrapyard.management.SecurityConfig;
 import com.scrapyard.management.Models.User;
 import com.scrapyard.management.Models.Enums.UserRole;
 import com.scrapyard.management.Repository.UserRepo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
@@ -9,8 +12,13 @@ import jakarta.annotation.PostConstruct;
 @Component
 public class DataInitializer {
 
+    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
+
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.admin.default-password:#{null}}")
+    private String defaultPassword;
 
     public DataInitializer(UserRepo userRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
@@ -20,13 +28,23 @@ public class DataInitializer {
     @PostConstruct
     public void init() {
         if (!userRepo.existsByEmail("admin@scrapyard.com")) {
+            String password = (defaultPassword != null && !defaultPassword.isBlank())
+                    ? defaultPassword
+                    : "Adm1n$" + java.util.UUID.randomUUID().toString().substring(0, 6);
             User admin = new User();
             admin.setEmail("admin@scrapyard.com");
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setPassword(passwordEncoder.encode(password));
             admin.setRole(UserRole.SUPERADMIN);
             admin.setActive(true);
             admin.setMustChangePassword(true);
             userRepo.save(admin);
+            if (defaultPassword == null || defaultPassword.isBlank()) {
+                log.warn("======================================================");
+                log.warn("DEFAULT ADMIN CREATED with email: admin@scrapyard.com");
+                log.warn("Temporary password: {}", password);
+                log.warn("CHANGE THIS PASSWORD IMMEDIATELY after first login.");
+                log.warn("======================================================");
+            }
         }
     }
 }

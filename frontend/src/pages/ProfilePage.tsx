@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import { authApi } from '@/api/endpoints/auth'
 import { UserCog, ShieldCheck, ShieldOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui'
+import { PasswordRequirements } from '@/components/ui/PasswordRequirements'
 import { TwoFASetupModal } from '@/components/TwoFASetupModal'
 
 export default function ProfilePage() {
@@ -47,8 +48,20 @@ export default function ProfilePage() {
       return
     }
 
-    if (passwordChanged && newPassword.length < 6) {
-      setError('New password must be at least 6 characters')
+    if (passwordChanged && newPassword.length < 8) {
+      setError('New password must be at least 8 characters')
+      return
+    }
+    if (passwordChanged && !/[A-Z]/.test(newPassword)) {
+      setError('New password must contain at least one uppercase letter')
+      return
+    }
+    if (passwordChanged && !/[a-z]/.test(newPassword)) {
+      setError('New password must contain at least one lowercase letter')
+      return
+    }
+    if (passwordChanged && !/\d/.test(newPassword)) {
+      setError('New password must contain at least one digit')
       return
     }
 
@@ -206,8 +219,9 @@ export default function ProfilePage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 placeholder:text-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                placeholder="At least 6 characters"
+                 placeholder="At least 8 characters"
               />
+              {newPassword && <PasswordRequirements password={newPassword} />}
             </div>
 
             {newPassword && (

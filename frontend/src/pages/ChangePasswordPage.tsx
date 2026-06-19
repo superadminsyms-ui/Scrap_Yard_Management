@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { authApi } from '@/api/endpoints/auth'
 import { Lock, Eye, EyeOff } from 'lucide-react'
+import { PasswordRequirements } from '@/components/ui/PasswordRequirements'
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState('')
@@ -26,8 +27,20 @@ export default function ChangePasswordPage() {
       return
     }
 
-    if (newPassword.length < 6) {
-      setError('New password must be at least 6 characters')
+    if (newPassword.length < 8) {
+      setError('New password must be at least 8 characters')
+      return
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      setError('New password must contain at least one uppercase letter')
+      return
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      setError('New password must contain at least one lowercase letter')
+      return
+    }
+    if (!/\d/.test(newPassword)) {
+      setError('New password must contain at least one digit')
       return
     }
 
@@ -111,7 +124,7 @@ export default function ChangePasswordPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   className="w-full px-4 pr-10 py-2.5 rounded-full border border-outline bg-surface text-sm text-secondary-800 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  placeholder="At least 6 characters"
+                   placeholder="At least 8 characters"
                 />
                 <button
                   type="button"
@@ -122,6 +135,7 @@ export default function ChangePasswordPage() {
                   {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              <PasswordRequirements password={newPassword} />
             </div>
 
             <div>

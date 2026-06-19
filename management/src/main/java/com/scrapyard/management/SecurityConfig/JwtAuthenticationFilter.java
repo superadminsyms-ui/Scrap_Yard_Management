@@ -73,11 +73,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Optional<User> userOpt = userRepo.findById(Long.parseLong(userId));
 
         if (userOpt.isEmpty() || !userOpt.get().isActive()) {
-            filterChain.doFilter(request, response);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
         User user = userOpt.get();
+
+        String tokenPwdAt = jwtUtil.extractPasswordChangedAt(token);
+        if (tokenPwdAt != null && user.getPasswordChangedAt() != null) {
+            if (tokenPwdAt.compareTo(user.getPasswordChangedAt().toString()) < 0) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+        }
 
         LocalDateTime lastActivity = user.getLastActivityAt();
         LocalDateTime now = LocalDateTime.now();

@@ -33,6 +33,9 @@ public class WebSecurityConfig {
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
 
+    @Value("${app.swagger.enabled:false}")
+    private boolean swaggerEnabled;
+
     public WebSecurityConfig(JwtAuthenticationFilter jwtAuthFilter, RateLimitFilter rateLimitFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.rateLimitFilter = rateLimitFilter;
@@ -56,7 +59,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/2fa/**").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**").hasRole(swaggerEnabled ? "SUPERADMIN" : "NONE")
                         .requestMatchers("/api/backup/**").hasRole("SUPERADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/company/**").hasRole("SUPERADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/company/**").hasRole("SUPERADMIN")

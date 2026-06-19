@@ -22,6 +22,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.scrapyard.management.Utils.PasswordValidator;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
@@ -343,6 +344,9 @@ public class BackupServImpl implements IBackupService {
         if (user == null) {
             throw new AccessDeniedException("Authentication required");
         }
+        if (user.getRole() != com.scrapyard.management.Models.Enums.UserRole.SUPERADMIN) {
+            throw new AccessDeniedException("SUPERADMIN role required");
+        }
     }
 
     private void enforceMaxFiles() {
@@ -524,10 +528,13 @@ public class BackupServImpl implements IBackupService {
 
     @Transactional
     private void resetAdminPassword() {
+        String defaultPassword = "Adm1n$" + java.util.UUID.randomUUID().toString().substring(0, 6);
         userRepo.findByEmail("admin@scrapyard.com").ifPresent(admin -> {
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setPassword(passwordEncoder.encode(defaultPassword));
             admin.setMustChangePassword(true);
+            admin.setPasswordChangedAt(java.time.LocalDateTime.now());
             userRepo.save(admin);
+            log.warn("Admin password has been reset after restore. The admin must use password recovery to set a new password.");
         });
     }
 
