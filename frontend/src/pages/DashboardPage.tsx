@@ -116,12 +116,10 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-3">
                     <Badge
                       variant={
-                        m.movementType === MovementType.INBOUND ? 'green' :
-                        m.movementType === MovementType.OUTBOUND ? 'red' : 'blue'
+                        m.movementType === MovementType.INBOUND ? 'green' : 'red'
                       }
                     >
-                      {m.movementType === MovementType.INBOUND ? 'Inbound' :
-                       m.movementType === MovementType.OUTBOUND ? 'Outbound' : 'Transfer'}
+                      {m.movementType === MovementType.INBOUND ? 'Inbound' : 'Outbound'}
                     </Badge>
                     <span className="text-sm text-secondary-600">
                       {m.containerDescription} &rarr; {m.destination}

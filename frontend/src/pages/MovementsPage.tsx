@@ -26,13 +26,11 @@ const MATERIAL_LABELS: Record<MaterialType, string> = {
 const MOVEMENT_TYPE_LABELS: Record<MovementType, string> = {
   [MovementType.INBOUND]: 'Inbound',
   [MovementType.OUTBOUND]: 'Outbound',
-  [MovementType.TRANSFER]: 'Transfer',
 }
 
-const MOVEMENT_TYPE_BADGE: Record<MovementType, 'green' | 'red' | 'blue'> = {
+const MOVEMENT_TYPE_BADGE: Record<MovementType, 'green' | 'red'> = {
   [MovementType.INBOUND]: 'green',
   [MovementType.OUTBOUND]: 'red',
-  [MovementType.TRANSFER]: 'blue',
 }
 
 export default function MovementsPage() {
@@ -301,7 +299,6 @@ function MovementForm({ yards, onSuccess, isManager, user }: {
         >
           <option value={MovementType.INBOUND}>Inbound</option>
           <option value={MovementType.OUTBOUND}>Outbound</option>
-          <option value={MovementType.TRANSFER}>Transfer</option>
         </Select>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

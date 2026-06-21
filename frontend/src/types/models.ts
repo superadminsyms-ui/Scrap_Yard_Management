@@ -21,7 +21,6 @@ export enum MaterialType {
 export enum MovementType {
   INBOUND = 'INBOUND',
   OUTBOUND = 'OUTBOUND',
-  TRANSFER = 'TRANSFER',
 }
 
 export enum ContainerSize {
@@ -234,7 +233,7 @@ export interface MaterialPricing {
   materialType: MaterialType
   totalWeight: number
   totalSpent: number
-  averageUnitPrice: number
+  unitPrice: number
   lineCount: number
 }
 
@@ -477,4 +476,36 @@ export interface ReportDetailTemplateItem {
 export interface ReportTemplateResponse {
   reportDetails: ReportDetailTemplateItem[]
   totalDiscount: number
+}
+
+export interface Message {
+  id: number
+  senderId: number
+  senderName: string
+  senderRole: string
+  recipientId: number
+  recipientName: string
+  recipientRole: string
+  content: string
+  pinned: boolean
+  read: boolean
+  createdAt: string
+}
+
+export interface MessageFormData {
+  recipientId: number
+  content: string
+  pinned: boolean
+}
+
+export interface Recipient {
+  id: number
+  name: string
+  email: string
+  role: string
+  yardName: string | null
+}
+
+export interface UnreadCountResponse {
+  unreadCount: number
 }

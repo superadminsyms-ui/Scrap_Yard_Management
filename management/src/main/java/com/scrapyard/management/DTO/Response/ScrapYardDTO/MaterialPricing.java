@@ -13,6 +13,6 @@ public class MaterialPricing {
     private MaterialType materialType;
     private BigDecimal totalWeight;
     private BigDecimal totalSpent;
-    private BigDecimal averageUnitPrice;
+    private BigDecimal unitPrice;
     private Integer lineCount;
 }

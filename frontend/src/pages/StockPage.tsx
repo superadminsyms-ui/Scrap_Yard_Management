@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useQuery } from '@tanstack/react-query'
 import { scrapyardsApi } from '@/api/endpoints/scrapyards'
 import { PageHeader, Tabs, LoadingSpinner, EmptyState, Badge, StatCard, Card, Button, Select } from '@/components/ui'
 import { MaterialType, MovementType, ReportPeriod } from '@/types/models'
 import type { Container, InvoiceSummary, Movement, MaterialStockItem, ContainerStockItem, YardStockSummary, ScrapyardReport } from '@/types/models'
-import { Scale, Package, TrendingUp, Receipt, FileDown } from 'lucide-react'
+import { Scale, Package, TrendingUp, Receipt, FileDown, Eye } from 'lucide-react'
 
 const MATERIAL_LABELS: Record<MaterialType, string> = {
   [MaterialType.ALUMINIUM]: 'Aluminum',
@@ -24,7 +25,6 @@ const MATERIAL_LABELS: Record<MaterialType, string> = {
 const MOVEMENT_TYPE_LABELS: Record<MovementType, string> = {
   [MovementType.INBOUND]: 'Inbound',
   [MovementType.OUTBOUND]: 'Outbound',
-  [MovementType.TRANSFER]: 'Transfer',
 }
 
 export default function StockPage() {
@@ -246,6 +246,7 @@ function InvoicesTab({ data, isLoading }: { data: InvoiceSummary[] | undefined; 
             <th className="text-left px-6 py-3 font-medium text-secondary-600">Customer</th>
             <th className="text-left px-6 py-3 font-medium text-secondary-600">Date</th>
             <th className="text-right px-6 py-3 font-medium text-secondary-600">Total</th>
+            <th className="text-right px-6 py-3 font-medium text-secondary-600">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-outline-light">
@@ -258,6 +259,16 @@ function InvoicesTab({ data, isLoading }: { data: InvoiceSummary[] | undefined; 
               </td>
               <td className="px-6 py-4 text-right font-medium text-secondary-800">
                 ${inv.totalPaid?.toFixed(2)}
+              </td>
+              <td className="px-6 py-4">
+                <div className="flex items-center justify-end gap-1">
+                  <Link
+                    to={`/app/invoices/${inv.invoiceId}`}
+                    className="p-2 text-secondary-400 hover:text-primary-500 rounded-lg hover:bg-primary-50"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}
@@ -292,8 +303,7 @@ function MovementsTab({ data, isLoading }: { data: Movement[] | undefined; isLoa
               <td className="px-6 py-4">
                 <Badge
                   variant={
-                    m.movementType === MovementType.INBOUND ? 'green' :
-                    m.movementType === MovementType.OUTBOUND ? 'red' : 'blue'
+                    m.movementType === MovementType.INBOUND ? 'green' : 'red'
                   }
                 >
                   {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}
@@ -439,7 +449,7 @@ function ReportsTab({
                       <th className="text-left px-6 py-3 font-medium text-secondary-600">Material</th>
                       <th className="text-right px-6 py-3 font-medium text-secondary-600">Total Weight (lbs)</th>
                       <th className="text-right px-6 py-3 font-medium text-secondary-600">Total Spent</th>
-                      <th className="text-right px-6 py-3 font-medium text-secondary-600">Avg Unit Price</th>
+                       <th className="text-right px-6 py-3 font-medium text-secondary-600">Unit Price</th>
                       <th className="text-right px-6 py-3 font-medium text-secondary-600">Lines</th>
                     </tr>
                   </thead>
@@ -451,7 +461,7 @@ function ReportsTab({
                         </td>
                         <td className="px-6 py-4 text-right text-secondary-800 font-medium">{mp.totalWeight?.toFixed(2)}</td>
                         <td className="px-6 py-4 text-right font-medium text-secondary-800">${mp.totalSpent?.toFixed(2)}</td>
-                        <td className="px-6 py-4 text-right font-medium text-secondary-800">${mp.averageUnitPrice?.toFixed(4)}</td>
+                        <td className="px-6 py-4 text-right font-medium text-secondary-800">${mp.unitPrice?.toFixed(4)}</td>
                         <td className="px-6 py-4 text-right text-secondary-600">{mp.lineCount}</td>
                       </tr>
                     ))}

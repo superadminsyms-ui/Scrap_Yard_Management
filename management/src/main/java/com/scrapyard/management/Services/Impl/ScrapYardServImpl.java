@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -158,6 +157,10 @@ public class ScrapYardServImpl implements IScrapYardService {
 
         if (!existing.getInvoices().isEmpty()) {
             throw new IllegalArgumentException("Cannot delete scrap yard with associated invoices");
+        }
+
+        if (!existing.getContainers().isEmpty()) {
+            throw new IllegalArgumentException("Cannot delete scrap yard with associated containers");
         }
 
         scrapYardRepo.deleteById(id);
@@ -371,29 +374,25 @@ public class ScrapYardServImpl implements IScrapYardService {
         List<MaterialPricing> materialPricing = new ArrayList<>();
 
         if (type.equals("PRICING")) {
-            Map<MaterialType, List<com.scrapyard.management.Models.InvoiceDetail>> grouped = invoices.stream()
+            Map<MaterialPricingKey, List<com.scrapyard.management.Models.InvoiceDetail>> grouped = invoices.stream()
                     .flatMap(inv -> inv.getDetails().stream())
                     .filter(d -> d.getMaterialType() != null && d.getWeight() != null && d.getUnitPrice() != null)
-                    .collect(Collectors.groupingBy(com.scrapyard.management.Models.InvoiceDetail::getMaterialType));
+                    .collect(Collectors.groupingBy(d ->
+                            new MaterialPricingKey(d.getMaterialType(), d.getUnitPrice())));
 
             materialPricing = grouped.entrySet().stream()
                     .map(entry -> {
-                        MaterialType matType = entry.getKey();
+                        MaterialPricingKey key = entry.getKey();
                         List<com.scrapyard.management.Models.InvoiceDetail> details = entry.getValue();
 
                         BigDecimal totalWeight = details.stream()
                                 .map(com.scrapyard.management.Models.InvoiceDetail::getWeight)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                        BigDecimal totalSpent = details.stream()
-                                .map(com.scrapyard.management.Models.InvoiceDetail::getSubtotal)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                        BigDecimal totalSpent = key.unitPrice().multiply(totalWeight);
 
-                        BigDecimal avgPrice = totalWeight.compareTo(BigDecimal.ZERO) > 0
-                                ? totalSpent.divide(totalWeight, 4, RoundingMode.HALF_UP)
-                                : BigDecimal.ZERO;
-
-                        return new MaterialPricing(matType, totalWeight, totalSpent, avgPrice, details.size());
+                        return new MaterialPricing(key.materialType(), totalWeight, totalSpent,
+                                key.unitPrice(), details.size());
                     })
                     .toList();
         }

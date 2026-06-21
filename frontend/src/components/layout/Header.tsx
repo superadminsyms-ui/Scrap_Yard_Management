@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useRoleTheme } from '@/hooks/useRoleTheme'
 import { cn } from '@/lib/utils'
 import { dashboardApi } from '@/api/endpoints/dashboard'
+import { NotificationCenter } from '@/components/NotificationCenter'
 
 interface HeaderProps {
   onToggleSidebar: () => void
@@ -43,6 +44,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       )}
 
       <div className="hidden md:flex items-center gap-3">
+        <NotificationCenter />
         <div className="text-right">
           <p className="text-sm font-medium text-secondary-800">
             Welcome to Scrap Yard Management System,{' '}

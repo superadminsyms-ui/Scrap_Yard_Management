@@ -263,12 +263,12 @@ export function generateReportPDF(report: ScrapyardReport): void {
   } else if (report.reportType === 'PRICING' && report.materialPricing?.length) {
     autoTable(doc, {
       startY: tableStartY,
-      head: [['Material', 'Total Weight (lbs)', 'Total Spent', 'Avg Unit Price', 'Lines']],
+      head: [['Material', 'Total Weight (lbs)', 'Total Spent', 'Unit Price', 'Lines']],
       body: report.materialPricing.map((mp) => [
         MATERIAL_LABELS[mp.materialType] || mp.materialType,
         (mp.totalWeight || 0).toFixed(2),
         `$${(mp.totalSpent || 0).toFixed(2)}`,
-        `$${(mp.averageUnitPrice || 0).toFixed(4)}`,
+        `$${(mp.unitPrice || 0).toFixed(4)}`,
         String(mp.lineCount || 0),
       ]),
       theme: 'striped',

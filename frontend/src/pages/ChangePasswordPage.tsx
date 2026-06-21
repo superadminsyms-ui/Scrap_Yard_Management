@@ -70,7 +70,10 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('/login_image.jpg')" }}
+    >
       <div className="w-full max-w-sm">
         <div className="bg-surface rounded-2xl border border-outline shadow-elevation-1 p-8">
           <div className="flex flex-col items-center mb-6">

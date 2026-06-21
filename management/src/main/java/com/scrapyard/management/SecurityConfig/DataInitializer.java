@@ -27,24 +27,28 @@ public class DataInitializer {
 
     @PostConstruct
     public void init() {
-        if (!userRepo.existsByEmail("admin@scrapyard.com")) {
-            String password = (defaultPassword != null && !defaultPassword.isBlank())
-                    ? defaultPassword
-                    : "Adm1n$" + java.util.UUID.randomUUID().toString().substring(0, 6);
-            User admin = new User();
-            admin.setEmail("admin@scrapyard.com");
-            admin.setPassword(passwordEncoder.encode(password));
-            admin.setRole(UserRole.SUPERADMIN);
-            admin.setActive(true);
-            admin.setMustChangePassword(true);
-            userRepo.save(admin);
-            if (defaultPassword == null || defaultPassword.isBlank()) {
-                log.warn("======================================================");
-                log.warn("DEFAULT ADMIN CREATED with email: admin@scrapyard.com");
-                log.warn("Temporary password: {}", password);
-                log.warn("CHANGE THIS PASSWORD IMMEDIATELY after first login.");
-                log.warn("======================================================");
+        try {
+            if (!userRepo.existsByEmail("admin@syms.com")) {
+                String password = (defaultPassword != null && !defaultPassword.isBlank())
+                        ? defaultPassword
+                        : "Adm1n$" + java.util.UUID.randomUUID().toString().substring(0, 6);
+                User admin = new User();
+                admin.setEmail("admin@syms.com");
+                admin.setPassword(passwordEncoder.encode(password));
+                admin.setRole(UserRole.SUPERADMIN);
+                admin.setActive(true);
+                admin.setMustChangePassword(true);
+                userRepo.save(admin);
+                if (defaultPassword == null || defaultPassword.isBlank()) {
+                    log.warn("======================================================");
+                    log.warn("DEFAULT ADMIN CREATED with email: admin@syms.com");
+                    log.warn("Temporary password: {}", password);
+                    log.warn("CHANGE THIS PASSWORD IMMEDIATELY after first login.");
+                    log.warn("======================================================");
+                }
             }
+        } catch (Exception e) {
+            log.warn("Admin user already exists or could not be created: {}", e.getMessage());
         }
     }
 }
