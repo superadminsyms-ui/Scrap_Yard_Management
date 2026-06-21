@@ -310,6 +310,10 @@ public class ReportServImpl implements IReportService {
     @Override
     @Transactional(readOnly = true)
     public Page<ReportDTOResponse> getAllReportsByScrapYard(Long scrapYardId, Pageable pageable) {
+        Long currentYardId = securityContextService.getCurrentYardId();
+        if (currentYardId != null && !currentYardId.equals(scrapYardId)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
         Page<Report> reportPage = reportRepo.findByScrapYardId(scrapYardId, pageable);
         if (reportPage.isEmpty()) {
             throw new IllegalArgumentException("No reports found for this yard");
@@ -404,6 +408,10 @@ public class ReportServImpl implements IReportService {
     @Override
     @Transactional(readOnly = true)
     public Page<ReportDTOResponse> getReportsByScrapYardAndDateRange(Long scrapYardId, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        Long currentYardId = securityContextService.getCurrentYardId();
+        if (currentYardId != null && !currentYardId.equals(scrapYardId)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
         Page<Report> reportPage = reportRepo.findByScrapYardIdAndCreatedAtBetween(scrapYardId, startDate, endDate, pageable);
         if (reportPage.isEmpty()) {
             throw new IllegalArgumentException("No reports found for this yard in the specified date range");

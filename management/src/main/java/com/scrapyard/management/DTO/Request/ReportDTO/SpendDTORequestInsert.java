@@ -13,6 +13,7 @@ public class SpendDTORequestInsert {
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.0", message = "Amount cannot be negative")
+    @DecimalMax(value = "1000000000.0", message = "Amount exceeds the maximum allowed value")
     private BigDecimal amount;
 
     @NotBlank(message = "description is required")

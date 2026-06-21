@@ -64,7 +64,16 @@ public class CompanyServImpl implements ICompanyService {
     @Override
     public List<CompanyDTOResponse> getCompanyByName(String name) {
 
-        List<Company> companies = companyRepo.findByNameContainingIgnoreCase(name);
+        Long companyId = securityContextService.getCurrentCompanyId();
+        List<Company> companies;
+
+        if (companyId != null) {
+            companies = companyRepo.findByNameContainingIgnoreCase(name).stream()
+                    .filter(c -> c.getId().equals(companyId))
+                    .toList();
+        } else {
+            companies = companyRepo.findByNameContainingIgnoreCase(name);
+        }
 
         if (companies.isEmpty()) {
             throw new IllegalArgumentException("No Company found with name containing: " + name);

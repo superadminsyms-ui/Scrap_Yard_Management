@@ -387,8 +387,8 @@ export default function BackupPage() {
               <p className="font-medium text-primary-600">Your session will close after wiping.</p>
               <p className="text-primary-600">Login again with these credentials:</p>
               <p className="font-mono text-primary-600">
-                Email: admin@scrapyard.com<br />
-                Password: admin123
+                Email: superadminsyms@gmail.com<br />
+                Password: Use your current admin password
               </p>
             </div>
             {twoFAEnabled && (

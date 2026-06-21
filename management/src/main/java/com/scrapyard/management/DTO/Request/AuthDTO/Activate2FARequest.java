@@ -10,13 +10,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Disable2FARequest {
+public class Activate2FARequest {
 
-    @NotBlank(message = "Current password is required")
-    @Size(max = 72, message = "Current password must be at most 72 characters")
-    private String currentPassword;
-
-    @NotBlank(message = "2FA code is required")
+    @NotBlank(message = "Verification code is required")
     @Size(min = 6, max = 6, message = "Code must be 6 digits")
     @Pattern(regexp = "\\d{6}", message = "Code must be 6 digits")
     private String code;

@@ -4,19 +4,21 @@ import com.scrapyard.management.DTO.Request.ContainerDTO.ContainerDTORequestUpda
 import com.scrapyard.management.Models.Enums.MaterialType;
 import com.scrapyard.management.Services.IContainerService;
 import com.scrapyard.management.Services.Impl.ContainerServImpl;
+import com.scrapyard.management.Util.PageableUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
+import java.util.Set;
 
 
 @RestController
 @RequestMapping("/api/container")
 public class ContainerController {
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "createdAt", "materialWeight", "description");
 
     @Autowired
     private final IContainerService containerServices;
@@ -32,10 +34,7 @@ public class ContainerController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
         try {
-            Sort sort = direction.equalsIgnoreCase("asc")
-                    ? Sort.by(sortBy).ascending()
-                    : Sort.by(sortBy).descending();
-            Pageable pageable = PageRequest.of(page, size, sort);
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
             return ResponseEntity.ok(containerServices.getAllContainers(pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -63,10 +62,7 @@ public class ContainerController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
         try {
-            Sort sort = direction.equalsIgnoreCase("asc")
-                    ? Sort.by(sortBy).ascending()
-                    : Sort.by(sortBy).descending();
-            Pageable pageable = PageRequest.of(page, size, sort);
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
             return ResponseEntity.ok(containerServices.getContainersByMaterial(material, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -118,10 +114,7 @@ public class ContainerController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
         try {
-            Sort sort = direction.equalsIgnoreCase("asc")
-                    ? Sort.by(sortBy).ascending()
-                    : Sort.by(sortBy).descending();
-            Pageable pageable = PageRequest.of(page, size, sort);
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
             return ResponseEntity.ok(containerServices.getContainersByScrapYard(yardId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -138,10 +131,7 @@ public class ContainerController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
         try {
-            Sort sort = direction.equalsIgnoreCase("asc")
-                    ? Sort.by(sortBy).ascending()
-                    : Sort.by(sortBy).descending();
-            Pageable pageable = PageRequest.of(page, size, sort);
+            Pageable pageable = PageableUtil.buildPageable(page, size, sortBy, direction, ALLOWED_SORT_FIELDS);
             return ResponseEntity.ok(containerServices.getContainersByCompany(companyId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()

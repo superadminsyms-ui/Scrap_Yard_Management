@@ -196,6 +196,7 @@ public class InvoiceServImpl implements IInvoiceService {
 
 
     @Override
+    @Transactional
     public InvoiceDTOResponse saveInvoice(InvoiceDTORequestInsert invoiceDto) {
 
         Long yardId = securityContextService.getCurrentYardId();

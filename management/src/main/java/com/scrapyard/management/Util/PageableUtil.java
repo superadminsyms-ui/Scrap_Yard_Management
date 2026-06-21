@@ -10,7 +10,7 @@ public final class PageableUtil {
 
     public static Pageable buildPageable(int page, int size, String sortBy, String direction, Set<String> allowedFields) {
         if (!allowedFields.contains(sortBy)) {
-            throw new IllegalArgumentException("Invalid sort field: " + sortBy);
+            throw new IllegalArgumentException("Invalid sort field");
         }
         Sort sort = direction.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()

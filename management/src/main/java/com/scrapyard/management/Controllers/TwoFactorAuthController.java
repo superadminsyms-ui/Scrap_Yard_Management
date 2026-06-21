@@ -1,5 +1,6 @@
 package com.scrapyard.management.Controllers;
 
+import com.scrapyard.management.DTO.Request.AuthDTO.Activate2FARequest;
 import com.scrapyard.management.DTO.Request.AuthDTO.Disable2FARequest;
 import com.scrapyard.management.DTO.Request.AuthDTO.Verify2FARequest;
 import com.scrapyard.management.DTO.Response.AuthDTO.LoginResponse;
@@ -54,14 +55,9 @@ public class TwoFactorAuthController {
     }
 
     @PostMapping("/activate")
-    public ResponseEntity<?> activate(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> activate(@Valid @RequestBody Activate2FARequest request) {
         try {
-            String code = body.get("code");
-            if (code == null || code.isBlank()) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("Error", "Verification code is required"));
-            }
-            twoFactorService.enable(securityContextService.getCurrentUser(), code);
+            twoFactorService.enable(securityContextService.getCurrentUser(), request.getCode());
             return ResponseEntity.ok(Map.of("message", "Two-factor authentication enabled successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()

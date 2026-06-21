@@ -26,6 +26,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 
@@ -152,14 +153,17 @@ public class AuthServImpl implements IAuthService {
     }
 
     @Override
+    @Transactional
     public RegisterResponse register(RegisterRequest request, User currentUser) {
-        if (currentUser.getRole() != UserRole.SUPERADMIN) {
+        if (currentUser == null || currentUser.getRole() != UserRole.SUPERADMIN) {
             throw new IllegalArgumentException("Only SUPERADMIN can register new users");
         }
 
         if (userRepo.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already registered");
         }
+
+        PasswordValidator.validate(request.getPassword());
 
         if (request.getRole() == UserRole.MANAGER) {
             if (request.getScrapYardId() == null) {

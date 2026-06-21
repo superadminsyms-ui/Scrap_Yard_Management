@@ -68,7 +68,7 @@ public class CompanyController {
     @PutMapping("/update/{id}")
     public ResponseEntity<?> update(
             @PathVariable Long id,
-            @RequestBody CompanyDTORequestInsert company) {
+            @Valid @RequestBody CompanyDTORequestInsert company) {
         try {
             return ResponseEntity.ok(companyServices.updateCompany(company, id));
         } catch (IllegalArgumentException e) {

@@ -97,6 +97,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<?> handleNullPointer(NullPointerException ex) {
+        log.warn("Null pointer (possible missing auth context): {}", ex.getMessage());
+        Map<String, Object> error = new HashMap<>();
+        error.put("timestamp", LocalDateTime.now());
+        error.put("status", 401);
+        error.put("message", "Authentication required");
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<?> handleAuthentication(AuthenticationException ex) {
         Map<String, Object> error = new HashMap<>();

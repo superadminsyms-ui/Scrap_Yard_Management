@@ -181,7 +181,7 @@ public class BackupServImpl implements IBackupService {
         }
 
         if (!Files.exists(path)) {
-            throw new IllegalArgumentException("Backup file not found: " + filename);
+            throw new IllegalArgumentException("Backup file not found");
         }
 
         return path.toFile();
@@ -206,7 +206,7 @@ public class BackupServImpl implements IBackupService {
 
         Path zipPath = Paths.get(backupProperties.getDir(), filename).normalize();
         if (!Files.exists(zipPath)) {
-            throw new IllegalArgumentException("Backup file not found: " + filename);
+            throw new IllegalArgumentException("Backup file not found");
         }
 
         Path sqlPath = zipPath.resolveSibling("restore_temp_" + System.currentTimeMillis() + ".sql");
@@ -216,8 +216,6 @@ public class BackupServImpl implements IBackupService {
             validateSqlContent(sqlPath);
             runMySqlRestore(sqlPath.toString());
             Files.deleteIfExists(sqlPath);
-
-            resetAdminPassword();
         } catch (BackupException e) {
             try { Files.deleteIfExists(sqlPath); } catch (IOException ignored) {}
             throw e;
@@ -297,7 +295,7 @@ public class BackupServImpl implements IBackupService {
             entityManager.createNativeQuery("DELETE FROM invoice").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM container").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM manager_sy").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM user WHERE email != 'admin@scrapyard.com'").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM user WHERE email != 'superadminsyms@gmail.com'").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM customer").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM scrap_yard").executeUpdate();
             entityManager.createNativeQuery("DELETE FROM company").executeUpdate();
@@ -331,7 +329,7 @@ public class BackupServImpl implements IBackupService {
 
         try {
             if (!Files.deleteIfExists(path)) {
-                throw new IllegalArgumentException("Backup file not found: " + filename);
+                throw new IllegalArgumentException("Backup file not found");
             }
         } catch (IOException e) {
             throw new BackupException("Failed to delete backup.",
@@ -524,18 +522,6 @@ public class BackupServImpl implements IBackupService {
         if (currentUser != null) {
             twoFactorService.verifyRequired(currentUser, twoFACode);
         }
-    }
-
-    @Transactional
-    private void resetAdminPassword() {
-        String defaultPassword = "Adm1n$" + java.util.UUID.randomUUID().toString().substring(0, 6);
-        userRepo.findByEmail("admin@scrapyard.com").ifPresent(admin -> {
-            admin.setPassword(passwordEncoder.encode(defaultPassword));
-            admin.setMustChangePassword(true);
-            admin.setPasswordChangedAt(java.time.LocalDateTime.now());
-            userRepo.save(admin);
-            log.warn("Admin password has been reset after restore. The admin must use password recovery to set a new password.");
-        });
     }
 
     private void runMySqlDump(String outputPath) throws IOException, InterruptedException {

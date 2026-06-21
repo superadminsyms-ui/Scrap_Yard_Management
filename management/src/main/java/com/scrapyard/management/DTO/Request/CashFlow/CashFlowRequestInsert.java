@@ -20,10 +20,12 @@ public class CashFlowRequestInsert {
 
     @NotNull(message = "startingBalance is required")
     @DecimalMin(value = "0.0", message = "Starting balance cannot be negative")
+    @DecimalMax(value = "1000000000.0", message = "Starting balance exceeds the maximum allowed value")
     private BigDecimal startingBalance;
 
     @NotNull(message = "cashReceived is required")
     @DecimalMin(value = "0.0", message = "Cash received cannot be negative")
+    @DecimalMax(value = "1000000000.0", message = "Cash received exceeds the maximum allowed value")
     private BigDecimal cashReceived;
 
     @Size(max = 75, message = "cashReceivedFrom must be at most 75 characters")
@@ -32,6 +34,7 @@ public class CashFlowRequestInsert {
 
     @NotNull(message = "totalSpendInDay is required")
     @DecimalMin(value = "0.0", message = "Spend cannot be negative")
+    @DecimalMax(value = "1000000000.0", message = "Spend exceeds the maximum allowed value")
     private BigDecimal totalSpendInDay;
 
     @AssertTrue(message = "Total spend cannot exceed starting balance + cash received")

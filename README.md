@@ -170,8 +170,8 @@ cd management
 The server starts on `http://localhost:8080`.
 
 A default SUPERADMIN account is created on first startup:
-- **Email:** `admin@scrapyard.com`
-- **Password:** `admin123`
+- **Email:** `superadminsyms@gmail.com`
+- **Password:** Check the application startup logs for the temporary password
 - **You will be required to change this password on first login.**
 
 ### 4. Run the Frontend

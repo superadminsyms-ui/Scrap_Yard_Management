@@ -56,6 +56,8 @@ public interface ContainerRepo extends JpaRepository<Container,Long> {
 
     Page<Container> findByMaterialType(MaterialType materialType, Pageable pageable);
 
+    Page<Container> findByMaterialTypeAndScrapYardId(MaterialType materialType, Long scrapYardId, Pageable pageable);
+
     Page<Container> findByScrapYardId(Long scrapYardId, Pageable pageable);
 
     Page<Container> findByScrapYard_Company_Id(Long companyId, Pageable pageable);

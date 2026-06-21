@@ -2,6 +2,7 @@ package com.scrapyard.management.DTO.Request.MovementDTO;
 import com.scrapyard.management.Models.Enums.MaterialType;
 import com.scrapyard.management.Models.Enums.MovementType;
 import com.scrapyard.management.Models.Enums.UnitOfMeasure;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -29,6 +30,7 @@ public class MovementDTORequestInsert {
 
     @NotNull(message = "Amount moved is required")
     @Positive(message = "Amount moved must be a positive number")
+    @DecimalMax(value = "1000000000.0", message = "Amount moved exceeds the maximum allowed value")
     private BigDecimal amountMoved;
 
     @NotNull(message = "Unit of measure is required")

@@ -2,6 +2,7 @@ package com.scrapyard.management.DTO.Request.ReportDTO;
 import com.scrapyard.management.Models.Enums.MaterialType;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -20,10 +21,12 @@ public class ReportDetailDTORequestInsert {
 
     @NotNull(message = "weight is required")
     @Positive(message = "weight must be a positive number")
+    @DecimalMax(value = "1000000000.0", message = "weight exceeds the maximum allowed value")
     private BigDecimal weight;
 
     @NotNull(message = "unitPrice is required")
     @Positive(message = "unitPrice must be a positive number")
+    @DecimalMax(value = "1000000000.0", message = "unitPrice exceeds the maximum allowed value")
     private BigDecimal unitPrice;
 
     @NotNull(message = "containerId is required")

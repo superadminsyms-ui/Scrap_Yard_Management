@@ -81,7 +81,13 @@ public class ContainerServImpl implements IContainerService {
 
     @Override
     public Page<ContainerDTOResponse> getContainersByMaterial(MaterialType material, Pageable pageable) {
-        Page<Container> containers = containerRepo.findByMaterialType(material, pageable);
+        Long yardId = securityContextService.getCurrentYardId();
+        Page<Container> containers;
+        if (yardId != null) {
+            containers = containerRepo.findByMaterialTypeAndScrapYardId(material, yardId, pageable);
+        } else {
+            containers = containerRepo.findByMaterialType(material, pageable);
+        }
         if (containers.isEmpty()) {
             throw new IllegalArgumentException("No containers found for material: " + material);
         }
@@ -179,6 +185,11 @@ public class ContainerServImpl implements IContainerService {
 
     @Override
     public Page<ContainerDTOResponse> getContainersByScrapYard(Long yardId, Pageable pageable) {
+        Long currentYardId = securityContextService.getCurrentYardId();
+        if (currentYardId != null && !currentYardId.equals(yardId)) {
+            throw new IllegalArgumentException("Access denied to this scrap yard");
+        }
+
         ScrapYard existing = scrapYardRepo.findById(yardId)
                 .orElseThrow(() -> new IllegalArgumentException("The scrapyard does not exist, please try again"));
 

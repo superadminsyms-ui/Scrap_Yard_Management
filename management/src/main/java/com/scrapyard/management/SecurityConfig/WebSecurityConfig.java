@@ -58,6 +58,8 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/auth/2fa/verify").permitAll()
                         .requestMatchers("/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/2fa/**").authenticated()
+                        .requestMatchers("/api/auth/register").hasRole("SUPERADMIN")
+                        .requestMatchers("/api/admin/users/**").hasRole("SUPERADMIN")
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**").hasRole(swaggerEnabled ? "SUPERADMIN" : "NONE")
                         .requestMatchers("/api/backup/**").hasRole("SUPERADMIN")
@@ -82,7 +84,7 @@ public class WebSecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
