@@ -4,6 +4,7 @@ import com.scrapyard.management.DTO.BackupFileInfo;
 import com.scrapyard.management.DTO.WipeRestoreRequest;
 import com.scrapyard.management.Services.IBackupService;
 import jakarta.validation.Valid;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/backup")
+@ConditionalOnProperty(prefix = "app.backup", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class BackupController {
 
     private final IBackupService backupService;
