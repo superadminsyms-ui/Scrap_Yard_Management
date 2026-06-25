@@ -69,6 +69,8 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/scrapyard/**").hasRole("SUPERADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/scrapyard/**").hasRole("SUPERADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/scrapyard/**").hasRole("SUPERADMIN")
+                        .requestMatchers("/api/**").authenticated()                                                                                                            
+                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
                         .anyRequest().authenticated()
 
                 ).exceptionHandling(ex -> ex
